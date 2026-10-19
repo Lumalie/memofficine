@@ -69,8 +69,8 @@ const SUPABASE_URL = "https://xbhqogndzbrjhrigtncy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4cQdbKxcRjO8JH48uA8bZA_taBLuHdE";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const DEFAULT_SECTIONS = [
+ {id:"conseil-comptoir",title:"📣 À DIRE AU COMPTOIR",type:"text",content:"À compléter : 3 à 5 messages prioritaires, vérifiés dans les sources officielles.",enabled:true},
  {id:"indications",title:"📍 Indications",type:"text",content:"À compléter à partir d’une source officielle vérifiée.",enabled:true},
- {id:"forme",title:"💊 Forme",type:"text",content:"Aspect du comprimé ou de la gélule, uniquement si l’identification est documentée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""},
  {id:"posologie",title:"🔢 Posologie",type:"text",content:"À compléter selon la spécialité, le dosage et l’indication. Vérifier la prescription et les sources officielles.",enabled:true},
  {id:"prise",title:"🕐 Modalités de prise",type:"table",content:"Repas | À renseigner | Pourquoi ?\nLiquide | À renseigner | Pourquoi ?\nAliments à privilégier | À renseigner | Pourquoi ?\nAliments à éviter | À renseigner | Pourquoi ?\nPosition particulière | À renseigner | Pourquoi ?",enabled:true},
  {id:"fractionnement",title:"⚪ Fractionnement / écrasement",type:"table",content:"Fractionner | À vérifier | Justification / source\nÉcraser | À vérifier | Justification / source",enabled:true},
@@ -181,7 +181,7 @@ function renderResults(){
  $("count").textContent=found.length+" résultat"+(found.length===1?"":"s");
  $("results").innerHTML=found.length?found.map(item=>{
    const m=item.med, sec=item.section;
-   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}"><strong>${esc(m.name||"Sans nom")}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div><div class="sub">${esc(m.form||"Forme à préciser")}${m.entry_type==="specialite"&&m.parent_dci?" · DCI : "+esc(m.parent_dci):""}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
+   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}"><strong>${esc(m.name||"Sans nom")}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
  }).join(""):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $("results").querySelectorAll(".result").forEach(el=>el.onclick=()=>{
    selectedId=el.dataset.id;
@@ -202,8 +202,8 @@ function renderDetail(targetSectionId=null){
  if(!m){$("detailHeading").textContent="Fiche médicament";$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
  $("detailHeading").textContent="Fiche médicament";
  const sections=(m.sections||[]).filter(s=>s.enabled!==false);
- const related=m.entry_type==="dci"?meds.filter(x=>x.entry_type==="specialite"&&norm(x.parent_dci||x.dci)===norm(m.name)):[];
- $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(m.name)}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span><span class="tag">${esc(m.form||"Forme à préciser")}</span><span class="tag status">${esc(m.status||"À vérifier")}</span></div></div>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div>
+ const related=m.entry_type==="dci"?meds.filter(x=>x.entry_type==="specialite"&&norm(x.dci||x.parent_dci)===norm(m.name)):[];
+ $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(m.name)}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span><span class="tag status">${esc(m.status||"À vérifier")}</span></div></div>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div>
  <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
  ${m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div><section class="section"><h3>💊 Spécialités associées (${related.length})</h3>${related.length?related.map(x=>`<button class="related-item" data-related="${esc(x.id)}">${esc(x.name)} → Fiche complète</button>`).join(""):'<p class="muted">Aucune spécialité associée pour le moment.</p>'}</section>`:""}
  ${m.entry_type==="specialite"?renderPresentations(m):""}
@@ -257,9 +257,7 @@ function renderEditor(id){
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"?"selected":""}>DCI / substance active</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-wrap"><label for="f-dci">DCI / substance(s) active(s)</label><input id="f-dci" value="${esc(m.dci)}" placeholder="Ex. : sulfate ferreux"></div>
- <div id="f-parent-wrap"><label for="f-parent-dci">DCI de rattachement (nom exact de la fiche DCI)</label><input id="f-parent-dci" value="${esc(m.parent_dci||"")}" placeholder="Ex. : doxycycline"></div>
  <div><label>Famille</label><input id="f-category" list="cats" value="${esc(m.category)}"><datalist id="cats">${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
- <div><label>Forme pharmaceutique</label><input id="f-form" value="${esc(m.form)}"></div>
  <div class="full"><label>Alias / termes de recherche</label><input id="f-aliases" value="${esc(m.aliases)}"></div>
  <div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
  <div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?'selected':''}>Brouillon — privé</option><option value="true" ${m.published?'selected':''}>Publié — visible publiquement</option></select></div>
@@ -285,7 +283,7 @@ const toggleType = () => {
       : "Nom de la spécialité";
   }
 
-  ["f-dci-wrap", "f-parent-wrap", "presentation-editor-wrap"]
+  ["f-dci-wrap", "presentation-editor-wrap"]
     .forEach(id => {
       const element = $(id);
 
@@ -318,9 +316,9 @@ function captureEditorFields(m){
  if(get("f-entry-type")===undefined)return;
  m.entry_type=get("f-entry-type");m.name=(get("f-name")||"").trim()||"Fiche sans nom";
  m.dci=m.entry_type==="dci"?"":(get("f-dci")||"").trim();
- m.parent_dci=m.entry_type==="dci"?"":(get("f-parent-dci")||"").trim();
+ m.parent_dci=m.entry_type==="dci"?"":m.dci;
  m.category=(get("f-category")||"").trim()||"Autres";
- m.form=(get("f-form")||"").trim();m.aliases=(get("f-aliases")||"").trim();
+ m.aliases=(get("f-aliases")||"").trim();
  m.status=get("f-status");m.published=get("f-published")==="true";
  m.updated=get("f-updated");m.source=(get("f-source")||"").trim();
  readPresentationEditors(m);
