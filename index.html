@@ -209,6 +209,12 @@ function renderEditor(id){
  <div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?'selected':''}>Brouillon — privé</option><option value="true" ${m.published?'selected':''}>Publié — visible publiquement</option></select></div>
  <div><label>Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div>
  <div class="full"><label>URL de la source principale</label><input id="f-source" type="url" value="${esc(m.source)}" placeholder="https://…"></div></div>
+  <div id="presentation-editor-wrap" class="full" style="margin-top:18px">
+    <h3>💊 Présentations de cette spécialité</h3>
+    <p class="muted">Documenter séparément les présentations et leurs sources officielles.</p>
+    <div id="presentationEditors">${(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("")}</div>
+    <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
+  </div>
  <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
  <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div>
  <div class="admin-actions"><button id="addTextSection">+ Rubrique texte</button><button id="addTableSection">+ Rubrique tableau</button></div>
@@ -236,8 +242,8 @@ const toggleType = () => {
 };
  $("f-entry-type").onchange=toggleType;toggleType();
  $("backBtn").onclick=()=>renderDetail();
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{readPresentationEditors(m);m.presentations.splice(Number(b.dataset.removePresentation),1);refreshPresentationEditors()})};
- $("addPresentation").onclick=()=>{readPresentationEditors(m);m.presentations.push({lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);m.presentations.splice(Number(b.dataset.removePresentation),1);refreshPresentationEditors()})};
+ $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
  $("sectionEditors").querySelectorAll('[data-field="imageFile"]').forEach(input=>input.addEventListener("change",()=>{
@@ -249,22 +255,39 @@ const toggleType = () => {
 }
 function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map(card=>{const p={};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
 function sectionEditor(s,i){return `<div class="section-editor" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><textarea data-field="content">${esc(s.content||"")}</textarea><div class="image-controls"><label>Image facultative pour cette rubrique</label><div class="muted">Utile notamment pour illustrer l’aspect d’un comprimé ou d’une gélule. Formats image courants, idéalement moins de 2 Mo.</div><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-field="imageFile" style="margin-top:8px"><label style="margin-top:8px">Ou URL d’une image</label><input data-field="imageUrl" value="${esc(s.imageUrl||"")}" placeholder="https://…"><label style="margin-top:8px">Légende (facultative)</label><input data-field="imageCaption" value="${esc(s.imageCaption||"")}" placeholder="Ex. : Aspect — vérifier la spécialité exacte">${(s.imageData||s.imageUrl)?`<img class="image-preview" src="${esc(s.imageData||s.imageUrl)}" alt="Aperçu de l’image"><button type="button" data-act="clear-image" data-index="${i}">Retirer l’image</button>`:""}</div></div></div>`}
-function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)return;const ss=m.sections;
+function captureEditorFields(m){
+ const get=id=>$(id)?.value;
+ if(get("f-entry-type")===undefined)return;
+ m.entry_type=get("f-entry-type");m.name=(get("f-name")||"").trim()||"Fiche sans nom";
+ m.dci=m.entry_type==="dci"?"":(get("f-dci")||"").trim();
+ m.parent_dci=m.entry_type==="dci"?"":(get("f-parent-dci")||"").trim();
+ m.category=(get("f-category")||"").trim()||"Autres";
+ m.form=(get("f-form")||"").trim();m.aliases=(get("f-aliases")||"").trim();
+ m.status=get("f-status");m.published=get("f-published")==="true";
+ m.updated=get("f-updated");m.source=(get("f-source")||"").trim();
+ readPresentationEditors(m);
+ const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
+ cards.forEach((card,i)=>{if(!m.sections[i])return;
+   for(const field of ["title","type","content","imageUrl","imageCaption"]){
+     const el=card.querySelector(`[data-field="${field}"]`);
+     if(el)m.sections[i][field]=el.value;
+   }
+ });
+}
+function sectionAction(action,index,id){if(document.querySelector('#sectionEditors input[type="file"]:not([value=""])')?.files?.length){toast("Une image locale est sélectionnée : utilise une URL avant de modifier les rubriques.");return}const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);const ss=m.sections;
  if(action==="up"&&index>0)[ss[index-1],ss[index]]=[ss[index],ss[index-1]];
  if(action==="down"&&index<ss.length-1)[ss[index+1],ss[index]]=[ss[index],ss[index+1]];
  if(action==="toggle")ss[index].enabled=ss[index].enabled===false;
  if(action==="clear-image"){ss[index].imageData="";ss[index].imageUrl="";ss[index].imageCaption="";}
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
  renderEditor(id)}
-function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id)}
+function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id)}
 async function saveEditor(id){
  const m=meds.find(x=>x.id===id);if(!m)return;
- m.entry_type=$("f-entry-type").value;m.name=$("f-name").value.trim()||"Fiche sans nom";m.dci=m.entry_type==="dci"?"":$("f-dci").value.trim();m.parent_dci=m.entry_type==="dci"?"":$("f-parent-dci").value.trim();readPresentationEditors(m);if(m.entry_type==="dci")m.presentations=[];m.category=$("f-category").value.trim()||"Autres";m.form=$("f-form").value.trim();m.aliases=$("f-aliases").value.trim();m.status=$("f-status").value;m.published=$("f-published").value==="true";m.updated=$("f-updated").value;m.source=$("f-source").value.trim();
- const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
- cards.forEach((card,i)=>{if(!m.sections[i])return;m.sections[i].title=card.querySelector('[data-field="title"]').value.trim()||"Rubrique sans titre";m.sections[i].type=card.querySelector('[data-field="type"]').value;m.sections[i].content=card.querySelector('[data-field="content"]').value;m.sections[i].imageUrl=card.querySelector('[data-field="imageUrl"]').value.trim();m.sections[i].imageCaption=card.querySelector('[data-field="imageCaption"]').value.trim()});
+ captureEditorFields(m);if(m.entry_type==="dci")m.presentations=[];
  const uploads=cards.map((card,i)=>({card,index:i,file:card.querySelector('[data-field="imageFile"]').files[0]})).filter(x=>x.file);
  if(uploads.length){toast("Utilise une URL d’image pour le moment : le téléversement sera ajouté plus tard.");return}
- try{await syncMedication(m);toast("Fiche enregistrée et synchronisée")}catch(e){}
+ try{await syncMedication(m);renderDetail();toast("Fiche enregistrée et synchronisée")}catch(e){}
 
 }
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);toast("Copie créée : enregistre-la pour la synchroniser")}
