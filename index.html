@@ -65,13 +65,38 @@ const starter = [
 function clone(x){return JSON.parse(JSON.stringify(x))}
 let meds=[], selectedId=null, activeCategory="Toutes", admin=false, currentUser=null;
 const $=id=>document.getElementById(id);
+// Brouillon temporaire propre à cet onglet et à ce compte administrateur.
+const draftKey=()=>currentUser?.id?"memofficine-editor-v3:"+currentUser.id:null;
+let editorId=null;
+function saveLocalDraft(){
+ if(!admin||!editorId||$("editor").classList.contains("hidden"))return;
+ const m=meds.find(x=>x.id===editorId);if(!m)return;
+ captureEditorFields(m);
+ try{const key=draftKey();if(key)sessionStorage.setItem(key,JSON.stringify({id:m.id,med:m}));}
+ catch(e){console.warn("Brouillon local indisponible",e)}
+}
+function clearLocalDraft(){try{const key=draftKey();if(key)sessionStorage.removeItem(key)}catch(e){console.warn(e)}}
+function restoreLocalDraft(){
+ if(!admin)return false;
+ try{
+  const key=draftKey(),raw=key&&sessionStorage.getItem(key);if(!raw)return false;
+  const draft=JSON.parse(raw);if(!draft?.med?.id||!Array.isArray(draft.med.sections))return false;
+  const i=meds.findIndex(m=>m.id===draft.med.id);
+  if(i>=0)meds[i]=draft.med;else meds.unshift(draft.med);
+  selectedId=draft.med.id;renderFilters();renderResults();renderEditor(selectedId);return true;
+ }catch(e){console.warn("Restauration du brouillon impossible",e);return false}
+}
+
 
 function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
 function medToRow(m){return {parent_dci:m.entry_type==="dci"?null:(m.parent_dci||null),presentations:m.entry_type==="dci"?[]:(m.presentations||[]),id:m.id,name:m.name,dci:m.entry_type==="dci"?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
 async function loadCloudMeds(){
  const {data,error}=await supabaseClient.from("medications").select("*").order("name");
  if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
- meds=(data||[]).map(rowToMed);selectedId=meds[0]?.id||null;renderFilters();renderResults();
+ const wasEditing=admin&&editorId&&!$("editor").classList.contains("hidden");
+ if(wasEditing)saveLocalDraft();
+ meds=(data||[]).map(rowToMed);selectedId=meds[0]?.id||null;
+ if(!restoreLocalDraft()){renderFilters();renderResults();}
 }
 async function syncMedication(m){
  const {data,error}=await supabaseClient.from("medications").upsert(medToRow(m)).select().single();
@@ -83,7 +108,7 @@ async function initCloud(){
  if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=!!currentUser;
  $("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);
  await loadCloudMeds();
- supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();if(admin)toast("Connexion établie");},0);});
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();},0);});
 }
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
@@ -145,6 +170,7 @@ function renderResults(){
  renderDetail();
 }
 function renderDetail(targetSectionId=null){
+ editorId=null;
  const m=meds.find(x=>x.id===selectedId);
  $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
  if(!m){$("detailHeading").textContent="Fiche médicament";$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
@@ -188,14 +214,14 @@ function showLogin(){
  $("confirmLogin").onclick=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){toast("Renseigne ton adresse e-mail et ton mot de passe");return}
  const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){toast("Connexion impossible : vérifie l'adresse et le mot de passe");console.error(error);return}$("modalRoot").innerHTML="";};
 }
-async function logout(){const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
+async function logout(){clearLocalDraft();editorId=null;const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
 function addMedication(){
  if(!admin){toast("Connecte-toi pour ajouter une fiche");return}
  const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
- meds.unshift(m);selectedId=m.id;renderFilters();renderResults();renderEditor(m.id);
+ meds.unshift(m);selectedId=m.id;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();
 }
 function renderEditor(id){
- const m=meds.find(x=>x.id===id);if(!m)return;
+ const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;
  $("detail").classList.add("hidden");$("editor").classList.remove("hidden");$("detailHeading").textContent="Administration de la fiche";
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><button id="backBtn">Retour à la fiche</button></div>
  <div class="admin-grid" style="margin-top:18px">
@@ -251,6 +277,8 @@ const toggleType = () => {
    if(f.size>2*1024*1024){toast("Image trop lourde (maximum 2 Mo)");input.value="";return}
    if(!f.type.startsWith("image/")){toast("Choisis un fichier image");input.value=""}
  }));
+ $("editor").oninput=saveLocalDraft;
+ $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
 function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map(card=>{const p={};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
@@ -280,22 +308,24 @@ function sectionAction(action,index,id){if(document.querySelector('#sectionEdito
  if(action==="toggle")ss[index].enabled=ss[index].enabled===false;
  if(action==="clear-image"){ss[index].imageData="";ss[index].imageUrl="";ss[index].imageCaption="";}
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
- renderEditor(id)}
-function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id)}
+ renderEditor(id);saveLocalDraft()}
+function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id);saveLocalDraft()}
 async function saveEditor(id){
  const m=meds.find(x=>x.id===id);if(!m)return;
  captureEditorFields(m);if(m.entry_type==="dci")m.presentations=[];
  const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
  const uploads=cards.map((card,i)=>({card,index:i,file:card.querySelector('[data-field="imageFile"]')?.files?.[0]})).filter(x=>x.file);
  if(uploads.length){toast("Utilise une URL d’image pour le moment : le téléversement sera ajouté plus tard.");return}
- try{await syncMedication(m);renderDetail();toast("Fiche enregistrée et synchronisée")}catch(e){}
+ try{await syncMedication(m);clearLocalDraft();renderDetail();toast("Fiche enregistrée et synchronisée")}catch(e){}
 
 }
-function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
+function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
+async function deleteMed(id){if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",renderResults);$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
+window.addEventListener("pagehide",saveLocalDraft);
 renderFilters();renderResults();initCloud();
 </script>
 </body></html>
