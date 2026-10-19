@@ -121,7 +121,9 @@ async function loadCloudMeds(){
  if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
  const wasEditing=admin&&editorId&&!$("editor").classList.contains("hidden");
  if(wasEditing)saveLocalDraft();
- meds=(data||[]).map(rowToMed);selectedId=meds[0]?.id||null;
+ meds=(data||[]).map(rowToMed);
+ const requestedId=new URLSearchParams(window.location.search).get("fiche");
+ selectedId=meds.find(m=>m.id===requestedId)?.id||meds[0]?.id||null;
  if(!restoreLocalDraft()){renderFilters();renderResults();}
 }
 async function syncMedication(m){
@@ -138,6 +140,19 @@ async function initCloud(){
 }
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+// Liens directs stables fondés sur l'identifiant Supabase de la fiche.
+function ficheUrl(id){const url=new URL(window.location.href);url.searchParams.set("fiche",id);return url.href}
+function selectFiche(id,addHistory=true){
+ if(!meds.some(m=>m.id===id))return;
+ selectedId=id;
+ if(addHistory){const url=new URL(window.location.href);url.searchParams.set("fiche",id);history.pushState({fiche:id},"",url)}
+ renderResults();
+}
+window.addEventListener("popstate",()=>{
+ const id=new URLSearchParams(window.location.search).get("fiche");
+ selectedId=meds.find(m=>m.id===id)?.id||meds[0]?.id||null;
+ activeCategory="Toutes";$("search").value="";renderFilters();renderResults();
+});
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
 function categories(){return ["Toutes",...new Set(meds.map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
@@ -184,8 +199,7 @@ function renderResults(){
    return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}"><strong>${esc(m.name||"Sans nom")}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
  }).join(""):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $("results").querySelectorAll(".result").forEach(el=>el.onclick=()=>{
-   selectedId=el.dataset.id;
-   renderResults();
+   selectFiche(el.dataset.id);
    renderDetail(el.dataset.section||null);
  });
  const validIds=new Set(found.map(x=>x.med.id));
@@ -202,8 +216,11 @@ function renderDetail(targetSectionId=null){
  if(!m){$("detailHeading").textContent="Fiche médicament";$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
  $("detailHeading").textContent="Fiche médicament";
  const sections=(m.sections||[]).filter(s=>s.enabled!==false);
+ const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
+ const formBadge=m.entry_type==="specialite"&&presentationForms.length
+   ? `<span class="tag">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
  const related=m.entry_type==="dci"?meds.filter(x=>x.entry_type==="specialite"&&norm(x.dci||x.parent_dci)===norm(m.name)):[];
- $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(m.name)}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span><span class="tag status">${esc(m.status||"À vérifier")}</span></div></div>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div>
+ $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(m.name)}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span>${formBadge}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
  <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
  ${m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div><section class="section"><h3>💊 Spécialités associées (${related.length})</h3>${related.length?related.map(x=>`<button class="related-item" data-related="${esc(x.id)}">${esc(x.name)} → Fiche complète</button>`).join(""):'<p class="muted">Aucune spécialité associée pour le moment.</p>'}</section>`:""}
  ${m.entry_type==="specialite"?renderPresentations(m):""}
@@ -212,8 +229,12 @@ function renderDetail(targetSectionId=null){
   ...sections.filter(s => !(s.title || "").toLowerCase().includes("à dire au comptoir"))
 ].map(s=>renderSection(s,targetSectionId)).join("")}
  <div class="section sources"><h3>📚 Sources et traçabilité</h3><p><strong>Source principale :</strong> ${m.source?`<a href="${esc(m.source)}" target="_blank" rel="noopener">${esc(m.source)}</a>`:"À renseigner"}</p><p><strong>Mise à jour :</strong> ${esc(m.updated||"Non renseignée")}</p><p><strong>Statut :</strong> ${esc(m.status||"À vérifier")}</p></div>`;
+ $("copyFicheLink").onclick=async()=>{
+  try{await navigator.clipboard.writeText(ficheUrl(m.id));toast("Lien de la fiche copié !")}
+  catch(e){window.prompt("Copie ce lien :",ficheUrl(m.id))}
+ };
  if(admin)$("editBtn").onclick=()=>renderEditor(m.id);
- $("detail").querySelectorAll("[data-related]").forEach(b=>b.onclick=()=>{selectedId=b.dataset.related;renderResults();renderDetail()});
+ $("detail").querySelectorAll("[data-related]").forEach(b=>b.onclick=()=>{selectFiche(b.dataset.related)});
  $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const index=Number(sel.value);const target=$("presentation-info");if(target)target.innerHTML=presentationInfo((m.presentations||[])[index])});
  if(targetSectionId){
    requestAnimationFrame(()=>{const target=document.getElementById("section-"+CSS.escape(targetSectionId));if(target){target.scrollIntoView({behavior:"smooth",block:"start"});target.classList.add("direct-target")}});
