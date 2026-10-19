@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mémofficine — prototype</title>
+<style>
+:root{--ink:#23352e;--muted:#687970;--bg:#f4f7f3;--card:#fff;--line:#dce6de;--green:#245d4b;--green2:#e5f0e8;--green3:#c5dccb;--gold:#f6edcf;--goldline:#e8d68d;--red:#a44c43}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;padding:9px 13px}button:hover{border-color:#9bbca7}button.primary{background:var(--green);color:#fff;border-color:var(--green)}button.soft{background:var(--green2);border-color:var(--green3)}button.danger{color:var(--red)}button:disabled{opacity:.5;cursor:not-allowed}
+header{background:#193f34;color:#fff;padding:24px 20px 25px}.wrap{max-width:1180px;margin:auto}.topline{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:15px;background:#e6f0e7;color:#245d4b;display:grid;place-items:center;font-size:24px;font-weight:800}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:.72rem;opacity:.8;font-weight:750}h1{font-size:clamp(1.65rem,4vw,2.25rem);line-height:1.15;margin:2px 0 0}header p{color:#dfebe3;max-width:680px;margin:13px 0 0}.header-actions{display:flex;gap:8px;flex-wrap:wrap}.header-actions button{background:#fff;color:var(--green);border-color:#fff}
+main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(--gold);border:1px solid var(--goldline);border-radius:13px;padding:12px 15px;font-size:.9rem;margin-bottom:17px}.searchcard,.panel{background:var(--card);border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 20px #193f3408;overflow:hidden}.searchcard{padding:16px}.label{font-weight:750;display:block;margin-bottom:7px}.searchrow{display:flex;gap:10px}.searchrow input{flex:1;min-width:0}.field,input,select,textarea{width:100%;border:1px solid #c8d5cb;background:white;color:var(--ink);border-radius:10px;padding:10px 12px;outline-color:#6d9b7d}.filters{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.filters button{border-radius:999px;padding:6px 11px;font-size:.88rem}.filters button.active{background:var(--green2);border-color:#9ec3a8;color:#204f3d;font-weight:700}.layout{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(0,1.55fr);gap:16px;margin-top:16px;align-items:start}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);font-weight:800}.muted{color:var(--muted);font-size:.85rem;font-weight:450}.results{max-height:700px;overflow:auto}.result{padding:13px 16px;border-bottom:1px solid #edf1ed;cursor:pointer}.result:hover,.result.selected{background:#edf5ee}.result strong{display:block}.sub{color:var(--muted);font-size:.84rem}.empty{padding:24px;color:var(--muted)}.detail{padding:19px}.detailtop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.detail h2{font-size:1.65rem;line-height:1.2;margin:0 0 5px}.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.tag{background:#edf2ed;border-radius:7px;padding:3px 8px;font-size:.78rem;color:#44584b}.tag.status{background:#fff2d2;color:#795d17}.callout{background:#f1f5f1;border-radius:12px;padding:12px 14px;margin:16px 0;font-size:.91rem}.section{border-top:1px solid var(--line);padding:15px 0}.section h3{font-size:1.03rem;margin:0 0 8px}.section p{margin:4px 0}.section ul{margin:5px 0;padding-left:22px}.section table{border-collapse:collapse;width:100%;font-size:.91rem}.section th,.section td{padding:8px;border:1px solid var(--line);text-align:left;vertical-align:top}.section th{background:#f4f7f3}.section .muted{margin-top:6px}.section-image{margin:12px 0 4px;padding:10px;background:#f7faf7;border:1px solid var(--line);border-radius:13px;max-width:440px}.section-image img{display:block;max-width:100%;max-height:300px;object-fit:contain;margin:auto;border-radius:8px}.section-image figcaption{font-size:.82rem;color:var(--muted);margin-top:7px;text-align:center}.result .direct-hit{display:inline-block;margin-top:7px;background:#e5f0e8;color:#245d4b;border-radius:7px;padding:3px 7px;font-size:.8rem;font-weight:700}.section.direct-target{background:#f0f7f0;outline:2px solid #8eb99a;outline-offset:4px;border-radius:9px;padding-left:10px;padding-right:10px;scroll-margin-top:18px;transition:background .3s}.image-controls{border:1px dashed #b9cbbd;background:#f7faf7;border-radius:10px;padding:10px;margin-top:8px}.image-preview{display:block;max-width:180px;max-height:130px;object-fit:contain;border:1px solid var(--line);background:white;border-radius:8px;margin:8px 0}.sources a{color:var(--green);text-underline-offset:3px;overflow-wrap:anywhere}.admin-banner{background:#e7f0e9;border:1px solid #b8d1be;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;gap:12px;align-items:center}.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-grid .full{grid-column:1/-1}.admin label{display:block;font-size:.88rem;font-weight:700;margin-bottom:5px}.admin textarea{min-height:85px;resize:vertical}.admin h3{margin:18px 0 8px}.admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.section-editor{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fbfcfa}.section-editor-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.section-editor-head strong{font-size:.93rem}.section-editor textarea{margin-top:9px;min-height:75px}.mini-actions{display:flex;gap:5px;flex-wrap:wrap}.mini-actions button{padding:4px 8px;font-size:.8rem}.hidden{display:none!important}.foot{color:var(--muted);font-size:.82rem;margin:20px 2px 0}.modalback{position:fixed;inset:0;background:#14281f88;display:grid;place-items:center;padding:18px;z-index:5}.modal{background:white;border-radius:18px;padding:22px;max-width:430px;width:100%;box-shadow:0 20px 70px #0003}.modal h2{margin:0 0 8px}.modal p{color:var(--muted);font-size:.92rem}.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#193f34;color:white;padding:10px 15px;border-radius:12px;box-shadow:0 5px 20px #0002;z-index:8;max-width:90vw}
+@media(max-width:760px){.topline{align-items:flex-start;flex-direction:column}.layout{grid-template-columns:1fr}.results{max-height:280px}.admin-grid{grid-template-columns:1fr}.admin-grid .full{grid-column:auto}.detail{padding:15px}.detailtop{flex-direction:column}.searchrow{flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="topline">
+    <div class="brand"><div class="logo">M</div><div><div class="eyebrow">Repères de délivrance</div><h1>Mémofficine</h1></div></div>
+    <div class="header-actions"><button id="loginBtn">Connexion administrateur</button></div>
+  </div>
+  <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
+</div></header>
+<main>
+  <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
+  <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémofficine</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+  <section class="searchcard">
+    <label class="label" for="search">Rechercher un médicament, une DCI, une famille ou une rubrique</label>
+    <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
+    <div class="filters" id="filters"></div>
+  </section>
+  <div class="layout">
+    <section class="panel"><div class="panelhead"><span>Bibliothèque</span><span class="muted" id="count">0 fiche</span></div><div class="results" id="results"></div></section>
+    <section class="panel" aria-live="polite"><div class="panelhead"><span id="detailHeading">Fiche médicament</span><span class="muted">Vue détaillée</span></div><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
+  </div>
+  <p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
+</main>
+<div id="modalRoot"></div><div id="toastRoot"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://xbhqogndzbrjhrigtncy.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4cQdbKxcRjO8JH48uA8bZA_taBLuHdE";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const DEFAULT_SECTIONS = [
+ {id:"indications",title:"📍 Indications",type:"text",content:"À compléter à partir d’une source officielle vérifiée.",enabled:true},
+ {id:"forme",title:"💊 Forme",type:"text",content:"Aspect du comprimé ou de la gélule, uniquement si l’identification est documentée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""},
+ {id:"posologie",title:"🔢 Posologie",type:"text",content:"À compléter selon la spécialité, le dosage et l’indication. Vérifier la prescription et les sources officielles.",enabled:true},
+ {id:"prise",title:"🕐 Modalités de prise",type:"table",content:"Repas | À renseigner | Pourquoi ?\nLiquide | À renseigner | Pourquoi ?\nAliments à privilégier | À renseigner | Pourquoi ?\nAliments à éviter | À renseigner | Pourquoi ?\nPosition particulière | À renseigner | Pourquoi ?",enabled:true},
+ {id:"fractionnement",title:"⚪ Fractionnement / écrasement",type:"table",content:"Fractionner | À vérifier | Justification / source\nÉcraser | À vérifier | Justification / source",enabled:true},
+ {id:"effets",title:"🌀 Effets indésirables",type:"text",content:"À compléter : effets pertinents, fréquence si documentée et signes nécessitant un avis professionnel.",enabled:true},
+ {id:"age",title:"🧒 Âge minimum",type:"text",content:"À vérifier selon la spécialité, la forme et l’indication.",enabled:true},
+ {id:"grossesse",title:"🤰 Grossesse et allaitement",type:"text",content:"Grossesse : à vérifier dans les sources de référence.\nAllaitement : à vérifier dans les sources de référence.",enabled:true},
+ {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"table",content:"Contre-indications | À renseigner\nAssociations déconseillées | À renseigner\nPrécautions / à prendre en compte | À renseigner",enabled:true},
+ {id:"oubli",title:"🗓️ En cas d’oubli de prise",type:"text",content:"Conduite à tenir à relever dans la notice officielle de la spécialité exacte.",enabled:true},
+ {id:"manipulation",title:"💉 Manipulation / reconstitution",type:"text",content:"À compléter si pertinent : reconstitution, manipulation, modalités d’administration ou d’injection.",enabled:true},
+ {id:"conservation",title:"❄️ Modalités de conservation",type:"text",content:"À vérifier : température, durée après ouverture/reconstitution et durée hors réfrigérateur si documentées.",enabled:true},
+ {id:"sources",title:"📚 Sources et mise à jour",type:"sources",content:"Sources : à ajouter\nMise à jour le : à renseigner\nStatut : à vérifier",enabled:true}
+];
+const starter = [
+ {id:"demo-1",name:"Amoxicilline",dci:"Amoxicilline",category:"Infectiologie",form:"Gélule / poudre pour suspension (selon spécialité)",aliases:"antibiotique pénicilline",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)},
+ {id:"demo-2",name:"Paracétamol",dci:"Paracétamol",category:"Douleur",form:"Comprimé / gélule / solution (selon spécialité)",aliases:"douleur fièvre",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)},
+ {id:"demo-3",name:"Lévothyroxine",dci:"Lévothyroxine",category:"Endocrinologie",form:"Selon spécialité",aliases:"thyroïde",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)}
+];
+function clone(x){return JSON.parse(JSON.stringify(x))}
+let meds=[], selectedId=null, activeCategory="Toutes", admin=false, currentUser=null;
+const $=id=>document.getElementById(id);
+
+function rowToMed(row){return {id:row.id,name:row.name||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),status:row.review_status||"À vérifier",updated:row.verified_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
+function medToRow(m){return {id:m.id,name:m.name,dci:m.dci||null,category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
+async function loadCloudMeds(){
+ const {data,error}=await supabaseClient.from("medications").select("*").order("name");
+ if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
+ meds=(data||[]).map(rowToMed);selectedId=meds[0]?.id||null;renderFilters();renderResults();
+}
+async function syncMedication(m){
+ const {data,error}=await supabaseClient.from("medications").upsert(medToRow(m)).select().single();
+ if(error){console.error(error);toast("Enregistrement refusé par Supabase : vérifie les permissions et la structure SQL");throw error}
+ const updated=rowToMed(data);const index=meds.findIndex(x=>x.id===updated.id);if(index>=0)meds[index]=updated;else meds.unshift(updated);selectedId=updated.id;renderFilters();renderResults();return updated;
+}
+async function initCloud(){
+ const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
+ if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=!!currentUser;
+ $("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);
+ await loadCloudMeds();
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();if(admin)toast("Connexion établie");},0);});
+}
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
+function categories(){return ["Toutes",...new Set(meds.map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
+function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
+function getSearchMatches(){
+ const q=norm($("search").value.trim());
+ const queryTokens=q.split(/\s+/).filter(Boolean);
+ const stopWords=new Set(["de","du","des","la","le","les","un","une","et","a","au","aux","en","pour","sur","avec","sans","dans","d"]);
+ const matches=[];
+ meds.forEach(m=>{
+   if(activeCategory!=="Toutes"&&m.category!==activeCategory)return;
+   const identity=norm([m.name,m.dci,m.category,m.form,m.aliases].join(" "));
+   const allText=norm([m.name,m.dci,m.category,m.form,m.aliases,...(m.sections||[]).map(s=>s.title+" "+s.content)].join(" "));
+   if(!q){matches.push({med:m,section:null});return}
+   if(!allText.includes(q)&&!queryTokens.every(t=>allText.includes(t)))return;
+   // If the query identifies a medication and also names a section, prefer a direct section result.
+   const identityTokens=new Set(identity.split(/\s+/).filter(Boolean));
+   const sectionTerms=queryTokens.filter(t=>!identityTokens.has(t)&&!stopWords.has(t));
+   let sectionHits=[];
+   if(sectionTerms.length){
+     sectionHits=(m.sections||[]).filter(s=>{
+       if(s.enabled===false)return false;
+       const sectionText=norm([s.title,s.content].join(" "));
+       return sectionTerms.every(t=>sectionText.includes(t));
+     });
+   }
+   if(sectionHits.length){
+     sectionHits.forEach(section=>matches.push({med:m,section}));
+   }else if(allText.includes(q)||queryTokens.every(t=>allText.includes(t))){
+     matches.push({med:m,section:null});
+   }
+ });
+ // Prefer direct section hits, then avoid duplicate medication rows.
+ const seen=new Set();
+ return matches.filter(item=>{
+   const key=item.med.id+"::"+(item.section?.id||"med");
+   if(seen.has(key))return false;seen.add(key);return true;
+ });
+}
+function renderResults(){
+ const found=getSearchMatches();
+ $("count").textContent=found.length+" résultat"+(found.length===1?"":"s");
+ $("results").innerHTML=found.length?found.map(item=>{
+   const m=item.med, sec=item.section;
+   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}"><strong>${esc(m.name||"Sans nom")}</strong><div class="sub">${esc(m.dci||"DCI à renseigner")} · ${esc(m.category||"Sans famille")}</div><div class="sub">${esc(m.form||"Forme à préciser")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
+ }).join(""):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
+ $("results").querySelectorAll(".result").forEach(el=>el.onclick=()=>{
+   selectedId=el.dataset.id;
+   renderResults();
+   renderDetail(el.dataset.section||null);
+ });
+ const validIds=new Set(found.map(x=>x.med.id));
+ if(!validIds.has(selectedId)){selectedId=found[0]?.med.id||null}
+ // When a query points directly to a section, leave the user on that result rather than auto-opening another.
+ if(!found.length){renderDetail();return}
+ if(!found.some(x=>x.med.id===selectedId)){selectedId=found[0].med.id}
+ renderDetail();
+}
+function renderDetail(targetSectionId=null){
+ const m=meds.find(x=>x.id===selectedId);
+ $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
+ if(!m){$("detailHeading").textContent="Fiche médicament";$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
+ $("detailHeading").textContent="Fiche médicament";
+ const sections=(m.sections||[]).filter(s=>s.enabled!==false);
+ $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(m.name)}</h2><div>${esc(m.dci||"DCI non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span><span class="tag">${esc(m.form||"Forme à préciser")}</span><span class="tag status">${esc(m.status||"À vérifier")}</span></div></div>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div>
+ <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
+ ${sections.map(s=>renderSection(s,targetSectionId)).join("")}
+ <div class="section sources"><h3>📚 Sources et traçabilité</h3><p><strong>Source principale :</strong> ${m.source?`<a href="${esc(m.source)}" target="_blank" rel="noopener">${esc(m.source)}</a>`:"À renseigner"}</p><p><strong>Mise à jour :</strong> ${esc(m.updated||"Non renseignée")}</p><p><strong>Statut :</strong> ${esc(m.status||"À vérifier")}</p></div>`;
+ if(admin)$("editBtn").onclick=()=>renderEditor(m.id);
+ if(targetSectionId){
+   requestAnimationFrame(()=>{const target=document.getElementById("section-"+CSS.escape(targetSectionId));if(target){target.scrollIntoView({behavior:"smooth",block:"start"});target.classList.add("direct-target")}});
+ }
+}
+function renderSection(s,targetSectionId=null){
+ let content="";
+ if(s.type==="table"){
+   const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split("|").map(x=>x.trim()));
+   content=rows.length?`<table><tbody>${rows.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${esc(c)}</th>`:`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
+ }else{content=(s.content||"").split("\n").map(line=>`<p>${esc(line)||"&nbsp;"}</p>`).join("")}
+ const imageSrc=s.imageData||s.imageUrl||"";
+ const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
+ return `<section class="section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${imageHtml}${content}</section>`;
+}
+function setAdmin(value){admin=value;$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults()}
+function showLogin(){
+ $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><p>Connecte-toi avec le compte créé dans Supabase Authentication. Les inscriptions publiques doivent rester désactivées.</p><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
+ $("cancelLogin").onclick=()=>$("modalRoot").innerHTML="";
+ $("confirmLogin").onclick=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){toast("Renseigne ton adresse e-mail et ton mot de passe");return}
+ const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){toast("Connexion impossible : vérifie l'adresse et le mot de passe");console.error(error);return}$("modalRoot").innerHTML="";};
+}
+async function logout(){const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
+function addMedication(){
+ if(!admin){toast("Connecte-toi pour ajouter une fiche");return}
+ const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dci:"",category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
+ meds.unshift(m);selectedId=m.id;renderFilters();renderResults();renderEditor(m.id);
+}
+function renderEditor(id){
+ const m=meds.find(x=>x.id===id);if(!m)return;
+ $("detail").classList.add("hidden");$("editor").classList.remove("hidden");$("detailHeading").textContent="Administration de la fiche";
+ $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><button id="backBtn">Retour à la fiche</button></div>
+ <div class="admin-grid" style="margin-top:18px">
+ <div><label>Nom du médicament</label><input id="f-name" value="${esc(m.name)}"></div><div><label>DCI</label><input id="f-dci" value="${esc(m.dci)}"></div>
+ <div><label>Famille</label><input id="f-category" list="cats" value="${esc(m.category)}"><datalist id="cats">${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
+ <div><label>Forme pharmaceutique</label><input id="f-form" value="${esc(m.form)}"></div>
+ <div class="full"><label>Alias / termes de recherche</label><input id="f-aliases" value="${esc(m.aliases)}"></div>
+ <div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
+ <div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?'selected':''}>Brouillon — privé</option><option value="true" ${m.published?'selected':''}>Publié — visible publiquement</option></select></div>
+ <div><label>Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div>
+ <div class="full"><label>URL de la source principale</label><input id="f-source" type="url" value="${esc(m.source)}" placeholder="https://…"></div></div>
+ <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
+ <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div>
+ <div class="admin-actions"><button id="addTextSection">+ Rubrique texte</button><button id="addTableSection">+ Rubrique tableau</button></div>
+ <div class="admin-actions"><button class="primary" id="saveMed">Enregistrer</button><button id="duplicateMed">Dupliquer</button><button class="danger" id="deleteMed">Supprimer la fiche</button></div>`;
+ $("backBtn").onclick=()=>renderDetail();
+ $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
+ $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
+ $("sectionEditors").querySelectorAll('[data-field="imageFile"]').forEach(input=>input.addEventListener("change",()=>{
+   const f=input.files&&input.files[0];if(!f)return;
+   if(f.size>2*1024*1024){toast("Image trop lourde (maximum 2 Mo)");input.value="";return}
+   if(!f.type.startsWith("image/")){toast("Choisis un fichier image");input.value=""}
+ }));
+ $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
+}
+function sectionEditor(s,i){return `<div class="section-editor" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><textarea data-field="content">${esc(s.content||"")}</textarea><div class="image-controls"><label>Image facultative pour cette rubrique</label><div class="muted">Utile notamment pour illustrer l’aspect d’un comprimé ou d’une gélule. Formats image courants, idéalement moins de 2 Mo.</div><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-field="imageFile" style="margin-top:8px"><label style="margin-top:8px">Ou URL d’une image</label><input data-field="imageUrl" value="${esc(s.imageUrl||"")}" placeholder="https://…"><label style="margin-top:8px">Légende (facultative)</label><input data-field="imageCaption" value="${esc(s.imageCaption||"")}" placeholder="Ex. : Aspect — vérifier la spécialité exacte">${(s.imageData||s.imageUrl)?`<img class="image-preview" src="${esc(s.imageData||s.imageUrl)}" alt="Aperçu de l’image"><button type="button" data-act="clear-image" data-index="${i}">Retirer l’image</button>`:""}</div></div></div>`}
+function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)return;const ss=m.sections;
+ if(action==="up"&&index>0)[ss[index-1],ss[index]]=[ss[index],ss[index-1]];
+ if(action==="down"&&index<ss.length-1)[ss[index+1],ss[index]]=[ss[index],ss[index+1]];
+ if(action==="toggle")ss[index].enabled=ss[index].enabled===false;
+ if(action==="clear-image"){ss[index].imageData="";ss[index].imageUrl="";ss[index].imageCaption="";}
+ if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
+ renderEditor(id)}
+function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id)}
+async function saveEditor(id){
+ const m=meds.find(x=>x.id===id);if(!m)return;
+ m.name=$("f-name").value.trim()||"Médicament sans nom";m.dci=$("f-dci").value.trim();m.category=$("f-category").value.trim()||"Autres";m.form=$("f-form").value.trim();m.aliases=$("f-aliases").value.trim();m.status=$("f-status").value;m.published=$("f-published").value==="true";m.updated=$("f-updated").value;m.source=$("f-source").value.trim();
+ const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
+ cards.forEach((card,i)=>{if(!m.sections[i])return;m.sections[i].title=card.querySelector('[data-field="title"]').value.trim()||"Rubrique sans titre";m.sections[i].type=card.querySelector('[data-field="type"]').value;m.sections[i].content=card.querySelector('[data-field="content"]').value;m.sections[i].imageUrl=card.querySelector('[data-field="imageUrl"]').value.trim();m.sections[i].imageCaption=card.querySelector('[data-field="imageCaption"]').value.trim()});
+ const uploads=cards.map((card,i)=>({card,index:i,file:card.querySelector('[data-field="imageFile"]').files[0]})).filter(x=>x.file);
+ if(uploads.length){toast("Utilise une URL d’image pour le moment : le téléversement sera ajouté plus tard.");return}
+ try{await syncMedication(m);toast("Fiche enregistrée et synchronisée")}catch(e){}
+
+}
+function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);toast("Copie créée : enregistre-la pour la synchroniser")}
+async function deleteMed(id){if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
+$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",renderResults);$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
+$("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
+renderFilters();renderResults();initCloud();
+</script>
+</body></html>
