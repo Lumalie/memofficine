@@ -213,7 +213,27 @@ function renderEditor(id){
  <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div>
  <div class="admin-actions"><button id="addTextSection">+ Rubrique texte</button><button id="addTableSection">+ Rubrique tableau</button></div>
  <div class="admin-actions"><button class="primary" id="saveMed">Enregistrer</button><button id="duplicateMed">Dupliquer</button><button class="danger" id="deleteMed">Supprimer la fiche</button></div>`;
- const toggleType=()=>{const isDci=$("f-entry-type").value==="dci";$("f-name-label").textContent=isDci?"Nom de la DCI":"Nom de la spécialité";$("f-dci-wrap").classList.toggle("hidden",isDci);$("f-parent-wrap").classList.toggle("hidden",isDci);$("presentation-editor-wrap").classList.toggle("hidden",isDci)};
+const toggleType = () => {
+  const isDci = $("f-entry-type").value === "dci";
+
+  const nameLabel = $("f-name-label");
+  if (nameLabel) {
+    nameLabel.textContent = isDci
+      ? "Nom de la DCI"
+      : "Nom de la spécialité";
+  }
+
+  ["f-dci-wrap", "f-parent-wrap", "presentation-editor-wrap"]
+    .forEach(id => {
+      const element = $(id);
+
+      if (element) {
+        element.classList.toggle("hidden", isDci);
+      } else {
+        console.warn("Élément introuvable :", id);
+      }
+    });
+};
  $("f-entry-type").onchange=toggleType;toggleType();
  $("backBtn").onclick=()=>renderDetail();
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{readPresentationEditors(m);m.presentations.splice(Number(b.dataset.removePresentation),1);refreshPresentationEditors()})};
