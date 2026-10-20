@@ -457,6 +457,7 @@ function renderEditor(id){
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"?"selected":""}>DCI / substance active</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div><label for="f-dosage">Dosage de la fiche</label><input id="f-dosage" value="${esc(m.dosage||"")}" placeholder="Ex. : 80 mg"></div><div id="f-dci-wrap" class="full"><label for="f-dci">DCI / substance(s) active(s)</label><input id="f-dci" value="${esc(m.dci)}" placeholder="Ex. : sulfate ferreux"></div>
+ <div class="full"><label for="f-indications">Indications thérapeutiques (badges Explorer, séparées par des virgules)</label><input id="f-indications" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Carence en fer, Anémie ferriprive"><div class="muted">Étiquettes de navigation : vérifier les indications officielles avant de les ajouter.</div></div>
  <div><label>Famille</label><input id="f-category" list="cats" value="${esc(m.category)}"><datalist id="cats">${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
  <div class="full"><label>Alias / termes de recherche</label><input id="f-aliases" value="${esc(m.aliases)}"></div>
  <div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
@@ -602,6 +603,8 @@ function captureEditorFields(m){
  m.parent_dci=m.entry_type==="dci"?"":m.dci;
  m.category=(get("f-category")||"").trim()||"Autres";
  m.aliases=(get("f-aliases")||"").trim();
+ const indicationSection=m.sections.find(sec=>sec.id==="indications");
+ if(indicationSection)indicationSection.indicationTags=(get("f-indications")||"").split(",").map(x=>x.trim()).filter(Boolean);
  m.status=get("f-status");m.published=get("f-published")==="true";
  m.updated=get("f-updated");m.source=(get("f-source")||"").trim();
  readPresentationEditors(m);
