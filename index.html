@@ -1260,10 +1260,9 @@ async function saveEditor(id){
   if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
  }
 }
-// Ctrl+N / Cmd+N : crée une nouvelle fiche lorsque le navigateur autorise
-// l'interception de ce raccourci (certains le réservent à une nouvelle fenêtre).
+// Ctrl+Alt+N : crée une nouvelle fiche sans interférer avec Ctrl+N du navigateur.
 document.addEventListener("keydown",event=>{
- if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="n")return;
+ if(!event.ctrlKey||!event.altKey||event.metaKey||event.shiftKey||event.key.toLowerCase()!=="n")return;
  if(event.repeat||!admin)return;
  // Ne pas interrompre une édition déjà ouverte, notamment un brouillon non enregistré.
  if(editorId&&!$("editor").classList.contains("hidden"))return;
