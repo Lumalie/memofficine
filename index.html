@@ -46,16 +46,13 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 .table-grid-wrap{overflow-x:auto;margin-top:9px}
 .table-grid-editor{border-collapse:separate;border-spacing:4px;width:100%;min-width:310px}
 .table-grid-editor td{padding:0;min-width:105px}
-.table-grid-editor input{width:100%;min-width:95px;padding:9px 8px;border-radius:7px}
-.table-grid-editor td:first-child input{background:#eaf2ec;font-weight:700}
+.table-grid-editor textarea{width:100%;min-width:95px;min-height:75px;padding:9px 8px;border-radius:7px;resize:vertical;line-height:1.4;font-weight:400}
+.table-grid-editor td:first-child textarea{background:#eaf2ec}
 .table-grid-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .table-grid-actions button{font-size:.82rem;padding:6px 9px}
 
-.med-table th[scope="row"]{background:#eef5ef;font-weight:700}
-.med-table .table-explanation{color:#abb8c3}
-.med-table .interaction-red th,.med-table .interaction-red td{color:#a44c43}
-.med-table .interaction-orange th,.med-table .interaction-orange td{color:#a76a20}
-.med-table .interaction-muted td{color:#abb8c3}
+.med-table th[scope="row"]{background:#eef5ef;font-weight:400}
+.med-table td,.med-table th{color:var(--ink);font-weight:400;white-space:pre-line;vertical-align:top}
 .section.conseil-comptoir p{padding-left:3px}
 
 /* Barre contextuelle de mise en forme des cellules */
@@ -390,7 +387,7 @@ function renderSection(s,targetSectionId=null){
  let content="";
  if(s.type==="table"){
    const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split(/\s+\|\s+/).map(x=>x.trim()));
-   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===2)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${richInline(c)}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
+   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===2)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${richInline(c).replace(/\\[\\[newline\\]\\]/g,"<br>")}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
  }else{content=richText(s.content||"")}
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
@@ -473,7 +470,7 @@ function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
  const count=Math.max(1,...rows.map(row=>row.length));
- return rows.map(row=>Array.from({length:count},(_,i)=>row[i]||""));
+ return rows.map(row=>Array.from({length:count},(_,i)=>(row[i]||"").replace(/\\[\\[newline\\]\\]/g,"\\n")));
 }
 function tableCellToolbar(){
  return `<div class="table-cell-toolbar" hidden>
@@ -485,7 +482,7 @@ function tableCellToolbar(){
 }
 function tableGridEditor(content){
  const rows=tableRows(content);
- return `<div class="table-grid-wrap">${tableCellToolbar()}<table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><input data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}" value="${esc(cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les en-têtes (dans les tableaux prévus à cet effet). Les modifications sont sauvegardées dans le brouillon.</p>`;
+ return `<div class="table-grid-wrap">${tableCellToolbar()}<table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><textarea rows="3" data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}">${esc(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les intitulés, sans gras imposé. Utilise Entrée pour aller à la ligne dans une cellule. Les modifications sont sauvegardées dans le brouillon.</p>`;
 }
 function readTableGrid(card){
  const trs=[...card.querySelectorAll(".table-grid-editor tr")];
@@ -502,7 +499,7 @@ function wireTableCellFormatting(){
    if(selected)range=[active.selectionStart,active.selectionEnd];
    toolbar.hidden=!selected;
    preview.hidden=false;
-   preview.innerHTML=richInline(active.value)||"&nbsp;";
+   preview.innerHTML=richInline(active.value).replace(/\\n/g,"<br>")||"&nbsp;";
   };
   wrap.querySelectorAll("[data-table-cell]").forEach(input=>{
    input.addEventListener("focus",()=>{active=input;range=null;update()});
