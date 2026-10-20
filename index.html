@@ -309,16 +309,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .group-associations .group-members h3{margin:0 0 14px}
 .group-associations .associated-section+.associated-section{margin-top:17px}
 
-/* V5.71 : fil d’Ariane identifiable sans surcharger la fiche */
-.fiche-breadcrumb{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin:0 0 18px;padding:10px 14px;background:#f3f5f3;border:1px solid #dfe6e0;border-left:3px solid #718c80;border-radius:9px;color:#263c34;line-height:1.45}
-.fiche-breadcrumb .breadcrumb-heading{display:inline-flex;align-items:center;gap:7px;flex:none;color:#52665c;font-size:.68rem;font-weight:800;letter-spacing:.09em;white-space:nowrap}
-.fiche-breadcrumb .breadcrumb-compass{font-size:1rem;letter-spacing:0}
-.fiche-breadcrumb .breadcrumb-path{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.92rem}
-.fiche-breadcrumb .breadcrumb-link{appearance:none;border:0;background:transparent;padding:2px 0;color:#35584a;font:inherit;font-weight:650;text-decoration:underline;text-decoration-color:#b3c5ba;text-underline-offset:3px;cursor:pointer}
-.fiche-breadcrumb .breadcrumb-link:hover,.fiche-breadcrumb .breadcrumb-link:focus-visible{color:#184b37;text-decoration-color:currentColor;background:transparent}
-.fiche-breadcrumb .breadcrumb-separator{color:#71877b;font-size:1.18em;font-weight:750}
-.fiche-breadcrumb .breadcrumb-current{color:#1d342b;font-weight:800}
-@media(max-width:650px){.fiche-breadcrumb{gap:5px;padding:10px 12px}.fiche-breadcrumb .breadcrumb-heading{width:100%}.fiche-breadcrumb .breadcrumb-path{gap:6px}}
+/* V5.72 : fil d'Ariane éditorial compact, sans encadré */
+.fiche-breadcrumb{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin:0 0 12px;padding:2px 0 7px;border:0;border-bottom:1px solid #cad6d5;background:transparent;border-radius:0;line-height:1.35;font-size:.91rem}
+.fiche-breadcrumb .breadcrumb-link{appearance:none;background:transparent;border:0;border-radius:0;margin:0;padding:1px 0;font:inherit;font-weight:650;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;cursor:pointer}
+.fiche-breadcrumb .breadcrumb-root,.fiche-breadcrumb .breadcrumb-current-group{color:#32684e}
+.fiche-breadcrumb .breadcrumb-subgroup,.fiche-breadcrumb .breadcrumb-current-subgroup{color:#a66c22}
+.fiche-breadcrumb .breadcrumb-link:hover,.fiche-breadcrumb .breadcrumb-link:focus-visible{background:transparent;color:#1d4236;text-decoration-thickness:2px}
+.fiche-breadcrumb .breadcrumb-separator{color:#85958f;font-size:1.1em;font-weight:600;padding:0 1px}
+.fiche-breadcrumb .breadcrumb-current{font-weight:750}
+.fiche-breadcrumb .breadcrumb-current-med{color:#285780}
+@media(max-width:600px){.fiche-breadcrumb{gap:5px 7px;margin-bottom:10px;padding-bottom:6px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -608,7 +608,7 @@ function ficheBreadcrumb(m){
   chain.unshift(group);
   id=String(parentGroupId(group)||"");
  }
- return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche"><span class="breadcrumb-heading"><span class="breadcrumb-compass" aria-hidden="true">🧭</span><span>VOUS ÊTES ICI</span></span><span class="breadcrumb-path">${chain.map(g=>`<button type="button" class="breadcrumb-link" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current" aria-current="page">${esc(displayMedName(m))}</span></span></nav>`;
+ return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link ${i===0?"breadcrumb-root":"breadcrumb-subgroup"}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)?(chain.length?"breadcrumb-current-subgroup":"breadcrumb-current-group"):"breadcrumb-current-med"}" aria-current="page">${esc(displayMedName(m))}</span></nav>`;
 }
 function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
