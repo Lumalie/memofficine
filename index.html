@@ -114,8 +114,8 @@ function restoreLocalDraft(){
 }
 
 
-function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
-function medToRow(m){return {parent_dci:m.entry_type==="dci"?null:(m.parent_dci||null),presentations:m.entry_type==="dci"?[]:(m.presentations||[]),id:m.id,name:m.name,dci:m.entry_type==="dci"?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
+function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
+function medToRow(m){return {parent_dci:m.entry_type==="dci"?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:m.entry_type==="dci"?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
 async function loadCloudMeds(){
  const {data,error}=await supabaseClient.from("medications").select("*").order("name");
  if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
@@ -138,6 +138,7 @@ async function initCloud(){
  await loadCloudMeds();
  supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();},0);});
 }
+function displayMedName(m){const name=String(m.name||"Sans nom").trim(),dose=String(m.dosage||"").trim();return dose&&!norm(name).endsWith(norm(dose))?name+" "+dose:name}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
 // Liens directs stables fondés sur l'identifiant Supabase de la fiche.
@@ -163,8 +164,8 @@ function getSearchMatches(){
  const matches=[];
  meds.forEach(m=>{
    if(activeCategory!=="Toutes"&&m.category!==activeCategory)return;
-   const identity=norm([m.name,m.dci,m.parent_dci,m.category,m.form,m.aliases,...(m.presentations||[]).flatMap(p=>[p.lab,p.dosage,p.form,p.cip,p.cis,p.description,p.marking])].join(" "));
-   const allText=norm([m.name,m.dci,m.parent_dci,m.category,m.form,m.aliases,...(m.presentations||[]).flatMap(p=>[p.lab,p.dosage,p.form,p.cip,p.cis,p.description,p.marking]),...(m.sections||[]).map(s=>s.title+" "+s.content)].join(" "));
+   const identity=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.form,m.aliases,...(m.presentations||[]).flatMap(p=>[p.lab,p.dosage,p.form,p.cip,p.cis,p.description,p.marking])].join(" "));
+   const allText=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.form,m.aliases,...(m.presentations||[]).flatMap(p=>[p.lab,p.dosage,p.form,p.cip,p.cis,p.description,p.marking]),...(m.sections||[]).map(s=>s.title+" "+s.content)].join(" "));
    if(!q){matches.push({med:m,section:null});return}
    if(!allText.includes(q)&&!queryTokens.every(t=>allText.includes(t)))return;
    // If the query identifies a medication and also names a section, prefer a direct section result.
@@ -196,7 +197,7 @@ function renderResults(){
  $("count").textContent=found.length+" résultat"+(found.length===1?"":"s");
  $("results").innerHTML=found.length?found.map(item=>{
    const m=item.med, sec=item.section;
-   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}"><strong>${esc(m.name||"Sans nom")}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
+   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}"><strong>${esc(displayMedName(m))}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
  }).join(""):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $("results").querySelectorAll(".result").forEach(el=>el.onclick=()=>{
    selectFiche(el.dataset.id);
@@ -217,13 +218,13 @@ function renderDetail(targetSectionId=null){
  $("detailHeading").textContent="Fiche médicament";
  const sections=(m.sections||[]).filter(s=>s.enabled!==false);
  const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
- const formBadge=m.entry_type==="specialite"&&presentationForms.length
+ const formBadge=presentationForms.length
    ? `<span class="tag">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
  const related=m.entry_type==="dci"?meds.filter(x=>x.entry_type==="specialite"&&norm(x.dci||x.parent_dci)===norm(m.name)):[];
- $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(m.name)}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span>${formBadge}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
+ $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span>${formBadge}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
  <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
- ${m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div><section class="section"><h3>💊 Spécialités associées (${related.length})</h3>${related.length?related.map(x=>`<button class="related-item" data-related="${esc(x.id)}">${esc(x.name)} → Fiche complète</button>`).join(""):'<p class="muted">Aucune spécialité associée pour le moment.</p>'}</section>`:""}
- ${m.entry_type==="specialite"?renderPresentations(m):""}
+ ${m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div><section class="section"><h3>💊 Spécialités associées (${related.length})</h3>${related.length?related.map(x=>`<button class="related-item" data-related="${esc(x.id)}">${esc(displayMedName(x))} → Fiche complète</button>`).join(""):'<p class="muted">Aucune spécialité associée pour le moment.</p>'}</section>`:""}
+ ${renderPresentations(m)}
  ${[
   ...sections.filter(s => (s.title || "").toLowerCase().includes("à dire au comptoir")),
   ...sections.filter(s => !(s.title || "").toLowerCase().includes("à dire au comptoir"))
@@ -245,7 +246,7 @@ function presentationInfo(p){if(!p)return '<p class="muted">Aucune présentation
  const img=safeHttp(p.imageUrl||"");const src=safeHttp(p.sourceUrl||"");
  return `<p><strong>Laboratoire :</strong> ${esc(p.lab||"À renseigner")}</p><p><strong>Dosage :</strong> ${esc(p.dosage||"À renseigner")} · <strong>Forme :</strong> ${esc(p.form||"À renseigner")}</p><p><strong>Aspect :</strong> ${esc(p.description||"Non documenté")}</p><p><strong>Marquage / sécabilité :</strong> ${esc(p.marking||"Non documenté")}</p><p><strong>CIS :</strong> ${esc(p.cis||"Non renseigné")} · <strong>CIP :</strong> ${esc(p.cip||"Non renseigné")}</p>${img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""}${src?`<p><a href="${esc(src)}" target="_blank" rel="noopener noreferrer">Consulter la source de cette présentation ↗</a></p>`:""}<p class="hint">L'aspect seul ne permet pas d'identifier avec certitude un médicament. Ne pas déduire une équivalence ou une sécabilité d'une photographie.</p>`;
 }
-function renderPresentations(m){const ps=m.presentations||[];return `<details><summary>💊 Identifier la présentation (${ps.length})</summary>${ps.length?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}">${esc([p.lab,p.dosage,p.form].filter(Boolean).join(" · ")||"Présentation "+(i+1))}</option>`).join("")}</select><div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[0])}</div>`:'<p class="muted">Aucune présentation renseignée pour cette spécialité.</p>'}</details>`}
+function renderPresentations(m){const ps=m.presentations||[];return `<details><summary>💊 Présentations disponibles (${ps.length})</summary>${ps.length?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}">${esc([p.lab,p.dosage,p.form].filter(Boolean).join(" · ")||"Présentation "+(i+1))}</option>`).join("")}</select><div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[0])}</div>`:'<p class="muted">Aucune présentation renseignée pour cette spécialité.</p>'}</details>`}
 function presentationEditor(p,i){const fields=[["lab","Laboratoire"],["dosage","Dosage"],["form","Forme"],["cip","Code CIP"],["cis","Code CIS"],["description","Aspect / description"],["marking","Marquage / sécabilité"],["imageUrl","URL de photographie (https)"],["sourceUrl","URL de la source officielle (https)"]];return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div><div class="presentation-fields">${fields.map(([key,label])=>`<div class="${["description","marking","imageUrl","sourceUrl"].includes(key)?"full":""}"><label>${label}</label><input data-pfield="${key}" value="${esc(p[key]||"")}"></div>`).join("")}</div></div>`}
 function renderSection(s,targetSectionId=null){
  let content="";
@@ -268,7 +269,7 @@ function showLogin(){
 async function logout(){clearLocalDraft();editorId=null;const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
 function addMedication(){
  if(!admin){toast("Connecte-toi pour ajouter une fiche");return}
- const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
+ const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dosage:"",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
  meds.unshift(m);selectedId=m.id;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();
 }
 function renderEditor(id){
@@ -277,7 +278,7 @@ function renderEditor(id){
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><button id="backBtn">Retour à la fiche</button></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"?"selected":""}>DCI / substance active</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
-  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-wrap"><label for="f-dci">DCI / substance(s) active(s)</label><input id="f-dci" value="${esc(m.dci)}" placeholder="Ex. : sulfate ferreux"></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div><label for="f-dosage">Dosage de la fiche</label><input id="f-dosage" value="${esc(m.dosage||"")}" placeholder="Ex. : 80 mg"></div><div id="f-dci-wrap" class="full"><label for="f-dci">DCI / substance(s) active(s)</label><input id="f-dci" value="${esc(m.dci)}" placeholder="Ex. : sulfate ferreux"></div>
  <div><label>Famille</label><input id="f-category" list="cats" value="${esc(m.category)}"><datalist id="cats">${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
  <div class="full"><label>Alias / termes de recherche</label><input id="f-aliases" value="${esc(m.aliases)}"></div>
  <div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
@@ -285,8 +286,8 @@ function renderEditor(id){
  <div><label>Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div>
  <div class="full"><label>URL de la source principale</label><input id="f-source" type="url" value="${esc(m.source)}" placeholder="https://…"></div></div>
   <div id="presentation-editor-wrap" class="full" style="margin-top:18px">
-    <h3>💊 Présentations de cette spécialité</h3>
-    <p class="muted">Documenter séparément les présentations et leurs sources officielles.</p>
+    <h3>💊 Présentations disponibles</h3>
+    <p class="muted">Renseigner les présentations des différents laboratoires correspondant à cette substance et à ce dosage. Ajouter une URL d’image documentée si disponible.</p>
     <div id="presentationEditors">${(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("")}</div>
     <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
   </div>
@@ -304,7 +305,7 @@ const toggleType = () => {
       : "Nom de la spécialité";
   }
 
-  ["f-dci-wrap", "presentation-editor-wrap"]
+  ["f-dci-wrap"]
     .forEach(id => {
       const element = $(id);
 
@@ -321,21 +322,16 @@ const toggleType = () => {
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
- $("sectionEditors").querySelectorAll('[data-field="imageFile"]').forEach(input=>input.addEventListener("change",()=>{
-   const f=input.files&&input.files[0];if(!f)return;
-   if(f.size>2*1024*1024){toast("Image trop lourde (maximum 2 Mo)");input.value="";return}
-   if(!f.type.startsWith("image/")){toast("Choisis un fichier image");input.value=""}
- }));
  $("editor").oninput=saveLocalDraft;
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
 function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map(card=>{const p={};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><textarea data-field="content">${esc(s.content||"")}</textarea><div class="image-controls"><label>Image facultative pour cette rubrique</label><div class="muted">Utile notamment pour illustrer l’aspect d’un comprimé ou d’une gélule. Formats image courants, idéalement moins de 2 Mo.</div><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-field="imageFile" style="margin-top:8px"><label style="margin-top:8px">Ou URL d’une image</label><input data-field="imageUrl" value="${esc(s.imageUrl||"")}" placeholder="https://…"><label style="margin-top:8px">Légende (facultative)</label><input data-field="imageCaption" value="${esc(s.imageCaption||"")}" placeholder="Ex. : Aspect — vérifier la spécialité exacte">${(s.imageData||s.imageUrl)?`<img class="image-preview" src="${esc(s.imageData||s.imageUrl)}" alt="Aperçu de l’image"><button type="button" data-act="clear-image" data-index="${i}">Retirer l’image</button>`:""}</div></div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><textarea data-field="content">${esc(s.content||"")}</textarea></div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
- m.entry_type=get("f-entry-type");m.name=(get("f-name")||"").trim()||"Fiche sans nom";
+ m.entry_type=get("f-entry-type");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=(get("f-dosage")||"").trim();
  m.dci=m.entry_type==="dci"?"":(get("f-dci")||"").trim();
  m.parent_dci=m.entry_type==="dci"?"":m.dci;
  m.category=(get("f-category")||"").trim()||"Autres";
@@ -345,26 +341,22 @@ function captureEditorFields(m){
  readPresentationEditors(m);
  const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
  cards.forEach((card,i)=>{if(!m.sections[i])return;
-   for(const field of ["title","type","content","imageUrl","imageCaption"]){
+   for(const field of ["title","type","content"]){
      const el=card.querySelector(`[data-field="${field}"]`);
      if(el)m.sections[i][field]=el.value;
    }
  });
 }
-function sectionAction(action,index,id){if(document.querySelector('#sectionEditors input[type="file"]:not([value=""])')?.files?.length){toast("Une image locale est sélectionnée : utilise une URL avant de modifier les rubriques.");return}const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);const ss=m.sections;
+function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);const ss=m.sections;
  if(action==="up"&&index>0)[ss[index-1],ss[index]]=[ss[index],ss[index-1]];
  if(action==="down"&&index<ss.length-1)[ss[index+1],ss[index]]=[ss[index],ss[index+1]];
  if(action==="toggle")ss[index].enabled=ss[index].enabled===false;
- if(action==="clear-image"){ss[index].imageData="";ss[index].imageUrl="";ss[index].imageCaption="";}
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
  renderEditor(id);saveLocalDraft()}
 function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id);saveLocalDraft()}
 async function saveEditor(id){
  const m=meds.find(x=>x.id===id);if(!m)return;
- captureEditorFields(m);if(m.entry_type==="dci")m.presentations=[];
- const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
- const uploads=cards.map((card,i)=>({card,index:i,file:card.querySelector('[data-field="imageFile"]')?.files?.[0]})).filter(x=>x.file);
- if(uploads.length){toast("Utilise une URL d’image pour le moment : le téléversement sera ajouté plus tard.");return}
+ captureEditorFields(m);
  try{await syncMedication(m);clearLocalDraft();renderDetail();toast("Fiche enregistrée et synchronisée")}catch(e){}
 
 }
