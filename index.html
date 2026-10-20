@@ -139,7 +139,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 @media(max-width:760px){.header-search-active #headerSearchSlot{flex:1 1 100%;max-width:none;margin:0}}
 .editor-warning{color:#a72f35;font-size:.83rem;font-weight:650;margin-top:6px}
 .needs-attention{border:2px solid #c8484e!important}
-.editor-top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.editor-top-actions button{font-size:.8rem;padding:7px 9px}.dosage-fields{display:flex;gap:8px}.dosage-fields input{flex:1;min-width:0}.dosage-fields select{width:120px}.detail-last-updated{font-size:.78rem;color:var(--muted);text-align:right;margin-top:25px}.admin-meta{border-top:1px solid var(--line);padding-top:18px}.admin-meta input[type=date]{max-width:220px}@media(max-width:800px){.editor .detailtop{flex-direction:column}.editor-top-actions{justify-content:flex-start}}
+.editor-top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.editor-top-actions button{font-size:.85rem;padding:9px 12px;background:#fff;color:var(--ink);border:1px solid #bdcec2;border-radius:10px;font-weight:650}.editor-top-actions button.primary{background:var(--green);color:#fff;border-color:var(--green)}.editor-top-actions button.danger{background:#a44c43;color:#fff;border-color:#a44c43}.editor-top-actions button:hover{filter:brightness(.96)}.dosage-fields{display:flex;gap:8px}.dosage-fields input{flex:1;min-width:0}.dosage-fields select{width:120px}.detail-last-updated{font-size:.78rem;color:var(--muted);text-align:right;margin-top:25px}.admin-meta{border-top:1px solid var(--line);padding-top:18px}.admin-meta input[type=date]{max-width:220px}@media(max-width:800px){.editor .detailtop{flex-direction:column}.editor-top-actions{justify-content:flex-start}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -354,7 +354,7 @@ function setHierarchy(m,kind,parent){
   else delete target.memofficineParentGroup;
  }
 }
-function groupOptions(m){return meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&g.id!==m.id&&g.category===m.category).sort((a,b)=>a.name.localeCompare(b.name,"fr"))}
+function groupOptions(m){return meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&g.id!==m.id).sort((a,b)=>a.name.localeCompare(b.name,"fr"))}
 function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
  return Array.isArray(raw)?raw.filter(Boolean):[];
@@ -740,10 +740,10 @@ function renderEditor(id){
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="header-actions editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
-  <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="editor-warning" id="group-parent-help">⚠️ Choisis d’abord une classe thérapeutique ci-dessous : seuls les groupes appartenant à cette même classe seront proposés.</div></div>
-  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div><label for="f-dosage">Dosage</label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div><p class="muted">Unité proposée selon la forme, modifiable. Pour les dosages complexes, choisir « autre » et saisir la valeur complète.</p></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Les DCI existantes sont conservées.</p></div>
+  <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dosage-wrap"><label for="f-dosage">Dosage</label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div><p class="muted">Unité proposée selon la forme, modifiable. Pour les dosages complexes, choisir « autre » et saisir la valeur complète.</p></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Les DCI existantes sont conservées.</p></div>
  <div class="full"><label for="f-indications">Indications thérapeutiques (badges Explorer, séparées par des virgules)</label><input id="f-indications" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Carence en fer, Anémie ferriprive"><div class="muted">Étiquettes de navigation : vérifier les indications officielles avant de les ajouter.</div></div>
- <div><label for="f-category">Classe thérapeutique</label><select id="f-category"><option value="">— Choisir une classe —</option>${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}" ${m.category===c?"selected":""}>${esc(c)}</option>`).join("")}<option value="__new__">＋ Créer une nouvelle classe…</option></select><input id="f-category-new" class="hidden" placeholder="Nom de la nouvelle classe thérapeutique" aria-label="Nouvelle classe thérapeutique"><div class="editor-warning" id="category-help">⚠️ Renseigne la classe thérapeutique avant de choisir un groupe parent.</div></div>
+ <div><label for="f-category">Classe thérapeutique</label><select id="f-category"><option value="">— Choisir une classe —</option>${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}" ${m.category===c?"selected":""}>${esc(c)}</option>`).join("")}<option value="__new__">＋ Créer une nouvelle classe…</option></select><input id="f-category-new" class="hidden" placeholder="Nom de la nouvelle classe thérapeutique" aria-label="Nouvelle classe thérapeutique"><div class="muted" id="category-help">La classe thérapeutique est indépendante du groupe parent.</div></div>
  
 
  </div>
@@ -763,6 +763,7 @@ const toggleType = () => {
   $("presentation-editor-wrap").classList.toggle("hidden",isGroupType);
   $("group-template-tools").classList.toggle("hidden",!isGroupType);
   $("parent-group-wrap").classList.toggle("hidden",isGroupType);
+  $("f-dosage-wrap").classList.toggle("hidden",isGroupType);
 
   const nameLabel = $("f-name-label");
   if (nameLabel) {
@@ -796,18 +797,12 @@ const toggleType = () => {
  function refreshParentGroups(){
   const custom=categorySelect.value==="__new__";
   categoryNew.classList.toggle("hidden",!custom);
-  const category=custom?categoryNew.value.trim():categorySelect.value;
-  const selected=parentSelect.value;
-  const matches=meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&g.id!==m.id&&g.category===category).sort((a,b)=>a.name.localeCompare(b.name,"fr"));
-  parentSelect.innerHTML='<option value="">Aucun groupe</option>'+matches.map(g=>`<option value="${esc(g.id)}">${esc(g.name)} — ${esc(g.category)}</option>`).join("");
+  const selected=parentSelect.value||parentGroupId(m);
+  const matches=groupOptions(m);
+  parentSelect.innerHTML='<option value="">Aucun groupe</option>'+matches.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}${g.category?" — "+esc(g.category):""}</option>`).join("");
   if(matches.some(g=>g.id===selected))parentSelect.value=selected;
-  const warning=$("category-help");
-  warning.textContent=category?"Classe sélectionnée : "+category+". Tu peux maintenant choisir un groupe parent.":"⚠️ Renseigne la classe thérapeutique avant de choisir un groupe parent.";
-  warning.classList.toggle("editor-warning",!category);
-  categorySelect.classList.toggle("needs-attention",!category);
-  parentSelect.classList.toggle("needs-attention",!category);
-  $("group-parent-help").classList.toggle("editor-warning",!category);$("group-parent-help").classList.toggle("muted",!!category);
-  $("group-parent-help").textContent=category?(matches.length? "Groupes proposés pour la classe « "+category+" »." : "Aucun groupe disponible pour cette classe. Tu peux laisser « Aucun groupe »."):"⚠️ Choisis d’abord une classe thérapeutique pour afficher les groupes compatibles.";
+  $("category-help").textContent="La classe thérapeutique est indépendante du groupe parent.";
+  $("group-parent-help").textContent=matches.length?"Tu peux choisir n’importe quel groupe parent, quelle que soit sa classe thérapeutique.":"Aucun groupe disponible pour le moment. Tu peux laisser « Aucun groupe ».";
  }
  categorySelect.addEventListener("change",refreshParentGroups);
  categoryNew.addEventListener("input",refreshParentGroups);
@@ -821,7 +816,7 @@ const toggleType = () => {
    const old=existing.find(sec=>sec.id===template.id);
    return old?{...template,content:old.content,indicationTags:old.indicationTags||template.indicationTags}:template;
   });
-  m.sections=[...replacement,...archived];renderEditor(m.id);saveLocalDraft();toast("Modèle groupe appliqué : vérifie les rubriques avant d’enregistrer.");
+  m.sections=[...replacement,...archived];setHierarchy(m,"groupe","");renderEditor(m.id);saveLocalDraft();toast("Modèle groupe appliqué : vérifie les rubriques avant d’enregistrer.");
  };
  $("backBtn").onclick=()=>renderDetail();
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=!no.checked;}));};
@@ -927,12 +922,11 @@ function captureEditorFields(m){
  if(get("f-entry-type")===undefined)return;
  const kind=get("f-entry-type");
  m.entry_type=kind==="groupe"?"dci":kind;
- setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=(get("f-dosage")||"").trim();if(m.dosage&&get("f-dosage-unit")!=="autre")m.dosage+=" "+get("f-dosage-unit");
+ setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=kind==="groupe"?"":(get("f-dosage")||"").trim();if(m.dosage&&get("f-dosage-unit")!=="autre")m.dosage+=" "+get("f-dosage-unit");
  m.dci=m.entry_type==="dci"?"":[...($("dciEntries")?.querySelectorAll("[data-dci-entry]")||[])].map(input=>input.value.trim()).filter(Boolean).join(" + ");
  m.parent_dci=m.entry_type==="dci"?"":m.dci;
  m.category=(get("f-category")==="__new__"?(get("f-category-new")||""):get("f-category")||"").trim()||"Autres";
- const linked=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g));
- if(linked&&linked.category!==m.category){setHierarchy(m,kind,"");toast("Groupe parent retiré : la classe thérapeutique a changé.")}
+
 
  // Alias conservés dans la base, sans champ visible dans l’éditeur.
  const indicationSection=m.sections.find(sec=>sec.id==="indications");
