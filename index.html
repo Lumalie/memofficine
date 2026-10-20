@@ -1240,7 +1240,7 @@ function tableCellToolbar(){
 }
 function tableGridEditor(content){
  const rows=tableRows(content);
- return `<div class="table-grid-wrap">${tableCellToolbar()}<table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><textarea rows="3" data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}">${esc(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les intitulés, sans gras imposé. Utilise Entrée pour aller à la ligne dans une cellule. Les modifications sont sauvegardées dans le brouillon.</p>`;
+ return `<div class="table-grid-wrap">${tableCellToolbar()}<table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><textarea rows="3" data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}">${esc(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les intitulés, sans gras imposé. Raccourcis sur une sélection : Ctrl+B (gras), Ctrl+I (italique), Ctrl+U (souligné). Utilise Entrée pour aller à la ligne dans une cellule. Les modifications sont sauvegardées dans le brouillon.</p>`;
 }
 function readTableGrid(card){
  const trs=[...card.querySelectorAll(".table-grid-editor tr")];
@@ -1408,6 +1408,43 @@ async function saveEditor(id){
   if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
  }
 }
+// V5.60 : raccourcis de mise en forme dans les champs de rédaction.
+// Utilise la même syntaxe que les barres d'outils existantes.
+function applyEditorKeyboardFormat(area,mode){
+ const start=area.selectionStart,end=area.selectionEnd;
+ if(start===end)return false;
+ const selected=area.value.slice(start,end);
+ let replacement=selected;
+ if(mode==="bold")replacement=`**${selected}**`;
+ else if(mode==="italic")replacement=`*${selected}*`;
+ else if(mode==="underline")replacement=`__${selected}__`;
+ else if(mode==="bullets")replacement=selected.split("\n").map(line=>"- "+line.replace(/^\s*(?:[-•]|\d+\.)\s+/,"")).join("\n");
+ else if(mode==="numbers")replacement=selected.split("\n").map((line,i)=>`${i+1}. `+line.replace(/^\s*(?:[-•]|\d+\.)\s+/,"")).join("\n");
+ else return false;
+ area.setRangeText(replacement,start,end,"select");
+ area.dispatchEvent(new Event("input",{bubbles:true}));
+ area.focus({preventScroll:true});
+ rememberEditorFocus();
+ return true;
+}
+document.addEventListener("keydown",event=>{
+ if(!admin||!editorId||$("editor").classList.contains("hidden"))return;
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.repeat)return;
+ const area=event.target;
+ if(!(area instanceof HTMLTextAreaElement)||!$("sectionEditors").contains(area))return;
+ const isText=area.matches('.section-editor textarea[data-field="content"]');
+ const isCell=area.matches('textarea[data-table-cell]');
+ if(!isText&&!isCell)return;
+ const key=event.key.toLowerCase();
+ let mode=null;
+ if(!event.shiftKey){if(key==="b")mode="bold";else if(key==="i")mode="italic";else if(key==="u")mode="underline";}
+ else if(isText){if(key==="8"||key==="*")mode="bullets";else if(key==="7"||key==="&")mode="numbers";}
+ if(!mode)return;
+ // N'intercepter que lorsque du texte est sélectionné.
+ if(area.selectionStart===area.selectionEnd)return;
+ event.preventDefault();
+ applyEditorKeyboardFormat(area,mode);
+});
 // Ctrl+Alt+N : crée une nouvelle fiche sans interférer avec Ctrl+N du navigateur.
 document.addEventListener("keydown",event=>{
  if(!event.ctrlKey||!event.altKey||event.metaKey||event.shiftKey||event.key.toLowerCase()!=="n")return;
