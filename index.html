@@ -32,6 +32,15 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
   margin: 8px 0;
   line-height: 1.55;
 }
+
+/* Mise en forme contextuelle des rubriques texte */
+.text-edit-wrap{position:relative}
+.text-format-bubble{position:absolute;bottom:calc(100% - 2px);left:0;z-index:4;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:100%;padding:7px;background:#fff;border:1px solid #b9cbbd;border-radius:12px;box-shadow:0 6px 22px #193f3425}
+.text-format-bubble[hidden]{display:none}
+.text-format-bubble button{padding:5px 8px;font-size:.85rem;border-radius:7px}
+.text-format-bubble select{width:auto;max-width:125px;padding:5px;font-size:.82rem}
+.rich-preview{margin-top:8px;padding:10px 12px;border:1px dashed #c5dccb;border-radius:9px;background:#fff;font-size:.91rem}
+.rich-preview p{margin:4px 0}.rich-preview ul,.rich-preview ol{margin:5px 0;padding-left:24px}
 </style>
 </head>
 <body>
@@ -295,12 +304,65 @@ async function uploadPresentationPhotos(m){
  if(!pending.size)pendingPresentationPhotos.delete(m.id);
 }
 
+// Format léger et sécurisé : seules les marques créées par la barre d'outils sont interprétées.
+const TEXT_COLORS={green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#abb8c3'};
+function richInline(raw){
+ let html=esc(raw);
+ html=html.replace(/\[\[(green|red|orange|blue|gray)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
+ html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+ html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
+ html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+ return html;
+}
+function richText(raw){
+ const lines=String(raw||'').split('\n');let html='',list=null;
+ const close=()=>{if(list){html+=`</${list}>`;list=null}};
+ for(const line of lines){
+  const bullet=line.match(/^\s*[-•] (.*)$/),number=line.match(/^\s*\d+\. (.*)$/);
+  const kind=bullet?'ul':number?'ol':null;
+  if(kind){if(list!==kind){close();html+=`<${kind}>`;list=kind}html+=`<li>${richInline((bullet||number)[1])}</li>`}
+  else{close();html+=`<p>${richInline(line)||'&nbsp;'}</p>`}
+ }
+ close();return html;
+}
+function wireTextFormatting(){
+ document.querySelectorAll('#sectionEditors .section-editor').forEach(card=>{
+  const area=card.querySelector('textarea[data-field="content"]');
+  const bubble=card.querySelector('.text-format-bubble');
+  const preview=card.querySelector('.rich-preview');
+  if(!area||!bubble||!preview)return;
+  const refresh=()=>{preview.innerHTML=richText(area.value)};
+  const show=()=>{bubble.hidden=area.selectionStart===area.selectionEnd};
+  area.addEventListener('select',show);area.addEventListener('mouseup',show);area.addEventListener('keyup',show);
+  area.addEventListener('input',refresh);
+  // Ne pas perdre la sélection quand on clique sur la barre flottante.
+  bubble.addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault()});
+  const apply=(mode)=>{
+   const start=area.selectionStart,end=area.selectionEnd,selected=area.value.slice(start,end);
+   if(!selected)return;
+   let replacement=selected;
+   if(mode==='bold')replacement=`**${selected}**`;
+   if(mode==='italic')replacement=`*${selected}*`;
+   if(mode==='underline')replacement=`__${selected}__`;
+   if(mode==='bullets')replacement=selected.split('\n').map(x=>'- '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
+   if(mode==='numbers')replacement=selected.split('\n').map((x,i)=>(i+1)+'. '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
+   if(mode.startsWith('color:'))replacement=`[[${mode.slice(6)}|${selected}]]`;
+   area.setRangeText(replacement,start,end,'select');
+   area.dispatchEvent(new Event('input',{bubbles:true}));
+   bubble.hidden=true;area.focus();
+  };
+  bubble.querySelectorAll('[data-format]').forEach(btn=>btn.addEventListener('click',()=>apply(btn.dataset.format)));
+  const picker=bubble.querySelector('[data-text-color]');
+  picker.addEventListener('change',()=>{if(picker.value)apply('color:'+picker.value);picker.value=''});
+  refresh();
+ });
+}
 function renderSection(s,targetSectionId=null){
  let content="";
  if(s.type==="table"){
    const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split("|").map(x=>x.trim()));
    content=rows.length?`<table><tbody>${rows.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${esc(c)}</th>`:`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
- }else{content=(s.content||"").split("\n").map(line=>`<p>${esc(line)||"&nbsp;"}</p>`).join("")}
+ }else{content=richText(s.content||"")}
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
  const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
@@ -369,13 +431,14 @@ const toggleType = () => {
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:true,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
+ wireTextFormatting();
  $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
  $("editor").oninput=saveLocalDraft;
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
 function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",showLab:card.querySelector("[data-show-lab]")?.checked!==false};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><textarea data-field="content">${esc(s.content||"")}</textarea></div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris #abb8c3</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`<textarea data-field="content">${esc(s.content||"")}</textarea>`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
