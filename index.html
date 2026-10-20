@@ -104,34 +104,35 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .tag.tag-category:hover,.tag.tag-category:focus-visible{background:#cce4d2;outline:2px solid #8eb99a;outline-offset:1px}
 .header-search-slot:empty,.home-search-slot:empty{display:none}
 .fiche-open #homeView .home-hero,.fiche-open #homeView .home-extras{display:none}
-.fiche-open #headerSearchSlot{max-width:580px;margin:12px 0 0 auto}
-.fiche-open #headerSearchSlot .searchcard{padding:8px 10px;border-radius:13px;box-shadow:none}
-.fiche-open #headerSearchSlot .label,.fiche-open #headerSearchSlot .filters{display:none}
-.fiche-open #headerSearchSlot #search{font-size:.93rem;padding:9px 11px}
-.fiche-open #headerSearchSlot .search-suggestions{left:0;right:0;top:calc(100% + 3px)}
+.header-search-active #headerSearchSlot{max-width:580px;margin:12px 0 0 auto}
+.header-search-active #headerSearchSlot .searchcard{padding:8px 10px;border-radius:13px;box-shadow:none}
+.header-search-active #headerSearchSlot .label,.header-search-active #headerSearchSlot .filters{display:none}
+.header-search-active #headerSearchSlot #search{font-size:.93rem;padding:9px 11px}
+.header-search-active #headerSearchSlot .search-suggestions{left:0;right:0;top:calc(100% + 3px)}
 .fiche-open #searchLayout{margin-top:0;scroll-margin-top:16px}
-@media(max-width:760px){.fiche-open #headerSearchSlot{max-width:none;margin:12px 0 0}.fiche-open #headerSearchSlot .searchrow{flex-direction:row}.fiche-open #headerSearchSlot #clearSearch{padding:8px}}
+@media(max-width:760px){.header-search-active #headerSearchSlot{max-width:none;margin:12px 0 0}.header-search-active #headerSearchSlot .searchrow{flex-direction:row}.header-search-active #headerSearchSlot #clearSearch{padding:8px}}
 
 /* V5.15 — Recherche sur la même ligne que le titre et la navigation */
 .topline{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .topline .brand{flex:0 0 auto}
 .topline .header-actions{flex:0 0 auto;margin-left:auto}
-.fiche-open #headerSearchSlot{flex:1 1 240px;min-width:180px;max-width:none;margin:0}
-.fiche-open #headerSearchSlot .searchcard{margin:0}
+.header-search-active .topline .header-actions{margin-left:0}
+.header-search-active #headerSearchSlot{flex:1 1 240px;min-width:180px;max-width:none;margin:0}
+.header-search-active #headerSearchSlot .searchcard{margin:0}
 @media(max-width:760px){
- .fiche-open #headerSearchSlot{order:3;flex:1 1 100%;min-width:0;margin:0}
+ .header-search-active #headerSearchSlot{order:3;flex:1 1 100%;min-width:0;margin:0}
  .topline .header-actions{margin-left:auto}
 }
 /* V5.16 — header search sizing and readable suggestions */
-.fiche-open #headerSearchSlot{flex:0 1 420px;max-width:420px;margin-left:22px;margin-right:auto}
-.fiche-open #headerSearchSlot .search-suggestions{background:#fff;color:#25352e;box-shadow:0 12px 28px rgba(0,0,0,.18)}
-.fiche-open #headerSearchSlot .search-suggestions .result,
-.fiche-open #headerSearchSlot .search-suggestions .result strong{color:#25352e}
-.fiche-open #headerSearchSlot .search-suggestions .sub{color:#586a60}
-.fiche-open #headerSearchSlot .search-suggestions .direct-hit{color:#356b54}
+.header-search-active #headerSearchSlot{flex:0 1 420px;max-width:420px;margin-left:auto;margin-right:0}
+.header-search-active #headerSearchSlot .search-suggestions{background:#fff;color:#25352e;box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.header-search-active #headerSearchSlot .search-suggestions .result,
+.header-search-active #headerSearchSlot .search-suggestions .result strong{color:#25352e}
+.header-search-active #headerSearchSlot .search-suggestions .sub{color:#586a60}
+.header-search-active #headerSearchSlot .search-suggestions .direct-hit{color:#356b54}
 .search-suggestions .result[aria-selected="true"]{background:#e1eee5;outline:2px solid #8ab59a;outline-offset:-2px}
-@media(max-width:900px){.fiche-open #headerSearchSlot{flex:1 1 220px;min-width:160px;margin-left:8px;max-width:380px}}
-@media(max-width:760px){.fiche-open #headerSearchSlot{flex:1 1 100%;max-width:none;margin:0}}
+@media(max-width:900px){.header-search-active #headerSearchSlot{flex:1 1 220px;min-width:160px;max-width:380px;margin-left:auto}}
+@media(max-width:760px){.header-search-active #headerSearchSlot{flex:1 1 100%;max-width:none;margin:0}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -446,9 +447,11 @@ function getSearchMatches(){
 let openedSearchFiche=false;
 function updateSearchPlacement(){
  const detailMode=currentView==="home"&&openedSearchFiche&&!editorId;
+ const compactMode=detailMode||currentView!=="home";
  document.body.classList.toggle("fiche-open",detailMode);
+ document.body.classList.toggle("header-search-active",compactMode);
  const card=$("mainSearchCard");
- const target=detailMode?$("headerSearchSlot"):$("homeSearchSlot");
+ const target=compactMode?$("headerSearchSlot"):$("homeSearchSlot");
  if(card.parentElement!==target)target.appendChild(card);
 }
 let highlightedSearchIndex=-1;
