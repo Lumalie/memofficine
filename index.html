@@ -82,7 +82,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #searchLayout{display:block;margin-top:18px}
 #searchLayout>.panel{width:100%}
 #searchLayout.hidden{display:none!important}
-.group-kicker{margin-bottom:4px;font-variant:all-small-caps;letter-spacing:.09em;font-weight:800;font-size:1.08rem;color:var(--green)}
+.detailtop h2{font-variant:small-caps;letter-spacing:.035em}.group-kicker{margin-bottom:4px;font-variant:all-small-caps;letter-spacing:.09em;font-weight:800;font-size:1.08rem;color:var(--green)}
 .group-glance>.section{border-top:0;padding:0}
 .presentation-toggle{display:flex;align-items:center;gap:9px;font-weight:700}.presentation-toggle input,.presentation-verified input{width:auto;flex-shrink:0}.presentation-edit-row{border-bottom:1px solid var(--line);padding:8px 0}.presentation-edit-row>input:not([type="checkbox"]){margin-top:6px}.presentation-verified{display:flex;align-items:center;gap:8px;margin:8px 0 0 25px;font-size:.83rem}</style>
 <style>
@@ -325,7 +325,7 @@ function getSearchMatches(){
  const found=[];
  publicMeds().forEach(m=>{
   const pres=specialtyItems(m);
-  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m)].join(" "));
+  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
   const matchedPres=pres.filter(x=>tokens.some(t=>norm([x.name,x.p.dosage,x.p.lab,x.p.cip,x.p.cis].join(" ")).includes(t)));
   const identity=norm([base,...pres.flatMap(x=>[x.name,x.p.dosage,x.p.lab,x.p.form,x.p.cip,x.p.cis])].join(" "));
   const sections=(m.sections||[]).filter(x=>x.enabled!==false);
@@ -340,7 +340,18 @@ function getSearchMatches(){
   if(sectionMatches.length)sectionMatches.forEach(section=>found.push({med:m,section,presentation:chosenPres}));
   else found.push({med:m,section:null,presentation:chosenPres});
  });
- return found;
+ // Les fiches groupes sont de vrais résultats de recherche, en priorité à pertinence égale.
+ // Une recherche sur le nom d'un groupe le fait apparaître avant les fiches individuelles.
+ return found.sort((a,b)=>{
+  const score=item=>{
+   const name=norm(item.med.name);
+   const exact=name===q?100:0;
+   const starts=name.startsWith(q)?40:0;
+   const nameMatch=name.includes(q)?20:0;
+   return exact+starts+nameMatch+(isGroup(item.med)?5:0);
+  };
+  return score(b)-score(a);
+ });
 }
 let openedSearchFiche=false;
 function renderResults(){
@@ -351,7 +362,7 @@ function renderResults(){
  $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
  $('results').innerHTML=found.length?found.slice(0,35).map(item=>{
    const m=item.med,sec=item.section;
-   return `<div class="result" role="option" tabindex="0" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${isGroup(m)?'Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:''}</div>`;
+   return `<div class="result" role="option" tabindex="0" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:''}</div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $('results').querySelectorAll('.result').forEach(el=>{
    const choose=()=>openMedication(el.dataset.id,el.dataset.presentation===''?null:Number(el.dataset.presentation),el.dataset.section||null);
@@ -728,7 +739,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
@@ -759,7 +770,17 @@ function captureEditorFields(m){
 function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);const ss=m.sections;
  if(action==="up"&&index>0)[ss[index-1],ss[index]]=[ss[index],ss[index-1]];
  if(action==="down"&&index<ss.length-1)[ss[index+1],ss[index]]=[ss[index],ss[index+1]];
- if(action==="toggle")ss[index].enabled=ss[index].enabled===false;
+ if(action==="toggle"){
+  ss[index].enabled=ss[index].enabled===false;
+  const card=$('sectionEditors')?.querySelector(`.section-editor[data-section="${index}"]`);
+  if(card){
+   card.classList.toggle('is-disabled',ss[index].enabled===false);
+   const button=card.querySelector('[data-act="toggle"]');
+   if(button){button.textContent=ss[index].enabled===false?'Afficher':'Masquer';button.setAttribute('aria-pressed',String(ss[index].enabled!==false));}
+  }
+  saveLocalDraft();
+  return;
+ }
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
  renderEditor(id);saveLocalDraft()}
 function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id);saveLocalDraft()}
