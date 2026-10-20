@@ -467,7 +467,7 @@ function tableGridEditor(content){
 }
 function readTableGrid(card){
  const trs=[...card.querySelectorAll(".table-grid-editor tr")];
- return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[|\\r\\n]/g," ").trim()).join(" | ")).join("\n");
+ return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[|\r\n]/g," ").trim()).join(" | ")).join("\n");
 }
 function wireTableGrids(m){
  $("sectionEditors").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
