@@ -71,6 +71,17 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .home-hero{text-align:center;padding:clamp(60px,12vh,130px) 15px 28px}.home-hero h2{font-size:clamp(1.8rem,4vw,2.8rem);margin:0}.home-hero p,.explore-heading p{color:var(--muted)}#homeView .searchcard{max-width:790px;margin:auto;padding:23px}#homeView #search{font-size:1.13rem;padding:15px 17px}#homeView .filters{display:none}#searchLayout{margin-top:24px}.explore-heading{text-align:center;padding:32px 0 14px}.explore-heading h2{font-size:1.9rem;margin:0}.explore-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:18px 0}.explore-controls label{flex:1;min-width:200px;font-weight:700}.explore-controls select{display:block;margin-top:6px}.explore-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:15px}.explore-card{background:white;border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 4px 14px #193f3408}.explore-card h3{margin:0 0 5px}.explore-card p{margin:6px 0;color:var(--muted);font-size:.87rem}.badge-button{border:0;border-radius:7px;padding:5px 9px;font-size:.79rem}.badge-class{background:#e5f0e8;color:#245d4b}.badge-indication{background:#e5edf9;color:#365f8c}.badge-form{background:#e9e5f5;color:#62528c}.explore-specialties{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.explore-specialties button{margin:3px 4px 3px 0;padding:5px 8px;font-size:.82rem}.presentation-target{outline:2px solid #8eb99a;scroll-margin-top:20px}#homeNav,#exploreNav{font-weight:700}.detail-summary{background:#f7faf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:16px}.detail-summary a{display:inline-block;margin:5px 12px 5px 0;color:var(--green);font-size:.87rem;text-decoration:none}.detail-summary a:hover{text-decoration:underline}
 @media(max-width:760px){.home-hero{padding:48px 8px 20px}.explore-controls{display:block}.explore-controls label{display:block;margin-bottom:12px}}
 .group-card{border-left:4px solid #7ca88b}.group-members{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.group-members button,.group-parent-link{margin:4px 5px 4px 0;background:#e5f0e8;border-color:#c5dccb}.group-label{font-size:.76rem;color:#245d4b;font-weight:750;letter-spacing:.04em;text-transform:uppercase}.group-detail{border:1px solid #c5dccb;border-radius:12px;background:#f2f8f3;padding:13px;margin:12px 0}.group-detail button{background:white}.group-indent{padding-left:12px;border-left:2px solid #dce6de;margin-top:10px}
+
+/* V5.3 : suggestions directement sous la recherche, fiche en pleine largeur */
+.searchcard{overflow:visible;position:relative;z-index:2}
+.search-suggestions{position:absolute;left:16px;right:16px;top:calc(100% - 10px);z-index:10;background:white;border:1px solid #b8cbbd;border-radius:13px;box-shadow:0 14px 32px #193f3426;overflow:hidden}
+.search-suggestions .results{max-height:340px;overflow-y:auto}
+.search-suggestions .result{padding:11px 14px}
+.search-suggestions .result:last-child{border-bottom:0}
+.suggestion-count{padding:8px 14px;background:#f5f8f5;color:var(--muted);font-size:.78rem;border-top:1px solid var(--line)}
+#searchLayout{display:block;margin-top:18px}
+#searchLayout>.panel{width:100%}
+#searchLayout.hidden{display:none!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -98,10 +109,10 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <section id="homeView"><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><section class="searchcard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
+    <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Suggestions de recherche"><div class="results" id="results"></div><div class="suggestion-count" id="count"></div></div>
     <div class="filters" id="filters"></div>
   </section>
   <div id="searchLayout" class="layout hidden">
-    <section class="panel"><div class="panelhead"><span>Bibliothèque</span><span class="muted" id="count">0 fiche</span></div><div class="results" id="results"></div></section>
     <section class="panel" aria-live="polite"><div class="panelhead"><span id="detailHeading">Fiche médicament</span><span class="muted">Vue détaillée</span></div><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
   </div>
   </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
@@ -182,7 +193,8 @@ async function loadCloudMeds(){
  meds=(data||[]).map(rowToMed);
  const requestedId=new URLSearchParams(window.location.search).get("fiche");
  selectedId=meds.find(m=>m.id===requestedId)?.id||meds[0]?.id||null;
- if(!restoreLocalDraft()){renderFilters();renderResults();}
+ if(requestedId)openedSearchFiche=true;
+ if(!restoreLocalDraft()){renderFilters();renderResults();if(requestedId)renderDetail(new URLSearchParams(location.search).get("rubrique"),new URLSearchParams(location.search).has("presentation")?Number(new URLSearchParams(location.search).get("presentation")):null);}
 }
 async function syncMedication(m){
  const {data,error}=await supabaseClient.from("medications").upsert(medToRow(m)).select().single();
@@ -252,8 +264,8 @@ function specialtyItems(m){
 function openMedication(id,presentationIndex=null,sectionId=null){
  const m=meds.find(x=>x.id===id);if(!m)return;
  $("search").value="";activeCategory="Toutes";selectedId=id;
- showView("home");renderFilters();renderResults();
- $("searchLayout").classList.remove("hidden");
+ showView("home");openedSearchFiche=true;renderFilters();renderResults();
+ $("searchSuggestions").classList.add("hidden");
  renderDetail(sectionId,presentationIndex);
  if(!sectionId&&presentationIndex===null){viewScrollPositions.home=0;requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,0)));}
  const url=new URL(location.href);url.searchParams.set("fiche",id);
@@ -297,7 +309,7 @@ function selectFiche(id,addHistory=true){
 window.addEventListener("popstate",()=>{
  const id=new URLSearchParams(window.location.search).get("fiche");
  selectedId=meds.find(m=>m.id===id)?.id||meds[0]?.id||null;
- activeCategory="Toutes";$("search").value="";renderFilters();renderResults();
+ activeCategory="Toutes";$("search").value="";openedSearchFiche=!!id;renderFilters();renderResults();
  if(location.hash==="#explorer")showView("explore");else showView("home");
  if(id)renderDetail(new URLSearchParams(location.search).get("rubrique"),new URLSearchParams(location.search).has("presentation")?Number(new URLSearchParams(location.search).get("presentation")):null);
 });
@@ -328,24 +340,26 @@ function getSearchMatches(){
  });
  return found;
 }
+let openedSearchFiche=false;
 function renderResults(){
- $("searchLayout").classList.toggle("hidden",!$("search").value.trim()&&!new URLSearchParams(location.search).has("fiche")&&!admin);
- const found=getSearchMatches();
- $("count").textContent=found.length+" résultat"+(found.length===1?"":"s");
- $("results").innerHTML=found.length?found.map(item=>{
-   const m=item.med, sec=item.section;
-   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}" data-presentation="${item.presentation===null?"":item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
- }).join(""):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
- $("results").querySelectorAll(".result").forEach(el=>el.onclick=()=>{
-   openMedication(el.dataset.id,el.dataset.presentation===""?null:Number(el.dataset.presentation),el.dataset.section||null);
+ const query=$('search').value.trim();
+ const found=query?getSearchMatches():[];
+ const dropdown=$('searchSuggestions');
+ dropdown.classList.toggle('hidden',!query);
+ $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
+ $('results').innerHTML=found.length?found.slice(0,35).map(item=>{
+   const m=item.med,sec=item.section;
+   return `<div class="result" role="option" tabindex="0" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${isGroup(m)?'Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:''}</div>`;
+ }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
+ $('results').querySelectorAll('.result').forEach(el=>{
+   const choose=()=>openMedication(el.dataset.id,el.dataset.presentation===''?null:Number(el.dataset.presentation),el.dataset.section||null);
+   el.onclick=choose;
+   el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
  });
- const validIds=new Set(found.map(x=>x.med.id));
- if(!validIds.has(selectedId)){selectedId=found[0]?.med.id||null}
- // When a query points directly to a section, leave the user on that result rather than auto-opening another.
- if(!found.length){renderDetail();return}
- if(!found.some(x=>x.med.id===selectedId)){selectedId=found[0].med.id}
- renderDetail();
+ // La fiche reste visible pendant une nouvelle recherche ; seule une sélection la remplace.
+ $('searchLayout').classList.toggle('hidden',!openedSearchFiche&&!editorId);
 }
+
 function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
@@ -514,7 +528,7 @@ function addMedication(){
  showView("home");$("searchLayout").classList.remove("hidden");
  if(!admin){toast("Connecte-toi pour ajouter une fiche");return}
  const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dosage:"",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
- meds.unshift(m);selectedId=m.id;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();
+ meds.unshift(m);selectedId=m.id;openedSearchFiche=true;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();
 }
 function addGroup(){
  if(!admin)return;
@@ -524,7 +538,7 @@ function addGroup(){
  renderEditor(m.id);saveLocalDraft();
 }
 function renderEditor(id){
- showView("home");$("searchLayout").classList.remove("hidden");
+ openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
  const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;
  $("detail").classList.add("hidden");$("editor").classList.remove("hidden");$("detailHeading").textContent="Administration de la fiche";
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><button id="backBtn">Retour à la fiche</button></div>
@@ -726,7 +740,7 @@ async function saveEditor(id){
 }
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
 async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
-$("homeNav").onclick=()=>{history.pushState({},"",location.pathname);$("search").value="";showView("home");renderResults()};
+$("homeNav").onclick=()=>{history.pushState({},"",location.pathname);$("search").value="";openedSearchFiche=false;editorId=null;$("searchSuggestions").classList.add("hidden");showView("home");renderResults()};
 $("exploreNav").onclick=()=>{history.pushState({},"",location.pathname+"#explorer");showView("explore")};
 $("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;
 $("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";renderExplorer()};
@@ -735,6 +749,6 @@ $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{t
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
 window.addEventListener("pagehide",saveLocalDraft);
-renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");initCloud();
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");initCloud();
 </script>
 </body></html>
