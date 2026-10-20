@@ -387,7 +387,7 @@ function renderSection(s,targetSectionId=null){
  let content="";
  if(s.type==="table"){
    const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split(/\s+\|\s+/).map(x=>x.trim()));
-   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===2)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${richInline(c).replace(/\\[\\[newline\\]\\]/g,"<br>")}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
+   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===2)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${richInline(c).replace(/\[\[newline\]\]/g,"<br>")}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
  }else{content=richText(s.content||"")}
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
@@ -470,7 +470,7 @@ function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
  const count=Math.max(1,...rows.map(row=>row.length));
- return rows.map(row=>Array.from({length:count},(_,i)=>(row[i]||"").replace(/\\[\\[newline\\]\\]/g,"\\n")));
+ return rows.map(row=>Array.from({length:count},(_,i)=>(row[i]||"").replace(/\[\[newline\]\]/g,"\n")));
 }
 function tableCellToolbar(){
  return `<div class="table-cell-toolbar" hidden>
@@ -486,7 +486,7 @@ function tableGridEditor(content){
 }
 function readTableGrid(card){
  const trs=[...card.querySelectorAll(".table-grid-editor tr")];
- return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[\r\n]/g," ").trim()).join(" | ")).join("\n");
+ return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/\r\n?/g,"\n").replace(/\n/g,"[[newline]]").trim()).join(" | ")).join("\n");
 }
 function wireTableCellFormatting(){
  document.querySelectorAll("#sectionEditors .table-grid-wrap").forEach(wrap=>{
