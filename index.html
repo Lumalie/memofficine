@@ -212,6 +212,11 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explorer-class-choices label{display:flex;align-items:center;gap:6px;font-weight:500}
 .explorer-class-choices input{width:auto;accent-color:#59896b}
 .explorer-section-heading{display:flex!important;align-items:center;gap:9px;margin-bottom:10px!important;font-weight:700!important;font-size:1rem!important}.explorer-section-heading input{width:auto!important;margin:0;accent-color:#59896b}.explorer-form-visibility{padding:10px 4px}.explorer-class-custom .explorer-class-choices{margin:12px 0}.explorer-class-custom .muted{margin-top:9px}
+.section-bottom-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;justify-content:flex-start;margin:16px 0 22px;padding:14px 0;border-top:1px solid var(--line)}
+.section-bottom-actions button{padding:10px 14px;border-radius:10px;border:1px solid #b9cbbd;background:#f5faf6;color:#254b3c;font-weight:700}
+.section-bottom-actions button:last-child{margin-left:auto;background:white}
+.section-bottom-actions button:hover{background:#e8f3eb}
+@media(max-width:600px){.section-bottom-actions button:last-child{margin-left:0}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -279,7 +284,7 @@ const DEFAULT_SECTIONS = [
  {id:"effets",title:"🌀 Effets indésirables",type:"text",content:"À compléter : effets pertinents, fréquence si documentée et signes nécessitant un avis professionnel.",enabled:true},
  {id:"age",title:"🧒 Âge minimum",type:"text",content:"À vérifier selon la spécialité, la forme et l’indication.",enabled:true},
  {id:"grossesse",title:"🤰 Grossesse et allaitement",type:"text",content:"Grossesse : à vérifier dans les sources de référence.\nAllaitement : à vérifier dans les sources de référence.",enabled:true},
- {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"table",content:"CONTRE-INDICATION | exemple\nassociation déconseillée | exemple\nprécaution d’emploi | exemple\nà prendre en compte | exemple",enabled:true},
+ {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"text",content:"À documenter selon les familles et les molécules. Préciser les interactions réellement communes.",enabled:true},
  {id:"oubli",title:"🗓️ En cas d’oubli de prise",type:"text",content:"Conduite à tenir à relever dans la notice officielle de la spécialité exacte.",enabled:true},
  {id:"manipulation",title:"💉 Manipulation / reconstitution",type:"text",content:"À compléter si pertinent : reconstitution, manipulation, modalités d’administration ou d’injection.",enabled:true},
  {id:"conservation",title:"❄️ Modalités de conservation",type:"text",content:"À vérifier : température, durée après ouverture/reconstitution et durée hors réfrigérateur si documentées.",enabled:true},
@@ -978,20 +983,7 @@ function addGroup(){
 function renderEditor(id){
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
  const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;editorLocation(id);
- // Conversion non destructive des anciennes interactions de groupe en tableau éditable.
- // Elle n'est persistée qu'au clic sur Enregistrer.
- if(isGroup(m)){
-  const interaction=(m.sections||[]).find(sec=>sec.id==="interactions");
-  if(interaction&&interaction.type!=="table"){
-   const oldText=String(interaction.content||"").trim();
-   const placeholder="Documenter les interactions communes et renvoyer aux fiches médicaments pour les spécificités.";
-   const safeCell=oldText.replace(/\r?\n/g,"[[newline]]").replace(/\s+\|\s+/g," / ");
-   interaction.type="table";
-   interaction.content="Interaction / association | Points de vigilance / conduite à tenir\n"+(oldText&&oldText!==placeholder?"Notes déjà saisies | "+safeCell:"À renseigner | À vérifier dans les sources officielles");
-  }
- }
- $("detail").classList.add("hidden");$("editor").classList.remove("hidden");
- $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
+ $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
@@ -1010,7 +1002,7 @@ function renderEditor(id){
   </div>
 
  <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
- <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div>
+ <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div><div class="section-bottom-actions"><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" id="editorBackToTop">↑ Retour en haut</button></div>
  <div class="admin-grid admin-meta" style="margin-top:24px"><div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(v=>`<option ${m.status===v?"selected":""}>${v}</option>`).join("")}</select></div><div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?"selected":""}>Brouillon — privé</option><option value="true" ${m.published?"selected":""}>Publié — visible publiquement</option></select></div><div class="full"><label for="f-updated">Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div></div>`;
 const toggleType = () => {
   const isGroupType = $("f-entry-type").value === "groupe";
@@ -1083,6 +1075,7 @@ const toggleType = () => {
  wireTableGrids(m);
  wireTableCellFormatting();
  $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
+ $("editorBackToTop").onclick=()=>{window.scrollTo({top:0,behavior:"smooth"});$("editor").scrollIntoView({block:"start",behavior:"smooth"});};
  $("editor").oninput=saveLocalDraft;
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
@@ -1168,7 +1161,13 @@ function wireTableGrids(m){
   const card=select.closest(".section-editor"),i=Number(card.dataset.section);
   // Capture all other fields before replacing the editor control.
   captureEditorFields(m);
-  m.sections[i].type=select.value;
+  const section=m.sections[i],oldType=section.type,newType=select.value;
+  if(oldType==="table"&&newType==="text"){
+   const rows=tableRows(section.content||"");
+   // Preserve all information in a readable, editable text layout.
+   section.content=rows.map(row=>row.map(cell=>String(cell||"").replace(/\[\[newline\]\]/g,"\n")).join(" — ")).join("\n");
+  }
+  section.type=newType;
   renderEditor(m.id);saveLocalDraft();
  });
 }
