@@ -1240,6 +1240,16 @@ async function saveEditor(id){
   await syncMedication(m);
   clearLocalDraft();
   detailLocation(id);renderDetail();
+  // Après la sauvegarde, afficher le début de la fiche qui vient d'être modifiée.
+  // Deux frames laissent au navigateur le temps d'afficher la vue consultation.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   const detail=$("detail");
+   if(detail&&!detail.classList.contains("hidden")&&selectedId===id){
+    const top=detail.getBoundingClientRect().top+window.scrollY-16;
+    window.scrollTo({top:Math.max(0,top),behavior:"instant"});
+    viewScrollPositions.home=window.scrollY;
+   }
+  }));
   toast("Fiche enregistrée et photos synchronisées");
  }catch(e){
   console.error(e);
@@ -1250,6 +1260,16 @@ async function saveEditor(id){
   if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
  }
 }
+// Ctrl+N / Cmd+N : crée une nouvelle fiche lorsque le navigateur autorise
+// l'interception de ce raccourci (certains le réservent à une nouvelle fenêtre).
+document.addEventListener("keydown",event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="n")return;
+ if(event.repeat||!admin)return;
+ // Ne pas interrompre une édition déjà ouverte, notamment un brouillon non enregistré.
+ if(editorId&&!$("editor").classList.contains("hidden"))return;
+ event.preventDefault();
+ addMedication();
+});
 // Ctrl+M / Cmd+M : ouvre l'édition de la fiche actuellement consultée.
 // Ne détourne pas le raccourci hors d'une fiche, ni quand l'éditeur est déjà ouvert.
 document.addEventListener("keydown",event=>{
