@@ -1056,11 +1056,10 @@ function wireTextFormatting(){
   bubble.addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault()});
   const apply=(mode)=>{
    const start=area.selectionStart,end=area.selectionEnd,selected=area.value.slice(start,end);
-   if(!selected)return;
+   if(!selected&&mode!=='link')return;
+   if(mode==='link'){applyEditorKeyboardFormat(area,'link');bubble.hidden=true;return}
    let replacement=selected;
-   if(mode==='bold')replacement=`**${selected}**`;
-   if(mode==='italic')replacement=`*${selected}*`;
-   if(mode==='underline')replacement=`__${selected}__`;
+   if(['bold','italic','underline'].includes(mode)){toggleInlineMarks(area,mode,start,end);bubble.hidden=true;return}
    if(mode==='bullets')replacement=selected.split('\n').map(x=>'- '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
    if(mode==='numbers')replacement=selected.split('\n').map((x,i)=>(i+1)+'. '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
    if(mode.startsWith('color:'))replacement=`[[${mode.slice(6)}|${selected}]]`;
@@ -1240,6 +1239,7 @@ function tableCellToolbar(){
  <button type="button" data-cell-format="bold" title="Gras"><b>G</b></button>
  <button type="button" data-cell-format="italic" title="Italique"><i>I</i></button>
  <button type="button" data-cell-format="underline" title="Souligné"><u>S</u></button>
+ <button type="button" data-cell-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button>
  <select data-cell-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select>
  </div><div class="table-cell-preview" hidden></div>`;
 }
@@ -1276,11 +1276,10 @@ function wireTableCellFormatting(){
    if(!active||!range)return;
    const [start,end]=range;
    const selected=active.value.slice(start,end);
-   if(!selected)return;
+   if(!selected&&mode!=='link')return;
+   if(mode==='link'){active.focus({preventScroll:true});active.setSelectionRange(start,end);applyEditorKeyboardFormat(active,'link');toolbar.hidden=true;range=null;return}
    let replacement=selected;
-   if(mode==="bold")replacement=`**${selected}**`;
-   if(mode==="italic")replacement=`*${selected}*`;
-   if(mode==="underline")replacement=`__${selected}__`;
+   if(["bold","italic","underline"].includes(mode)){toggleInlineMarks(active,mode,start,end);toolbar.hidden=true;range=null;return}
    if(mode.startsWith("color:"))replacement=`[[${mode.slice(6)}|${selected}]]`;
    active.setRangeText(replacement,start,end,"end");
    active.dispatchEvent(new Event("input",{bubbles:true}));
@@ -1319,7 +1318,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
@@ -1413,15 +1412,37 @@ async function saveEditor(id){
   if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
  }
 }
+// V5.62 : un seul moteur pour les boutons et raccourcis, avec bascule réversible.
+function toggleInlineMarks(area,mode,start=area.selectionStart,end=area.selectionEnd){
+ const marks={bold:'**',italic:'*',underline:'__'};
+ const mark=marks[mode];if(!mark)return false;
+ const value=area.value,selected=value.slice(start,end),n=mark.length;
+ const before=value.slice(Math.max(0,start-n),start),after=value.slice(end,end+n);
+ // La sélection contient déjà les marques : retirer celles-ci.
+ if(selected.length>=2*n&&selected.startsWith(mark)&&selected.endsWith(mark)){
+  const inner=selected.slice(n,-n);
+  area.setRangeText(inner,start,end,'end');area.setSelectionRange(start,start+inner.length);
+ }else if(before===mark&&after===mark){
+  // Cas habituel : le mot reste sélectionné entre ses marques après Ctrl+B.
+  area.setRangeText(selected,start-n,end+n,'end');
+  area.setSelectionRange(start-n,start-n+selected.length);
+ }else{
+  // Ne pas empiler de marqueurs quand on active le même style deux fois.
+  area.setRangeText(mark+selected+mark,start,end,'end');
+  area.setSelectionRange(start+n,start+n+selected.length);
+ }
+ area.dispatchEvent(new Event('input',{bubbles:true}));
+ area.focus({preventScroll:true});
+ if(typeof rememberEditorFocus==='function')rememberEditorFocus();
+ return true;
+}
 // V5.61 : raccourcis fiables dans les zones de texte et cellules.
 // Écoute en capture : le navigateur ne reçoit pas les combinaisons interceptées.
 function applyEditorKeyboardFormat(area,mode){
  const start=area.selectionStart,end=area.selectionEnd;
  const selected=area.value.slice(start,end);
  let replacement=selected,offset=0;
- if(mode==="bold"){replacement=`**${selected}**`;offset=2}
- else if(mode==="italic"){replacement=`*${selected}*`;offset=1}
- else if(mode==="underline"){replacement=`__${selected}__`;offset=2}
+ if(["bold","italic","underline"].includes(mode)){toggleInlineMarks(area,mode,start,end);return}
  else if(mode==="bullets")replacement=(selected||"Élément").split("\n").map(line=>"- "+line.replace(/^\s*(?:[-•]|\d+\.)\s+/,"")).join("\n");
  else if(mode==="numbers")replacement=(selected||"Élément").split("\n").map((line,i)=>`${i+1}. `+line.replace(/^\s*(?:[-•]|\d+\.)\s+/,"")).join("\n");
  else if(mode==="link"){
