@@ -524,6 +524,7 @@ function specialtyItems(m){
 function openMedication(id,presentationIndex=null,sectionId=null){
  const m=meds.find(x=>x.id===id);if(!m)return;
  $("search").value="";activeCategory="Toutes";selectedId=id;
+ if(sectionId)viewScrollPositions.home=0;
  showView("home");openedSearchFiche=true;renderFilters();renderResults();
  $("searchSuggestions").classList.add("hidden");
  renderDetail(sectionId,presentationIndex);
@@ -859,7 +860,16 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const index=Number(sel.value);const target=$("presentation-info");if(target)target.innerHTML=presentationInfo((m.presentations||[])[index])});
  if(targetPresentationIndex!==null){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
-   requestAnimationFrame(()=>{const target=document.getElementById("section-"+CSS.escape(targetSectionId));if(target){target.scrollIntoView({behavior:"smooth",block:"start"});target.classList.add("direct-target")}});
+   // Attendre la restauration de la position de la vue avant le saut ciblé.
+   // Sinon restoreViewScroll() peut ramener la page à son ancienne position.
+   requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if(selectedId!==m.id||currentView!=="home")return;
+    const target=document.getElementById("section-"+CSS.escape(targetSectionId));
+    if(!target)return;
+    target.classList.add("direct-target");
+    target.scrollIntoView({behavior:"instant",block:"start"});
+    viewScrollPositions.home=window.scrollY;
+   })));
  }
 }
 // Copie enrichie d'un passage sélectionné dans une fiche, sans bouton supplémentaire.
