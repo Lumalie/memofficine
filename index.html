@@ -84,7 +84,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #searchLayout.hidden{display:none!important}
 .group-kicker{margin-bottom:4px;font-variant:all-small-caps;letter-spacing:.09em;font-weight:800;font-size:1.08rem;color:var(--green)}
 .group-glance>.section{border-top:0;padding:0}
-</style>
+.presentation-toggle{display:flex;align-items:center;gap:9px;font-weight:700}.presentation-toggle input,.presentation-verified input{width:auto;flex-shrink:0}.presentation-edit-row{border-bottom:1px solid var(--line);padding:8px 0}.presentation-edit-row>input:not([type="checkbox"]){margin-top:6px}.presentation-verified{display:flex;align-items:center;gap:8px;margin:8px 0 0 25px;font-size:.83rem}</style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
 .group-glance h3{color:#245d4b;margin-top:0;font-size:1.25rem}
@@ -400,14 +400,25 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  }
 }
 function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
-function presentationInfo(p){if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
- const img=safeHttp(p.imageUrl||"");const src=safeHttp(p.sourceUrl||"");
- return `<p><strong>Médicament / molécule :</strong> ${esc(p.name||"À renseigner")}</p><p><strong>Laboratoire :</strong> ${esc(p.lab||"À renseigner")}</p><p><strong>Dosage :</strong> ${esc(p.dosage||"À renseigner")} · <strong>Forme :</strong> ${esc(p.form||"À renseigner")}</p><p><strong>Aspect :</strong> ${esc(p.description||"Non documenté")}</p>${p.showMarking!==false?`<p><strong>Marquage / sécabilité :</strong> ${esc(p.marking||"Non documenté")}</p>`:""}${p.showSplit!==false?`<p><strong>Fractionnement :</strong> ${p.canSplit===true?"Possible selon vérification":"Non confirmé — vérifier"}</p>`:""}${p.showCrush!==false?`<p><strong>Écrasement :</strong> ${p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}</p>`:""}<p><strong>CIS :</strong> ${esc(p.cis||"Non renseigné")} · <strong>CIP :</strong> ${esc(p.cip||"Non renseigné")}</p>${img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""}${src?`<p><a href="${esc(src)}" target="_blank" rel="noopener noreferrer">Consulter la source de cette présentation ↗</a></p>`:""}<p class="hint">L'aspect seul ne permet pas d'identifier avec certitude un médicament. Ne pas déduire une équivalence ou une sécabilité d'une photographie.</p>`;
+function presentationInfo(p){
+ if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
+ const img=safeHttp(p.imageUrl||"");
+ const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
+ const rows=[
+  line("showCip","CIP",p.cip||"Non renseigné"),
+  line("showLab","Laboratoire",p.lab||"À renseigner"),
+  line("showAspect","Aspect",p.description||"Non documenté"),
+  line("showMarking","Marquage / sécabilité",p.marking||"Non documenté"),
+  p.showSplit===true?`<p><strong>Fractionnement :</strong> ${p.canSplit===true?"Possible selon vérification":"Non confirmé — vérifier"}</p>`:"",
+  p.showCrush===true?`<p><strong>Écrasement :</strong> ${p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}</p>`:"",
+  p.showPhoto===true&&img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""
+ ].filter(Boolean);
+ return rows.length?rows.join("")+'<p class="hint">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier les informations pour la présentation exacte.</p>':'<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
  const lab=(p.lab||"").trim();
- const showLab=p.showLab!==false;
+ const showLab=true;
  const form=(p.form||"").trim();
  const dosage=(p.dosage||m.dosage||"").trim();
  return [name,showLab&&lab?lab:"",dosage,form].filter(Boolean).join(" · ")||"Présentation "+(i+1);
@@ -415,13 +426,23 @@ function presentationLabel(p,m,i){
 function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const chosen=targetPresentationIndex!==null&&ps[targetPresentationIndex]?targetPresentationIndex:0;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[chosen])}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
 
 function presentationEditor(p,i){
- const fields=[["name","Nom du médicament / de la molécule"],["lab","Laboratoire"],["dosage","Dosage"],["form","Forme"],["cip","Code CIP"],["cis","Code CIS"],["description","Aspect / description"],["marking","Marquage / sécabilité"],["sourceUrl","URL de la source officielle (https)"]];
  const currentPhoto=safeHttp(p.imageUrl||"");
  const pending=pendingPresentationPhotos.get(editorId)?.get(i);
- return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div><div class="presentation-fields">${fields.map(([key,label])=>`<div class="${["description","marking","sourceUrl"].includes(key)?"full":""}"><label>${label}</label><input data-pfield="${key}" value="${esc(p[key]||"")}"></div>`).join("")}
- <div class="full"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-show-lab style="width:auto" ${p.showLab!==false?"checked":""}>Afficher le laboratoire dans le menu déroulant</label></div>
- <div class="full"><strong>Afficher dans la fiche :</strong><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-show-marking style="width:auto" ${p.showMarking!==false?"checked":""}>Marquage / sécabilité</label><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-show-split style="width:auto" ${p.showSplit!==false?"checked":""}>Fractionnement</label><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-show-crush style="width:auto" ${p.showCrush!==false?"checked":""}>Écrasement</label><p class="hint">Décocher masque uniquement la ligne dans la fiche publique, sans effacer son contenu.</p><strong>Informations vérifiées :</strong><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-can-split style="width:auto" ${p.canSplit===true?"checked":""}>Peut être fractionné (si confirmé par une source officielle)</label><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-can-crush style="width:auto" ${p.canCrush===true?"checked":""}>Peut être écrasé (si confirmé par une source officielle)</label><p class="hint">Une case non cochée signifie « non confirmé », pas « interdit ». Vérifier chaque présentation.</p></div>
- <div class="full"><label>Photographie de cette présentation</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div></div></div>`;
+ const check=(key,label)=>`<label class="presentation-toggle"><input type="checkbox" data-show-field="${key}" ${p[key]===true?"checked":""}><span>${label}</span></label>`;
+ const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
+ return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
+ <p class="hint">Coche les critères à afficher sur la fiche. Aucun n'est visible par défaut ; les informations masquées restent enregistrées.</p>
+ <div class="presentation-fields">
+ ${field("cip","CIP","showCip")}
+ ${field("lab","Laboratoire","showLab")}
+ ${field("description","Aspect","showAspect")}
+ ${field("marking","Marquage / sécabilité","showMarking")}
+ <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true?"checked":""}>Possible (confirmé par une source officielle)</label></div>
+ <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true?"checked":""}>Possible (confirmé par une source officielle)</label></div>
+ <div class="full presentation-edit-row">${check("showPhoto","Photo")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
+ <div class="full"><details><summary>Informations internes de la présentation (non affichées dans l'encart)</summary><div class="presentation-fields">${[["name","Nom du médicament / de la molécule"],["dosage","Dosage"],["form","Forme"],["cis","Code CIS"],["sourceUrl","URL de la source officielle (https)"]].map(([key,label])=>`<div><label>${label}</label><input data-pfield="${key}" value="${esc(p[key]||"")}"></div>`).join("")}</div></details></div>
+ <p class="hint full">Une case « Possible » non cochée signifie « non confirmé », pas « interdit ». Vérifier chaque présentation.</p>
+ </div></div>`;
 }
 function wirePhotoInputs(){
  $("presentationEditors").querySelectorAll("[data-photo-file]").forEach(input=>{
@@ -611,7 +632,7 @@ const toggleType = () => {
  };
  $("backBtn").onclick=()=>renderDetail();
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs()};
- $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:true,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
+ $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  wireTextFormatting();
@@ -622,7 +643,7 @@ const toggleType = () => {
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",showLab:card.querySelector("[data-show-lab]")?.checked!==false,showMarking:card.querySelector("[data-show-marking]")?.checked!==false,showSplit:card.querySelector("[data-show-split]")?.checked!==false,showCrush:card.querySelector("[data-show-crush]")?.checked!==false,canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true};card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
 function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
