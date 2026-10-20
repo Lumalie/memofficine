@@ -333,7 +333,8 @@ function showView(view){
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
 function parentGroupId(m){return hierarchyMeta(m).memofficineParentGroup||""}
-function groupChildren(group,visible=publicMeds()){return visible.filter(m=>!isGroup(m)&&parentGroupId(m)===group.id)}
+function splitDci(value){return String(value||"").split(/\s+\+\s+/).map(x=>x.trim()).filter(Boolean)}
+function groupChildren(group,visible=publicMeds()){return visible.filter(m=>!isGroup(m)&&parentGroupId(m)===group.id).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"}))}
 function setHierarchy(m,kind,parent){
  if(!m.sections?.length)m.sections=clone(DEFAULT_SECTIONS);
  const target=(m.sections||[]).find(s=>s.id==="indications")||m.sections[0];
@@ -733,7 +734,7 @@ function renderEditor(id){
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="editor-warning" id="group-parent-help">⚠️ Choisis d’abord une classe thérapeutique ci-dessous : seuls les groupes appartenant à cette même classe seront proposés.</div></div>
-  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div><label for="f-dosage">Dosage de la fiche</label><input id="f-dosage" value="${esc(m.dosage||"")}" placeholder="Ex. : 80 mg"></div><div id="f-dci-wrap" class="full"><label for="f-dci">DCI / substance(s) active(s)</label><input id="f-dci" value="${esc(m.dci)}" placeholder="Ex. : sulfate ferreux"></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div><label for="f-dosage">Dosage de la fiche</label><input id="f-dosage" value="${esc(m.dosage||"")}" placeholder="Ex. : 80 mg"></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Les DCI existantes sont conservées.</p></div>
  <div class="full"><label for="f-indications">Indications thérapeutiques (badges Explorer, séparées par des virgules)</label><input id="f-indications" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Carence en fer, Anémie ferriprive"><div class="muted">Étiquettes de navigation : vérifier les indications officielles avant de les ajouter.</div></div>
  <div><label for="f-category">Classe thérapeutique</label><select id="f-category"><option value="">— Choisir une classe —</option>${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}" ${m.category===c?"selected":""}>${esc(c)}</option>`).join("")}<option value="__new__">＋ Créer une nouvelle classe…</option></select><input id="f-category-new" class="hidden" placeholder="Nom de la nouvelle classe thérapeutique" aria-label="Nouvelle classe thérapeutique"><div class="editor-warning" id="category-help">⚠️ Renseigne la classe thérapeutique avant de choisir un groupe parent.</div></div>
  <div class="full"><label>Alias / termes de recherche</label><input id="f-aliases" value="${esc(m.aliases)}"></div>
@@ -776,6 +777,14 @@ const toggleType = () => {
     });
 };
  $("f-entry-type").onchange=toggleType;toggleType();
+ const dciRoot=$("dciEntries");
+ function renderDciEntries(values){
+  const entries=values.length?values:[""];
+  dciRoot.innerHTML=entries.map((value,i)=>`<div class="dci-entry-row" style="display:flex;gap:8px;margin-top:8px;align-items:center"><input data-dci-entry aria-label="DCI ${i+1}" value="${esc(value)}" placeholder="Ex. : substance active ${i+1}" style="flex:1"><button type="button" data-remove-dci="${i}" aria-label="Retirer cette DCI" ${entries.length===1?'disabled':''}>−</button></div>`).join("");
+  dciRoot.querySelectorAll("[data-remove-dci]").forEach(button=>button.onclick=()=>{const values=[...dciRoot.querySelectorAll("[data-dci-entry]")].map(input=>input.value);values.splice(Number(button.dataset.removeDci),1);renderDciEntries(values)});
+ }
+ renderDciEntries(splitDci(m.dci));
+ $("addDciEntry").onclick=()=>{const values=[...dciRoot.querySelectorAll("[data-dci-entry]")].map(input=>input.value);renderDciEntries([...values,""]);[...dciRoot.querySelectorAll("[data-dci-entry]")].at(-1)?.focus();};
  const categorySelect=$("f-category"),categoryNew=$("f-category-new"),parentSelect=$("f-parent-group");
  function refreshParentGroups(){
   const custom=categorySelect.value==="__new__";
@@ -911,7 +920,7 @@ function captureEditorFields(m){
  const kind=get("f-entry-type");
  m.entry_type=kind==="groupe"?"dci":kind;
  setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=(get("f-dosage")||"").trim();
- m.dci=m.entry_type==="dci"?"":(get("f-dci")||"").trim();
+ m.dci=m.entry_type==="dci"?"":[...($("dciEntries")?.querySelectorAll("[data-dci-entry]")||[])].map(input=>input.value.trim()).filter(Boolean).join(" + ");
  m.parent_dci=m.entry_type==="dci"?"":m.dci;
  m.category=(get("f-category")==="__new__"?(get("f-category-new")||""):get("f-category")||"").trim()||"Autres";
  const linked=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g));
