@@ -86,6 +86,18 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .group-glance>.section{border-top:0;padding:0}
 .presentation-toggle{display:flex;align-items:center;gap:9px;font-weight:700}.presentation-toggle input,.presentation-verified input{width:auto;flex-shrink:0}.presentation-edit-row{border-bottom:1px solid var(--line);padding:8px 0}.presentation-edit-row>input:not([type="checkbox"]){margin-top:6px}.presentation-verified{display:flex;align-items:center;gap:8px;margin:8px 0 0 25px;font-size:.83rem}/* Bibliothèque de sources communes */
 .sources-list{display:grid;gap:12px;margin-top:20px}.source-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}.source-card h3{margin:0 0 5px;font-size:1.07rem}.source-card p{margin:6px 0}.source-card a{color:var(--green);overflow-wrap:anywhere}.source-entry{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fbfcfa}.source-entry .admin-grid{margin-top:10px}.sources-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.source-empty{padding:20px;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+
+/* Accueil : raccourcis et exemples de recherche */
+.home-extras{max-width:790px;margin:18px auto 0;display:grid;gap:19px}
+.home-examples{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;color:var(--muted);font-size:.88rem}
+.home-example{background:#f0f5f0;border:1px solid #d5e3d8;border-radius:999px;padding:7px 13px;color:#315b46;cursor:pointer;font:inherit}
+.home-example:hover,.home-example:focus-visible{background:#e2efe5;border-color:#9ec3a8}
+.home-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.home-shortcut{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 5px 20px #193f3408;color:var(--ink);font:inherit}
+.home-shortcut:hover,.home-shortcut:focus-visible{border-color:#8eb99a;background:#f7fbf7;transform:translateY(-1px)}
+.home-shortcut-icon{background:#e5f0e8;color:#245d4b;width:43px;height:43px;border-radius:12px;display:grid;place-items:center;font-size:1.3rem;flex-shrink:0}
+.home-shortcut strong{display:block;margin-bottom:4px}.home-shortcut small{display:block;color:var(--muted);line-height:1.4}
+@media(max-width:560px){.home-shortcuts{grid-template-columns:1fr}.home-shortcut{padding:15px}.home-extras{margin-top:15px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -116,6 +128,18 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
     <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Suggestions de recherche"><div class="results" id="results"></div><div class="suggestion-count" id="count"></div></div>
     <div class="filters" id="filters"></div>
   </section>
+  <div class="home-extras" id="homeExtras">
+    <div class="home-examples" aria-label="Exemples de recherches">
+      <span>Essayez par exemple :</span>
+      <button type="button" class="home-example" data-example-search="Tardyferon">Tardyferon</button>
+      <button type="button" class="home-example" data-example-search="oubli de prise">Oubli de prise</button>
+      <button type="button" class="home-example" data-example-search="fer par voie orale">Fer par voie orale</button>
+    </div>
+    <div class="home-shortcuts">
+      <button type="button" class="home-shortcut" id="homeExploreShortcut"><span class="home-shortcut-icon" aria-hidden="true">📖</span><span><strong>Explorer les fiches →</strong><small>Par classe thérapeutique et indication</small></span></button>
+      <button type="button" class="home-shortcut" id="homeSourcesShortcut"><span class="home-shortcut-icon" aria-hidden="true">📚</span><span><strong>Consulter les sources →</strong><small>Retrouver les références documentaires</small></span></button>
+    </div>
+  </div>
   <div id="searchLayout" class="layout hidden">
     <section class="panel" aria-live="polite"><div class="panelhead"><span id="detailHeading">Fiche médicament</span><span class="muted">Vue détaillée</span></div><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
   </div>
@@ -855,6 +879,14 @@ async function saveCommonSources(){
 $("homeNav").onclick=()=>{history.pushState({},"",location.pathname);$("search").value="";openedSearchFiche=false;editorId=null;$("searchSuggestions").classList.add("hidden");showView("home");renderResults()};
 $("exploreNav").onclick=()=>{history.pushState({},"",location.pathname+"#explorer");showView("explore")};
 $("sourcesNav").onclick=()=>{history.pushState({},"",location.pathname+"#sources");showView("sources")};
+$("homeExploreShortcut").onclick=()=>$('exploreNav').click();
+$("homeSourcesShortcut").onclick=()=>$('sourcesNav').click();
+document.querySelectorAll('[data-example-search]').forEach(btn=>btn.addEventListener('click',()=>{
+  $("search").value=btn.dataset.exampleSearch;
+  openedSearchFiche=false;
+  renderResults();
+  $("search").focus();
+}));
 $("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;
 $("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";renderExplorer()};
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
