@@ -1,0 +1,1365 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mémofficine — V5</title>
+<style>
+:root{--ink:#23352e;--muted:#687970;--bg:#f4f7f3;--card:#fff;--line:#dce6de;--green:#245d4b;--green2:#e5f0e8;--green3:#c5dccb;--gold:#f6edcf;--goldline:#e8d68d;--red:#a44c43}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;padding:9px 13px}button:hover{border-color:#9bbca7}button.primary{background:var(--green);color:#fff;border-color:var(--green)}button.soft{background:var(--green2);border-color:var(--green3)}button.danger{color:var(--red)}button:disabled{opacity:.5;cursor:not-allowed}
+header{background:#193f34;color:#fff;padding:24px 20px 25px}.wrap{max-width:1180px;margin:auto}.topline{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:15px;background:#e6f0e7;color:#245d4b;display:grid;place-items:center;font-size:24px;font-weight:800}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:.72rem;opacity:.8;font-weight:750}h1{font-size:clamp(1.65rem,4vw,2.25rem);line-height:1.15;margin:2px 0 0}header p{color:#dfebe3;max-width:680px;margin:13px 0 0}.header-actions{display:flex;gap:8px;flex-wrap:wrap}.header-actions button{background:#fff;color:var(--green);border-color:#fff}
+main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh - 160px);display:flex;flex-direction:column}main>.notice{margin-top:auto;margin-bottom:0}main>.foot{margin-bottom:18px}.notice{background:var(--gold);border:1px solid var(--goldline);border-radius:13px;padding:12px 15px;font-size:.9rem;margin-bottom:17px}.searchcard,.panel{background:var(--card);border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 20px #193f3408;overflow:hidden}.searchcard{padding:16px}.label{font-weight:750;display:block;margin-bottom:7px}.searchrow{display:flex;gap:10px}.searchrow input{flex:1;min-width:0}.field,input,select,textarea{width:100%;border:1px solid #c8d5cb;background:white;color:var(--ink);border-radius:10px;padding:10px 12px;outline-color:#6d9b7d}.filters{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.filters button{border-radius:999px;padding:6px 11px;font-size:.88rem}.filters button.active{background:var(--green2);border-color:#9ec3a8;color:#204f3d;font-weight:700}.layout{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(0,1.55fr);gap:16px;margin-top:16px;align-items:start}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);font-weight:800}.muted{color:var(--muted);font-size:.85rem;font-weight:450}.results{max-height:700px;overflow:auto}.result{padding:13px 16px;border-bottom:1px solid #edf1ed;cursor:pointer}.result:hover,.result.selected{background:#edf5ee}.result strong{display:block}.sub{color:var(--muted);font-size:.84rem}.empty{padding:24px;color:var(--muted)}.detail{padding:19px}.detailtop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.detail h2{font-size:1.65rem;line-height:1.2;margin:0 0 5px}.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.tag{background:#edf2ed;border-radius:7px;padding:3px 8px;font-size:.78rem;color:#44584b}.tag.status{background:#fff2d2;color:#795d17}.callout{background:#f1f5f1;border-radius:12px;padding:12px 14px;margin:16px 0;font-size:.91rem}.section{border-top:1px solid var(--line);padding:15px 0}.section h3{font-size:1.03rem;margin:0 0 8px}.section p{margin:4px 0}.section ul{margin:5px 0;padding-left:22px}.section table{border-collapse:collapse;width:100%;font-size:.91rem}.section th,.section td{padding:8px;border:1px solid var(--line);text-align:left;vertical-align:top}.section th{background:#f4f7f3}.section .muted{margin-top:6px}.section-image{margin:12px 0 4px;padding:10px;background:#f7faf7;border:1px solid var(--line);border-radius:13px;max-width:440px}.section-image img{display:block;max-width:100%;max-height:300px;object-fit:contain;margin:auto;border-radius:8px}.section-image figcaption{font-size:.82rem;color:var(--muted);margin-top:7px;text-align:center}.result .direct-hit{display:inline-block;margin-top:7px;background:#e5f0e8;color:#245d4b;border-radius:7px;padding:3px 7px;font-size:.8rem;font-weight:700}.section.direct-target{background:#f0f7f0;outline:2px solid #8eb99a;outline-offset:4px;border-radius:9px;padding-left:10px;padding-right:10px;scroll-margin-top:18px;transition:background .3s}.image-controls{border:1px dashed #b9cbbd;background:#f7faf7;border-radius:10px;padding:10px;margin-top:8px}.image-preview{display:block;max-width:180px;max-height:130px;object-fit:contain;border:1px solid var(--line);background:white;border-radius:8px;margin:8px 0}.sources a{color:var(--green);text-underline-offset:3px;overflow-wrap:anywhere}.admin-banner{background:#e7f0e9;border:1px solid #b8d1be;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;gap:12px;align-items:center}.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-grid .full{grid-column:1/-1}.admin label{display:block;font-size:.88rem;font-weight:700;margin-bottom:5px}.admin textarea{min-height:85px;resize:vertical}.admin h3{margin:18px 0 8px}.admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.section-editor.is-disabled{background:#eef1ed;border-style:dashed;opacity:.78}.section-editor.is-disabled .section-editor-head strong::after{content:" — Masquée sur la fiche";font-weight:500;color:#687970}.section-editor{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fbfcfa}.section-editor-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.section-editor-head strong{font-size:.93rem}.section-editor textarea{margin-top:9px;min-height:75px}.mini-actions{display:flex;gap:5px;flex-wrap:wrap}.mini-actions button{padding:4px 8px;font-size:.8rem}.hidden{display:none!important}.foot{color:var(--muted);font-size:.82rem;margin:20px 2px 0}.modalback{position:fixed;inset:0;background:#14281f88;display:grid;place-items:center;padding:18px;z-index:5}.modal{background:white;border-radius:18px;padding:22px;max-width:430px;width:100%;box-shadow:0 20px 70px #0003}.modal h2{margin:0 0 8px}.modal p{color:var(--muted);font-size:.92rem}.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#193f34;color:white;padding:10px 15px;border-radius:12px;box-shadow:0 5px 20px #0002;z-index:8;max-width:90vw}
+@media(max-width:760px){.topline{align-items:flex-start;flex-direction:column}.layout{grid-template-columns:1fr}.results{max-height:280px}.admin-grid{grid-template-columns:1fr}.admin-grid .full{grid-column:auto}.detail{padding:15px}.detailtop{flex-direction:column}.searchrow{flex-direction:column}}
+ .presentation-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fbfcfa}.presentation-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.presentation-fields .full{grid-column:1/-1}.presentation-fields label{font-size:.82rem}.detail details{border:1px solid var(--line);border-radius:12px;padding:12px;margin:14px 0}.detail summary{font-weight:750;cursor:pointer}.related-item{display:block;width:100%;text-align:left;margin:7px 0}.hint{font-size:.82rem;color:var(--muted)}@media(max-width:760px){.presentation-fields{grid-template-columns:1fr}.presentation-fields .full{grid-column:auto}}
+/* Rubrique prioritaire : conseils au comptoir */
+.section.conseil-comptoir {
+  background: #e7f2e8;
+  border: 1px solid #a9cbb0;
+  border-left: 5px solid #4e8964;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin: 18px 0;
+}
+
+.section.conseil-comptoir h3 {
+  color: #245d4b;
+  font-size: 1.12rem;
+  margin-bottom: 12px;
+}
+
+.section.conseil-comptoir p {
+  margin: 8px 0;
+  line-height: 1.55;
+}
+
+/* Mise en forme contextuelle des rubriques texte */
+.text-edit-wrap{position:relative}
+.text-format-bubble{position:absolute;bottom:calc(100% - 2px);left:0;z-index:4;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:100%;padding:7px;background:#fff;border:1px solid #b9cbbd;border-radius:12px;box-shadow:0 6px 22px #193f3425}
+.text-format-bubble[hidden]{display:none}
+.text-format-bubble button{padding:5px 8px;font-size:.85rem;border-radius:7px}
+.text-format-bubble select{width:auto;max-width:125px;padding:5px;font-size:.82rem}
+.rich-preview{margin-top:8px;padding:10px 12px;border:1px dashed #c5dccb;border-radius:9px;background:#fff;font-size:.91rem}
+.rich-preview p{margin:4px 0}.rich-preview ul,.rich-preview ol{margin:5px 0;padding-left:24px}
+
+/* Edition visuelle des tableaux : stockage compatible avec les anciennes fiches */
+.table-grid-wrap{overflow-x:auto;margin-top:9px}
+.table-grid-editor{border-collapse:separate;border-spacing:4px;width:100%;min-width:310px}
+.table-grid-editor td{padding:0;min-width:105px}
+.table-grid-editor textarea{width:100%;min-width:95px;min-height:75px;padding:9px 8px;border-radius:7px;resize:vertical;line-height:1.4;font-weight:400}
+.table-grid-editor td:first-child textarea{background:#eaf2ec}
+.table-grid-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.table-grid-actions button{font-size:.82rem;padding:6px 9px}
+
+.med-table th[scope="row"]{background:#eef5ef;font-weight:400}
+.med-table td,.med-table th{color:var(--ink);font-weight:400;white-space:pre-line;vertical-align:top}
+.section.conseil-comptoir p{padding-left:3px}
+.med-table td.table-explanation{color:var(--muted)}
+.presentation-status-note{color:var(--muted);font-size:.88rem;margin-left:6px}
+.presentation-status-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.presentation-status-row input[type="text"]{max-width:420px;flex:1;min-width:180px}
+
+/* Barre contextuelle de mise en forme des cellules */
+.table-grid-wrap{position:relative}
+.table-cell-toolbar{position:sticky;top:4px;z-index:3;display:flex;gap:5px;align-items:center;flex-wrap:wrap;width:max-content;max-width:100%;padding:7px;border:1px solid #b9cbbd;background:#fff;box-shadow:0 4px 16px #193f3422;border-radius:10px;margin-bottom:6px}
+.table-cell-toolbar[hidden],.table-cell-preview[hidden]{display:none!important}
+.table-cell-toolbar button{padding:4px 9px}
+.table-cell-toolbar select{width:auto;max-width:165px;padding:5px}
+.table-cell-preview{border:1px dashed #c8d5cb;background:#f7faf7;padding:7px 10px;border-radius:8px;margin:6px 0;font-size:.86rem;overflow-wrap:anywhere}
+
+/* Confort de saisie et distinction visuelle des badges */
+.admin .section-editor textarea[data-field="content"]{min-height:118px;resize:vertical;line-height:1.55}
+.tag.tag-category{background:#e5f0e8;color:#245d4b}
+.tag.tag-form{background:#e9e5f5;color:#62528c}
+.tag.tag-indication{background:#e5edf9;color:#365f8c;border:0;cursor:pointer}.tag.tag-indication:hover{background:#d5e4fa}
+.home-hero{text-align:center;padding:clamp(60px,12vh,130px) 15px 28px}.home-hero h2{font-size:clamp(1.8rem,4vw,2.8rem);margin:0}.home-hero p,.explore-heading p{color:var(--muted)}#homeView .searchcard{max-width:790px;margin:auto;padding:23px}#homeView #search{font-size:1.13rem;padding:15px 17px}#homeView .filters{display:none}#searchLayout{margin-top:24px}.explore-heading{text-align:center;padding:32px 0 14px}.explore-heading h2{font-size:1.9rem;margin:0}.explore-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:18px 0}.explore-controls label{flex:1;min-width:200px;font-weight:700}.explore-controls select{display:block;margin-top:6px}.explore-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:15px}.explore-card{background:white;border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 4px 14px #193f3408}.explore-card h3{margin:0 0 5px}.explore-card p{margin:6px 0;color:var(--muted);font-size:.87rem}.badge-button{border:0;border-radius:7px;padding:5px 9px;font-size:.79rem}.badge-class{background:#e5f0e8;color:#245d4b}.badge-indication{background:#e5edf9;color:#365f8c}.badge-form{background:#e9e5f5;color:#62528c}.explore-specialties{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.explore-specialties button{margin:3px 4px 3px 0;padding:5px 8px;font-size:.82rem}.presentation-target{outline:2px solid #8eb99a;scroll-margin-top:20px}#homeNav,#exploreNav{font-weight:700}.detail-summary{background:#f7faf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:16px}.detail-summary a{display:inline-block;margin:5px 12px 5px 0;color:var(--green);font-size:.87rem;text-decoration:none}.detail-summary a:hover{text-decoration:underline}
+@media(max-width:760px){.home-hero{padding:48px 8px 20px}.explore-controls{display:block}.explore-controls label{display:block;margin-bottom:12px}}
+.group-card{border-left:4px solid #7ca88b}.group-members{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.group-members button,.group-parent-link{margin:4px 5px 4px 0;background:#e5f0e8;border-color:#c5dccb}.group-label{font-size:.76rem;color:#245d4b;font-weight:750;letter-spacing:.04em;text-transform:uppercase}.group-detail{border:1px solid #c5dccb;border-radius:12px;background:#f2f8f3;padding:13px;margin:12px 0}.group-detail button{background:white}.group-indent{padding-left:12px;border-left:2px solid #dce6de;margin-top:10px}
+
+/* V5.3 : suggestions directement sous la recherche, fiche en pleine largeur */
+.searchcard{overflow:visible;position:relative;z-index:2}
+.search-suggestions{position:absolute;left:16px;right:16px;top:calc(100% - 10px);z-index:10;background:white;border:1px solid #b8cbbd;border-radius:13px;box-shadow:0 14px 32px #193f3426;overflow:hidden}
+.search-suggestions .results{max-height:340px;overflow-y:auto}
+.search-suggestions .result{padding:11px 14px}
+.search-suggestions .result:last-child{border-bottom:0}
+.suggestion-count{padding:8px 14px;background:#f5f8f5;color:var(--muted);font-size:.78rem;border-top:1px solid var(--line)}
+#searchLayout{display:block;margin-top:18px}
+#searchLayout>.panel{width:100%}
+#searchLayout.hidden{display:none!important}
+.detailtop h2{font-variant:normal;text-transform:uppercase;letter-spacing:.035em}.group-kicker{margin-bottom:4px;font-variant:all-small-caps;letter-spacing:.09em;font-weight:800;font-size:1.08rem;color:var(--green)}
+.group-glance>.section{border-top:0;padding:0}
+.presentation-toggle{display:flex;align-items:center;gap:9px;font-weight:700}.presentation-toggle input,.presentation-verified input{width:auto;flex-shrink:0}.presentation-edit-row{border-bottom:1px solid var(--line);padding:8px 0}.presentation-edit-row>input:not([type="checkbox"]){margin-top:6px}.presentation-verified{display:flex;align-items:center;gap:8px;margin:8px 0 0 25px;font-size:.83rem}/* Bibliothèque de sources communes */
+.sources-list{display:grid;gap:12px;margin-top:20px}.source-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}.source-card h3{margin:0 0 5px;font-size:1.07rem}.source-card p{margin:6px 0}.source-card a{color:var(--green);overflow-wrap:anywhere}.source-entry{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fbfcfa}.source-entry .admin-grid{margin-top:10px}.sources-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.source-empty{padding:20px;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+
+/* Accueil : raccourcis et exemples de recherche */
+.home-extras{max-width:790px;margin:18px auto 0;display:grid;gap:19px}
+.home-examples{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;color:var(--muted);font-size:.88rem}
+.home-example{background:#f0f5f0;border:1px solid #d5e3d8;border-radius:999px;padding:7px 13px;color:#315b46;cursor:pointer;font:inherit}
+.home-example:hover,.home-example:focus-visible{background:#e2efe5;border-color:#9ec3a8}
+.home-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.home-shortcut{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 5px 20px #193f3408;color:var(--ink);font:inherit}
+.home-shortcut:hover,.home-shortcut:focus-visible{border-color:#8eb99a;background:#f7fbf7;transform:translateY(-1px)}
+.home-shortcut-icon{background:#e5f0e8;color:#245d4b;width:43px;height:43px;border-radius:12px;display:grid;place-items:center;font-size:1.3rem;flex-shrink:0}
+.home-shortcut strong{display:block;margin-bottom:4px}.home-shortcut small{display:block;color:var(--muted);line-height:1.4}
+@media(max-width:560px){.home-shortcuts{grid-template-columns:1fr}.home-shortcut{padding:15px}.home-extras{margin-top:15px}}
+
+/* V5.14 — Recherche contextuelle dans la bannière et fiches en priorité */
+.tag.tag-category{border:0;cursor:pointer;font:inherit;font-size:.78rem}
+.tag.tag-category:hover,.tag.tag-category:focus-visible{background:#cce4d2;outline:2px solid #8eb99a;outline-offset:1px}
+.header-search-slot:empty,.home-search-slot:empty{display:none}
+.fiche-open #homeView .home-hero,.fiche-open #homeView .home-extras{display:none}
+.header-search-active #headerSearchSlot{max-width:580px;margin:12px 0 0 auto}
+.header-search-active #headerSearchSlot .searchcard{padding:8px 10px;border-radius:13px;box-shadow:none}
+.header-search-active #headerSearchSlot .label,.header-search-active #headerSearchSlot .filters{display:none}
+.header-search-active #headerSearchSlot #search{font-size:.93rem;padding:9px 11px}
+.header-search-active #headerSearchSlot .search-suggestions{left:0;right:0;top:calc(100% + 3px)}
+.fiche-open #searchLayout{margin-top:0;scroll-margin-top:16px}
+@media(max-width:760px){.header-search-active #headerSearchSlot{max-width:none;margin:12px 0 0}.header-search-active #headerSearchSlot .searchrow{flex-direction:row}.header-search-active #headerSearchSlot #clearSearch{padding:8px}}
+
+/* V5.15 — Recherche sur la même ligne que le titre et la navigation */
+.topline{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.topline .brand{flex:0 0 auto}
+.topline .header-actions{flex:0 0 auto;margin-left:auto}
+.header-search-active .topline .header-actions{margin-left:0}
+.header-search-active #headerSearchSlot{flex:1 1 240px;min-width:180px;max-width:none;margin:0}
+.header-search-active #headerSearchSlot .searchcard{margin:0}
+@media(max-width:760px){
+ .header-search-active #headerSearchSlot{order:3;flex:1 1 100%;min-width:0;margin:0}
+ .topline .header-actions{margin-left:auto}
+}
+/* V5.16 — header search sizing and readable suggestions */
+.header-search-active #headerSearchSlot{flex:0 1 420px;max-width:420px;margin-left:auto;margin-right:0}
+.header-search-active #headerSearchSlot .search-suggestions{background:#fff;color:#25352e;box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.header-search-active #headerSearchSlot .search-suggestions .result,
+.header-search-active #headerSearchSlot .search-suggestions .result strong{color:#25352e}
+.header-search-active #headerSearchSlot .search-suggestions .sub{color:#586a60}
+.header-search-active #headerSearchSlot .search-suggestions .direct-hit{color:#356b54}
+.search-suggestions .result[aria-selected="true"]{background:#e1eee5;outline:2px solid #8ab59a;outline-offset:-2px}
+@media(max-width:900px){.header-search-active #headerSearchSlot{flex:1 1 220px;min-width:160px;max-width:380px;margin-left:auto}}
+@media(max-width:760px){.header-search-active #headerSearchSlot{flex:1 1 100%;max-width:none;margin:0}}
+.editor-warning{color:#a72f35;font-size:.83rem;font-weight:650;margin-top:6px}
+.needs-attention{border:2px solid #c8484e!important}
+.editor-top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.editor-top-actions button{font-size:.85rem;padding:9px 12px;background:#fff;color:var(--ink);border:1px solid #bdcec2;border-radius:10px;font-weight:650}.editor-top-actions button.primary{background:var(--green);color:#fff;border-color:var(--green)}.editor-top-actions button.danger{background:#a44c43;color:#fff;border-color:#a44c43}.editor-top-actions button:hover{filter:brightness(.96)}.dosage-fields{display:flex;gap:8px}.dosage-fields input{flex:1;min-width:0}.dosage-fields select{width:120px}.detail-last-updated{font-size:.78rem;color:var(--muted);text-align:right;margin-top:25px}.admin-meta{border-top:1px solid var(--line);padding-top:18px}.admin-meta input[type=date]{max-width:220px}@media(max-width:800px){.editor .detailtop{flex-direction:column}.editor-top-actions{justify-content:flex-start}}
+
+/* Barre d'actions de l'éditeur : styles indépendants de la navigation */
+#editor .editor-top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px}
+#editor .editor-top-actions button{appearance:none;display:inline-flex;align-items:center;justify-content:center;width:auto;min-height:38px;padding:9px 13px;border:1px solid #b9cbbd;border-radius:10px;background:#fff;color:#254b3c;font-weight:650;box-shadow:0 1px 2px #193f3410}
+#editor .editor-top-actions button.primary{background:var(--green);border-color:var(--green);color:#fff}
+#editor .editor-top-actions button.danger{background:#a44c43;border-color:#a44c43;color:#fff}
+#editor .editor-top-actions button:hover{filter:brightness(.96)}
+@media(max-width:800px){#editor .editor-top-actions{justify-content:flex-start}}
+
+.detail-dci{margin-top:10px;font-size:.92rem;line-height:1.6;color:#64736c}.detail-dci-label{font-weight:650}.detail-dci-item{color:inherit}.detail-dci-separator{color:#9aa8a0}
+.ingredient-editor-row{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#f9fbf8}.ingredient-editor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.ingredient-editor-head button{width:auto}.ingredient-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ingredient-editor-grid label{font-weight:600}.ingredient-editor-grid input{margin-top:5px}.ingredient-title-choice{display:flex!important;gap:9px;align-items:center;margin:12px 0!important}.ingredient-title-choice input{width:auto}.ingredient-salt{font-size:.82rem;color:var(--muted);margin-top:5px}@media(max-width:600px){.ingredient-editor-grid{grid-template-columns:1fr}}
+.tag-form[data-fiche-form]{cursor:pointer;border:0;font:inherit}.badge-form[data-filter-form]{cursor:pointer}
+
+/* V5.32 : typographie uniforme des badges de fiche */
+#detail .detailtop .tags .tag{
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;min-height:26px;padding:4px 9px;
+  border:0;border-radius:7px;
+  font-family:inherit;font-size:.78rem;font-weight:600;
+  line-height:1.3;letter-spacing:normal;text-transform:none;
+  text-align:center;vertical-align:middle;
+}
+#detail .detailtop .tags button.tag{appearance:none;cursor:pointer}
+#detail .detailtop .tags button.tag:hover{filter:brightness(.96)}
+#detail .detailtop .tags button.tag:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.explore-card-form{margin:2px 0 9px}.explore-form-inline{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:7px;background:#e9e5f5;color:#62528c;font-size:.78rem;font-weight:600;line-height:1.4}.explore-card-form .explore-form-inline{margin-left:0}.group-members button .explore-form-inline{vertical-align:middle}
+
+/* V5.35 : bibliothèque hiérarchique, groupes imbriqués et formes visibles */
+.explore-tree{display:grid;gap:12px;width:100%}
+.explore-tree-node{background:var(--card,#fff);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.explore-tree-group{border-left:4px solid #83b095;background:#f7faf7}
+.explore-tree-med{border-left:3px solid #e2d9f2}
+.explore-tree-line{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.explore-tree-icon{color:#51816a;font-size:.9rem}
+.explore-tree-med>.explore-tree-line>.explore-tree-icon{color:#8772ad}
+.explore-tree-name{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;font-size:1rem;font-weight:700;color:var(--text,#244c3b);text-align:left}
+.explore-tree-name:hover{text-decoration:underline}
+.explore-tree-type{margin-left:auto;font-size:.72rem;color:var(--muted,#718077)}
+.explore-tree-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.explore-tree-children{margin-top:12px;padding-left:clamp(10px,2.5vw,24px);border-left:2px solid #dce8df;display:grid;gap:9px}
+.explore-tree-context>.explore-tree-line{opacity:.7}
+@media(max-width:650px){.explore-tree-node{padding:10px}.explore-tree-children{padding-left:10px}.explore-tree-type{margin-left:0}}
+
+/* V5.36 : arborescence pliable, compacte et lisible */
+.explore-tree{gap:8px}
+.explore-tree-node{padding:10px 12px}
+.explore-tree-group{background:#f8fbf8}
+.explore-tree-children{margin-top:8px;gap:7px}
+.explore-tree-disclosure{margin-top:7px}
+.explore-tree-disclosure>summary{cursor:pointer;display:list-item;color:#657d6e;font-size:.79rem;font-weight:600;padding:5px 2px;list-style-position:inside}
+.explore-tree-disclosure>summary:hover{color:#2d644a}
+.explore-tree-disclosure:not([open]) .explore-tree-children{display:none}
+
+/* V5.37 : la flèche à gauche du groupe est le seul déclencheur du dépliage */
+.explore-tree-toggle{appearance:none!important;display:inline-flex;align-items:center;justify-content:center;flex:none;width:26px;height:28px;min-width:26px;padding:0!important;border:0!important;border-radius:6px;background:transparent!important;color:#497b61!important;font-size:1.3rem;line-height:1;cursor:pointer;box-shadow:none!important}
+.explore-tree-toggle:hover{background:#e5efe8!important}
+.explore-tree-toggle:focus-visible{outline:2px solid #497b61;outline-offset:2px}
+.explore-tree-leaf-space{display:inline-block;flex:none;width:26px}
+.explore-tree-children[hidden]{display:none!important}
+.explore-tree-children{margin-top:9px}
+/* V5.38 : supprimer la ligne guide et alléger les lignes des groupes */
+.explore-tree-children{border-left:0!important}
+
+.explorer-visibility-editor{background:#f6faf7;border:1px solid #dce8df;border-radius:12px;padding:14px}
+.explorer-visibility-options{display:flex;gap:12px 22px;flex-wrap:wrap;margin-top:10px}
+.explorer-visibility-options label{display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer}
+.explorer-visibility-options input{width:auto;accent-color:#59896b}
+.explorer-class-custom{background:#fafcfb;border:1px solid #e1eae3;border-radius:12px;padding:12px}
+.explorer-class-choices{display:flex;gap:8px 16px;flex-wrap:wrap;margin-top:10px}
+.explorer-class-choices label{display:flex;align-items:center;gap:6px;font-weight:500}
+.explorer-class-choices input{width:auto;accent-color:#59896b}
+.explorer-section-heading{display:flex!important;align-items:center;gap:9px;margin-bottom:10px!important;font-weight:700!important;font-size:1rem!important}.explorer-section-heading input{width:auto!important;margin:0;accent-color:#59896b}.explorer-form-visibility{padding:10px 4px}.explorer-class-custom .explorer-class-choices{margin:12px 0}.explorer-class-custom .muted{margin-top:9px}
+.section-bottom-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;justify-content:flex-start;margin:16px 0 22px;padding:14px 0;border-top:1px solid var(--line)}
+.section-bottom-actions button{padding:10px 14px;border-radius:10px;border:1px solid #b9cbbd;background:#f5faf6;color:#254b3c;font-weight:700}
+.section-bottom-actions button:last-child{margin-left:auto;background:white}
+.section-bottom-actions button:hover{background:#e8f3eb}
+@media(max-width:600px){.section-bottom-actions button:last-child{margin-left:0}}
+</style>
+<style>
+.group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
+.group-glance h3{color:#245d4b;margin-top:0;font-size:1.25rem}
+.group-glance .section{margin:0;border:0;background:transparent;padding:0;box-shadow:none}
+.group-glance .section h3{display:block}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="topline">
+    <a class="brand" href="/memofficine/" style="color:inherit;text-decoration:none" aria-label="Retour à l'accueil de Mémofficine">
+  <div class="logo">M</div>
+  <div>
+    <div class="eyebrow">Repères de délivrance</div>
+    <h1>Mémofficine</h1>
+  </div>
+</a>
+    <div id="headerSearchSlot" class="header-search-slot"></div>
+    <div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button></div>
+  </div>
+  <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
+</div></header>
+<main>
+  <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémofficine</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+  <section id="homeView"><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><div id="homeSearchSlot"></div><section class="searchcard" id="mainSearchCard">
+    <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
+    <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
+    <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Suggestions de recherche"><div class="results" id="results"></div><div class="suggestion-count" id="count"></div></div>
+    <div class="filters" id="filters"></div>
+  </section>
+  <div class="home-extras" id="homeExtras">
+    <div class="home-examples" aria-label="Exemples de recherches">
+      <span>Essayez par exemple :</span>
+      <button type="button" class="home-example" data-example-search="Tardyferon">Tardyferon</button>
+      <button type="button" class="home-example" data-example-search="oubli de prise">Oubli de prise</button>
+      <button type="button" class="home-example" data-example-search="fer par voie orale">Fer par voie orale</button>
+    </div>
+    <div class="home-shortcuts">
+      <button type="button" class="home-shortcut" id="homeExploreShortcut"><span class="home-shortcut-icon" aria-hidden="true">📖</span><span><strong>Explorer les fiches →</strong><small>Par classe thérapeutique et indication</small></span></button>
+      <button type="button" class="home-shortcut" id="homeSourcesShortcut"><span class="home-shortcut-icon" aria-hidden="true">📚</span><span><strong>Consulter les sources →</strong><small>Retrouver les références documentaires</small></span></button>
+    </div>
+  </div>
+  <div id="searchLayout" class="layout hidden">
+    <section class="panel" aria-live="polite"><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
+  </div>
+  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémofficine.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
+  <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
+</main>
+<div id="modalRoot"></div><div id="toastRoot"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://xbhqogndzbrjhrigtncy.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4cQdbKxcRjO8JH48uA8bZA_taBLuHdE";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const PHOTO_BUCKET = "presentation-photos";
+// Les fichiers choisis restent en mémoire jusqu’à l’enregistrement (pas dans sessionStorage).
+const pendingPresentationPhotos = new Map();
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
+const DEFAULT_SECTIONS = [
+ {id:"conseil-comptoir",title:"📣 À DIRE AU COMPTOIR",type:"text",content:"💧 Mode d’administration : préciser le liquide et les modalités de prise après vérification de la présentation.\n⚠️ Effets indésirables à signaler : préciser les signes et la conduite à tenir selon les sources officielles.\n💬 Conseil associé : à adapter au médicament et à la situation du patient.",enabled:true},
+ {id:"indications",title:"📍 Indications",type:"text",content:"À compléter à partir d’une source officielle vérifiée.",enabled:true},
+ {id:"posologie",title:"🔢 Posologie",type:"text",content:"À compléter selon la spécialité, le dosage et l’indication. Vérifier la prescription et les sources officielles.",enabled:true},
+ {id:"prise",title:"🕐 Modalités de prise",type:"table",content:"🍽️ | moment du repas | pourquoi ?\n💧 | avec quel liquide | pourquoi ?\n🍎✅ | aliments à privilégier | exemple 1 ; exemple 2\n🍎❌ | aliments à éviter | exemple 1\n🧍‍♀️ | position particulière | pourquoi ?",enabled:true},
+ {id:"effets",title:"🌀 Effets indésirables",type:"text",content:"À compléter : effets pertinents, fréquence si documentée et signes nécessitant un avis professionnel.",enabled:true},
+ {id:"age",title:"🧒 Âge minimum",type:"text",content:"À vérifier selon la spécialité, la forme et l’indication.",enabled:true},
+ {id:"grossesse",title:"🤰 Grossesse et allaitement",type:"text",content:"Grossesse : à vérifier dans les sources de référence.\nAllaitement : à vérifier dans les sources de référence.",enabled:true},
+ {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"text",content:"À documenter selon les familles et les molécules. Préciser les interactions réellement communes.",enabled:true},
+ {id:"oubli",title:"🗓️ En cas d’oubli de prise",type:"text",content:"Conduite à tenir à relever dans la notice officielle de la spécialité exacte.",enabled:true},
+ {id:"manipulation",title:"💉 Manipulation / reconstitution",type:"text",content:"À compléter si pertinent : reconstitution, manipulation, modalités d’administration ou d’injection.",enabled:true},
+ {id:"conservation",title:"❄️ Modalités de conservation",type:"text",content:"À vérifier : température, durée après ouverture/reconstitution et durée hors réfrigérateur si documentées.",enabled:true},
+ {id:"sources",title:"📚 Sources et mise à jour",type:"sources",content:"Sources : à ajouter\nMise à jour le : à renseigner\nStatut : à vérifier",enabled:true}
+];
+const GROUP_SECTIONS = [
+ {id:"coup-oeil",title:"👀 En un coup d’œil",type:"text",content:"• Repère essentiel à documenter\n• Point de vigilance commun à vérifier\n• Question clé au comptoir",enabled:true},
+ {id:"presentation-groupe",title:"📍 Présentation du groupe",type:"text",content:"Définition, périmètre et substances concernées, à documenter avec des sources fiables.",enabled:true},
+ {id:"mecanisme",title:"⚙️ Mécanisme d’action",type:"text",content:"Expliquer simplement le mécanisme commun, sans généraliser aux exceptions.",enabled:true},
+ {id:"indications",title:"🎯 Indications thérapeutiques communes",type:"text",content:"Préciser les indications réellement partagées par les médicaments du groupe.",enabled:true,indicationTags:[]},
+ {id:"vigilance",title:"⚠️ Points de vigilance communs",type:"text",content:"Vérifier les précautions communes et signaler les exceptions éventuelles.",enabled:true},
+ {id:"interactions",title:"🔄 Interactions importantes",type:"table",content:"Interaction / association | Points de vigilance / conduite à tenir\nÀ renseigner | À vérifier dans les sources officielles",enabled:true},
+ {id:"questions-comptoir",title:"💬 Questions au comptoir",type:"text",content:"• Quel médicament et quelle présentation ?\n• Pour quelle indication ?\n• Quels autres traitements et facteurs de risque ?",enabled:true},
+ {id:"sources",title:"📚 Sources et mise à jour",type:"text",content:"Sources officielles : à renseigner\nDate de vérification : à renseigner",enabled:true}
+];
+const starter = [
+ {id:"demo-1",name:"Amoxicilline",dci:"Amoxicilline",category:"Infectiologie",form:"Gélule / poudre pour suspension (selon spécialité)",aliases:"antibiotique pénicilline",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)},
+ {id:"demo-2",name:"Paracétamol",dci:"Paracétamol",category:"Douleur",form:"Comprimé / gélule / solution (selon spécialité)",aliases:"douleur fièvre",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)},
+ {id:"demo-3",name:"Lévothyroxine",dci:"Lévothyroxine",category:"Endocrinologie",form:"Selon spécialité",aliases:"thyroïde",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)}
+];
+function clone(x){return JSON.parse(JSON.stringify(x))}
+let meds=[], selectedId=null, activeCategory="Toutes", admin=false, currentUser=null;
+const $=id=>document.getElementById(id);
+// Brouillon temporaire propre à cet onglet et à ce compte administrateur.
+const draftKey=()=>currentUser?.id?"memofficine-editor-v3:"+currentUser.id:null;
+let editorId=null;
+function saveLocalDraft(){
+ if(!admin||!editorId||$("editor").classList.contains("hidden"))return;
+ const m=meds.find(x=>x.id===editorId);if(!m)return;
+ captureEditorFields(m);
+ try{const key=draftKey();if(key)sessionStorage.setItem(key,JSON.stringify({id:m.id,med:m}));}
+ catch(e){console.warn("Brouillon local indisponible",e)}
+}
+function clearLocalDraft(){try{const key=draftKey();if(key)sessionStorage.removeItem(key)}catch(e){console.warn(e)}}
+function restoreLocalDraft(){
+ if(!admin)return false;
+ try{
+  const key=draftKey(),raw=key&&sessionStorage.getItem(key);if(!raw)return false;
+  const draft=JSON.parse(raw);if(!draft?.med?.id||!Array.isArray(draft.med.sections))return false;
+  const params=new URLSearchParams(location.search);
+  if(params.get("edition")!=="1"||params.get("fiche")!==draft.med.id)return false;
+  const i=meds.findIndex(m=>m.id===draft.med.id);
+  if(i>=0)meds[i]=draft.med;else meds.unshift(draft.med);
+  selectedId=draft.med.id;renderFilters();renderResults();renderEditor(selectedId);return true;
+ }catch(e){console.warn("Restauration du brouillon impossible",e);return false}
+}
+
+
+function rowToMed(row){return {parent_dci:row.parent_dci||"",presentations:Array.isArray(row.presentations)?row.presentations:[],id:row.id,name:row.name||"",dosage:row.dosage||"",dci:row.dci||"",category:row.category||"Autres",form:row.form||"",aliases:Array.isArray(row.aliases)?row.aliases.join(", "):(row.aliases||""),entry_type:row.entry_type||"specialite",status:row.review_status||"À vérifier",updated:row.verified_at||"",source:row.source_url||"",sections:Array.isArray(row.sections)?row.sections:clone(DEFAULT_SECTIONS),published:row.status==="published"}}
+function medToRow(m){return {parent_dci:m.entry_type==="dci"?null:(m.parent_dci||null),presentations:m.presentations||[],id:m.id,name:m.name,dosage:m.dosage||null,dci:m.entry_type==="dci"?null:(m.dci||null),entry_type:m.entry_type||"specialite",category:m.category||"Autres",form:m.form||null,aliases:String(m.aliases||"").split(",").map(x=>x.trim()).filter(Boolean),review_status:m.status||"À vérifier",verified_at:m.updated||null,source_url:m.source||null,sections:(m.sections||[]).map(({imageData,...section})=>section),status:m.published?"published":"draft"}}
+async function loadCloudMeds(){
+ const {data,error}=await supabaseClient.from("medications").select("*").order("name");
+ if(error){console.error(error);toast("Impossible de charger les fiches : vérifie la configuration SQL");return}
+ const wasEditing=admin&&editorId&&!$("editor").classList.contains("hidden");
+ if(wasEditing)saveLocalDraft();
+ meds=(data||[]).map(rowToMed);
+ renderSources();
+ const requestedId=new URLSearchParams(window.location.search).get("fiche");
+ selectedId=meds.find(m=>m.id===requestedId&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
+ if(requestedId)openedSearchFiche=true;
+ if(!restoreLocalDraft()){
+  renderFilters();renderResults();
+  if(requestedId){
+   const params=new URLSearchParams(location.search);
+   if(params.get("edition")==="1"&&admin&&meds.some(m=>m.id===requestedId)){
+    renderEditor(requestedId);
+   }else{
+    renderDetail(params.get("rubrique"),params.has("presentation")?Number(params.get("presentation")):null);
+   }
+  }
+ }
+}
+async function syncMedication(m){
+ const {data,error}=await supabaseClient.from("medications").upsert(medToRow(m)).select().single();
+ if(error){console.error(error);toast("Enregistrement refusé par Supabase : vérifie les permissions et la structure SQL");throw error}
+ const updated=rowToMed(data);const index=meds.findIndex(x=>x.id===updated.id);if(index>=0)meds[index]=updated;else meds.unshift(updated);selectedId=updated.id;renderFilters();renderResults();return updated;
+}
+async function initCloud(){
+ const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
+ if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=!!currentUser;
+ $("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);
+ await loadCloudMeds();
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();},0);});
+}
+let currentView="home";
+const viewScrollPositions={home:0,explore:0,sources:0};
+let restoringViewScroll=false;
+// Mémoriser la position pendant la lecture, avant qu'une vue masquée réduise la page.
+window.addEventListener("scroll",()=>{
+ if(!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
+},{passive:true});
+function restoreViewScroll(view){
+ restoringViewScroll=true;
+ // Laisser au navigateur le temps de rendre la nouvelle vue et ses cartes.
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const target=viewScrollPositions[view]||0;
+  window.scrollTo(0,target);
+  requestAnimationFrame(()=>{restoringViewScroll=false;});
+ }));
+}
+let editorReturnFocus=null;
+function rememberEditorFocus(){
+ if(!editorId||currentView!=="home")return;
+ const el=document.activeElement;
+ if(!el||!$("editor").contains(el)||!el.matches('input,textarea,[contenteditable="true"]'))return;
+ const section=el.closest('.section-editor');
+ const pres=el.closest('[data-presentation-index]');
+ editorReturnFocus={id:editorId,elementId:el.id||"",sectionIndex:section?.dataset.section??null,presentationIndex:pres?.dataset.presentationIndex??null,field:el.dataset.field||"",name:el.name||"",tag:el.tagName};
+}
+function restoreEditorFocus(){
+ const saved=editorReturnFocus;
+ if(!saved||!editorId||saved.id!==editorId)return;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  if(currentView!=="home"||editorId!==saved.id)return;
+  let el=saved.elementId?document.getElementById(saved.elementId):null;
+  if(!el&&saved.sectionIndex!==null){const card=[...$("sectionEditors").querySelectorAll('.section-editor')][Number(saved.sectionIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
+  if(!el&&saved.presentationIndex!==null){const card=[...$("presentationEditors").children][Number(saved.presentationIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
+  if(!el)return;
+  el.focus({preventScroll:true});
+  if(typeof el.setSelectionRange==='function'&&['text','search','url','tel','password','textarea'].includes(el.type||'textarea')){const end=el.value.length;el.setSelectionRange(end,end);}
+ }));
+}
+function showView(view){
+ if(currentView==="home"&&view!=="home"&&editorId){rememberEditorFocus();saveLocalDraft();}
+ const changing=currentView!==view;
+ if(changing&&!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
+ currentView=view;
+ $("homeView").classList.toggle("hidden",view!=="home");
+ $("exploreView").classList.toggle("hidden",view!=="explore");
+ $("sourcesView").classList.toggle("hidden",view!=="sources");
+ 
+ $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
+ $("sourcesNav").setAttribute("aria-current",view==="sources"?"page":"false");
+ if(view==="explore")renderExplorer();
+ if(view==="sources")renderSources();
+ updateSearchPlacement();
+ if(changing)restoreViewScroll(view);
+ if(view==="home"&&editorId)restoreEditorFocus();
+}
+function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
+function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
+function parentGroupId(m){return hierarchyMeta(m).memofficineParentGroup||""}
+function dosageParts(raw){const v=String(raw||"").trim();const m=v.match(/^([\d.,]+)\s*(mg\/mL|µg\/mL|g\/L|mg|g|µg|mL|UI|%)$/i);return m?{value:m[1],unit:m[2]}:{value:v,unit:v?"autre":"mg"}}
+function splitDci(value){return String(value||"").split(/\s+\+\s+/).map(x=>x.trim()).filter(Boolean)}
+function groupChildren(group,visible=publicMeds()){return visible.filter(m=>!isGroup(m)&&parentGroupId(m)===group.id).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"}))}
+function setHierarchy(m,kind,parent){
+ if(!m.sections?.length)m.sections=clone(DEFAULT_SECTIONS);
+ const target=(m.sections||[]).find(s=>s.id==="indications")||m.sections[0];
+ for(const sec of m.sections){delete sec.memofficineKind;delete sec.memofficineParentGroup}
+ if(kind==="groupe"){
+  target.memofficineKind="groupe";
+  if(parent)target.memofficineParentGroup=parent;
+  else delete target.memofficineParentGroup;
+ }else{
+  delete target.memofficineKind;
+  if(parent)target.memofficineParentGroup=parent;
+  else delete target.memofficineParentGroup;
+ }
+}
+function groupDescendantIds(id,all=meds){
+ const seen=new Set([id]),stack=[id];
+ while(stack.length){
+  const current=stack.pop();
+  for(const child of all.filter(x=>isGroup(x)&&parentGroupId(x)===current)){
+   if(!seen.has(child.id)){seen.add(child.id);stack.push(child.id)}
+  }
+ }
+ return seen;
+}
+function groupOptions(m){
+ const forbidden=groupDescendantIds(m.id);
+ return meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&!forbidden.has(g.id))
+  .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
+function childGroups(group,visible=publicMeds()){
+ return visible.filter(m=>isGroup(m)&&parentGroupId(m)===group.id)
+ .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
+function indicationTags(m){
+ const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
+ return Array.isArray(raw)?raw.filter(Boolean):[];
+}
+function publicMeds(){return meds.filter(m=>!isSourcesRecord(m)&&(admin||m.published))}
+function specialtyItems(m){
+ return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
+}
+function openMedication(id,presentationIndex=null,sectionId=null){
+ const m=meds.find(x=>x.id===id);if(!m)return;
+ $("search").value="";activeCategory="Toutes";selectedId=id;
+ showView("home");openedSearchFiche=true;renderFilters();renderResults();
+ $("searchSuggestions").classList.add("hidden");
+ renderDetail(sectionId,presentationIndex);
+ if(!sectionId&&presentationIndex===null){viewScrollPositions.home=0;requestAnimationFrame(()=>requestAnimationFrame(()=>$("searchLayout").scrollIntoView({block:"start"})));}
+ const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
+ if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
+ if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
+ url.searchParams.delete("edition");
+ history.pushState({fiche:id},"",url);rememberNavigation();
+}
+function medicationForms(m){return [...new Set((m.presentations||[]).map(p=>String(p.form||" ").trim()).filter(Boolean))]};
+function explorerFormLabel(m){
+ const forms=medicationForms(m);
+ if(!forms.length)return "";
+ return `<span class="explore-form-inline">${esc(forms.join(" · "))}</span>`;
+}
+const exploreExpandedGroups=new Set();
+function explorerBadgeVisible(m,kind){
+ const setting=(m.sections||[])[0]?.explorerVisibility;
+ return setting?.[kind]!==false;
+}
+function explorerClasses(m){
+ const extras=(m.sections||[])[0]?.explorerExtraClasses;
+ return [...new Set([m.category,...(Array.isArray(extras)?extras:[])].map(x=>String(x||"").trim()).filter(Boolean))];
+}
+function explorerClassVisible(m,name){
+ const hidden=(m.sections||[])[0]?.explorerHiddenClasses;
+ return explorerBadgeVisible(m,"category")&&!(Array.isArray(hidden)&&hidden.includes(name));
+}
+function renderExplorer(){
+ const entries=publicMeds();
+ const classes=[...new Set(entries.flatMap(explorerClasses).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
+ const indications=[...new Set(entries.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr"));
+ const forms=[...new Set(entries.flatMap(medicationForms))].sort((a,b)=>a.localeCompare(b,"fr",{sensitivity:"base"}));
+ const classSel=$("exploreClass"),indSel=$("exploreIndication"),formSel=$("exploreForm");
+ const oldClass=classSel.value,oldInd=indSel.value,oldForm=formSel.value;
+ classSel.innerHTML='<option value="">Toutes les classes</option>'+classes.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+ indSel.innerHTML='<option value="">Toutes les indications</option>'+indications.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+ formSel.innerHTML='<option value="">Toutes les formes</option>'+forms.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+ classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";formSel.value=forms.includes(oldForm)?oldForm:"";
+ const filtered=entries.filter(m=>(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
+ const byId=new Map(entries.map(m=>[m.id,m]));
+ // Les parents des résultats restent visibles pour conserver le contexte de navigation.
+ const included=new Set(filtered.map(m=>m.id));
+ for(const m of filtered){
+  let parentId=parentGroupId(m),seen=new Set([m.id]);
+  while(parentId&&!seen.has(parentId)){
+   seen.add(parentId);
+   const parent=byId.get(parentId);
+   if(!parent||!isGroup(parent))break;
+   included.add(parent.id);
+   parentId=parentGroupId(parent);
+  }
+ }
+ const visible=entries.filter(m=>included.has(m.id));
+ const visibleById=new Map(visible.map(m=>[m.id,m]));
+ const sortNames=(a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
+ const childrenOf=id=>visible.filter(m=>parentGroupId(m)===id).sort((a,b)=>isGroup(a)===isGroup(b)?sortNames(a,b):isGroup(a)?-1:1);
+ const rootEntries=visible.filter(m=>!visibleById.has(parentGroupId(m))||parentGroupId(m)===m.id).sort((a,b)=>isGroup(a)===isGroup(b)?sortNames(a,b):isGroup(a)?-1:1);
+ const renderNode=(m,depth=0,ancestors=new Set())=>{
+  if(ancestors.has(m.id))return "";
+  const next=new Set(ancestors);next.add(m.id);
+  const kids=isGroup(m)?childrenOf(m.id):[];
+  const forms=medicationForms(m);
+  const isMatch=filtered.some(x=>x.id===m.id);
+  return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
+   <div class="explore-tree-line">
+    ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
+    ${isGroup(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
+    <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}">${esc(displayMedName(m))}</button>
+    <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
+   </div>
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"indications")?indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)):[]).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"forms")?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
+  </div>`;
+ };
+ $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche pour ces filtres.</div>';
+ $("exploreCards").querySelectorAll("[data-tree-toggle]").forEach(button=>button.addEventListener("click",()=>{
+  const id=button.dataset.treeToggle;
+  const children=document.getElementById("tree-children-"+id);
+  if(!children)return;
+  const opening=children.hidden;
+  children.hidden=!opening;
+  button.setAttribute("aria-expanded",String(opening));
+  button.setAttribute("aria-label",(opening?"Replier ":"Déplier ")+button.parentElement.querySelector(".explore-tree-name")?.textContent);
+  button.querySelector("span").textContent=opening?"▾":"▸";
+  if(opening)exploreExpandedGroups.add(id);else exploreExpandedGroups.delete(id);
+ }));
+ $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
+ $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
+ $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
+ $("exploreCards").querySelectorAll("[data-filter-form]").forEach(b=>b.onclick=()=>{formSel.value=b.dataset.filterForm;renderExplorer()});
+}
+function ingredientInfo(m){return (m.sections||[]).find(s=>s.ingredientDosages)?.ingredientDosages||null}
+function ingredientTitleDose(m){const info=ingredientInfo(m);if(!info||!info.showInTitle)return "";return (info.entries||[]).map(e=>String(e.dose||"").trim()).filter(Boolean).join("/")}
+function displayMedName(m){const name=String(m.name||"Sans nom").trim(),info=ingredientInfo(m);const dose=info?(info.showInTitle?ingredientTitleDose(m):""):String(m.dosage||"").trim();return dose&&!norm(name).endsWith(norm(dose))?name+" "+dose:name}
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+// Liens directs stables fondés sur l'identifiant Supabase de la fiche.
+function ficheUrl(id){const url=new URL(window.location.href);url.searchParams.set("fiche",id);return url.href}
+function selectFiche(id,addHistory=true){
+ if(!meds.some(m=>m.id===id))return;
+ selectedId=id;
+ if(addHistory){const url=new URL(window.location.href);url.searchParams.set("fiche",id);history.pushState({fiche:id},"",url)}
+ renderResults();
+}
+// L'historique suit la page réellement consultée, et pas seulement la fiche sélectionnée.
+function rememberNavigation(){try{localStorage.setItem("memofficine-last-location-v1",location.pathname+location.search+location.hash)}catch(e){}}
+function editorLocation(id){
+ const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
+ url.searchParams.set("edition","1");url.searchParams.delete("presentation");url.searchParams.delete("rubrique");
+ history.replaceState({edition:id},"",url);rememberNavigation();
+}
+function detailLocation(id){
+ const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
+ url.searchParams.delete("edition");history.replaceState({fiche:id},"",url);rememberNavigation();
+}
+function navigateToView(view){
+ const url=new URL(location.href);
+ url.searchParams.delete("fiche");
+ url.searchParams.delete("edition");
+ url.searchParams.delete("presentation");
+ url.searchParams.delete("rubrique");
+ url.hash=view==="explore"?"explorer":view==="sources"?"sources":"";
+ history.pushState({view},"",url);rememberNavigation();
+ editorId=null;
+ openedSearchFiche=false;
+ $("search").value="";
+ $("searchSuggestions").classList.add("hidden");
+ $("editor").classList.add("hidden");
+ $("detail").classList.remove("hidden");
+ renderResults();
+ showView(view);
+ window.scrollTo({top:0,behavior:"instant"});
+}
+function restoreHistoryPage(){
+ const params=new URLSearchParams(location.search);
+ const id=params.get("fiche");
+ const med=id?meds.find(m=>m.id===id&&!isSourcesRecord(m)&&(admin||m.published)):null;
+ editorId=null;
+ $("editor").classList.add("hidden");
+ $("detail").classList.remove("hidden");
+ $("search").value="";
+ $("searchSuggestions").classList.add("hidden");
+ activeCategory="Toutes";
+ selectedId=med?.id||null;
+ openedSearchFiche=!!med;
+ renderFilters();
+ renderResults();
+ if(med){
+  showView("home");
+  if(params.get("edition")==="1"&&admin){renderEditor(med.id);return}
+  renderDetail(params.get("rubrique"),params.has("presentation")?Number(params.get("presentation")):null);
+ }else{
+  showView(location.hash==="#explorer"?"explore":location.hash==="#sources"?"sources":"home");
+ }
+ window.scrollTo({top:0,behavior:"instant"});
+}
+window.addEventListener("popstate",()=>{rememberNavigation();restoreHistoryPage()});
+function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
+function categories(){return ["Toutes",...new Set(meds.filter(m=>!isSourcesRecord(m)).map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
+function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
+function getSearchMatches(){
+ const q=norm($("search").value.trim());
+ const tokens=q.split(/\s+/).filter(Boolean);
+ const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
+ const found=[];
+ publicMeds().forEach(m=>{
+  const pres=specialtyItems(m);
+  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
+  const matchedPres=pres.filter(x=>tokens.some(t=>norm([x.name,x.p.dosage,x.p.lab,x.p.cip,x.p.cis].join(" ")).includes(t)));
+  const identity=norm([base,...pres.flatMap(x=>[x.name,x.p.dosage,x.p.lab,x.p.form,x.p.cip,x.p.cis])].join(" "));
+  const sections=(m.sections||[]).filter(x=>x.enabled!==false);
+  const all=norm([identity,...sections.map(x=>x.title+" "+x.content)].join(" "));
+  if(!q){found.push({med:m,section:null,presentation:null});return}
+  if(!tokens.every(t=>all.includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&sections.some(sec=>norm(sec.id+" "+sec.title).includes(key)))))return;
+  const sectionMatches=sections.filter(sec=>{
+   const text=norm(sec.title+" "+sec.content);
+   return tokens.some(t=>!identity.includes(t)&& (text.includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key))));
+  });
+  const chosenPres=matchedPres.length?matchedPres[0].i:null;
+  if(sectionMatches.length)sectionMatches.forEach(section=>found.push({med:m,section,presentation:chosenPres}));
+  else found.push({med:m,section:null,presentation:chosenPres});
+ });
+ // Les fiches groupes sont de vrais résultats de recherche, en priorité à pertinence égale.
+ // Une recherche sur le nom d'un groupe le fait apparaître avant les fiches individuelles.
+ return found.sort((a,b)=>{
+  const score=item=>{
+   const name=norm(item.med.name);
+   const exact=name===q?100:0;
+   const starts=name.startsWith(q)?40:0;
+   const nameMatch=name.includes(q)?20:0;
+   return exact+starts+nameMatch+(isGroup(item.med)?5:0);
+  };
+  return score(b)-score(a);
+ });
+}
+let openedSearchFiche=false;
+function updateSearchPlacement(){
+ const detailMode=currentView==="home"&&openedSearchFiche&&!editorId;
+ const compactMode=detailMode||currentView!=="home";
+ document.body.classList.toggle("fiche-open",detailMode);
+ document.body.classList.toggle("header-search-active",compactMode);
+ const card=$("mainSearchCard");
+ const target=compactMode?$("headerSearchSlot"):$("homeSearchSlot");
+ if(card.parentElement!==target)target.appendChild(card);
+}
+let highlightedSearchIndex=-1;
+function searchResultLabel(item){
+ const m=item.med;
+ if(isGroup(m))return m.name;
+ const p=item.presentation!==null?m.presentations?.[item.presentation]:null;
+ const name=(p?.name||m.name||"").trim();
+ const dose=(p?.dosage||m.dosage||"").trim();
+ const lab="";
+ const form=(p?.form||m.form||"").trim();
+ return [name,...(dose&&!norm(name).endsWith(norm(dose))?[dose]:[]),lab,form].filter(Boolean).join(" · ");
+}
+function updateSearchHighlight(){
+ const els=[...$('results').querySelectorAll('.result')];
+ els.forEach((el,i)=>el.setAttribute('aria-selected',String(i===highlightedSearchIndex)));
+ if(highlightedSearchIndex>=0)els[highlightedSearchIndex]?.scrollIntoView({block:'nearest'});
+}
+function renderResults(){
+ const query=$('search').value.trim();
+ const found=query?getSearchMatches():[];
+ const dropdown=$('searchSuggestions');
+ dropdown.classList.toggle('hidden',!query);
+ highlightedSearchIndex=-1;
+ $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
+ $('results').innerHTML=found.length?found.slice(0,35).map(item=>{
+   const m=item.med,sec=item.section;
+   return `<div class="result" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(searchResultLabel(item))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:''}</div>`;
+ }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
+ $('results').querySelectorAll('.result').forEach(el=>{
+   const choose=()=>openMedication(el.dataset.id,el.dataset.presentation===''?null:Number(el.dataset.presentation),el.dataset.section||null);
+   el.onclick=choose;
+   el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
+ });
+ $('searchLayout').classList.toggle('hidden',!openedSearchFiche&&!editorId);
+ updateSearchPlacement();
+}
+$('search').addEventListener('keydown',e=>{
+ const results=[...$('results').querySelectorAll('.result')];
+ if($('searchSuggestions').classList.contains('hidden')||!results.length)return;
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+  e.preventDefault();
+  highlightedSearchIndex=e.key==='ArrowDown'?(highlightedSearchIndex+1)%results.length:(highlightedSearchIndex<0?results.length-1:(highlightedSearchIndex-1+results.length)%results.length);
+  updateSearchHighlight();
+ }else if(e.key==='Enter'){
+  e.preventDefault();
+  results[highlightedSearchIndex>=0?highlightedSearchIndex:0].click();
+ }else if(e.key==='Escape'){
+  e.preventDefault();$('searchSuggestions').classList.add('hidden');highlightedSearchIndex=-1;
+ }
+});
+
+function renderDetail(targetSectionId=null,targetPresentationIndex=null){
+ editorId=null;
+ const m=meds.find(x=>x.id===selectedId);
+ $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
+ if(!m){$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
+ 
+ const sections=(m.sections||[]).filter(s=>s.enabled!==false);
+ const prioritySection=isGroup(m)
+  ? sections.find(s=>s.id==="coup-oeil"||/en un coup d[’']œil/i.test(s.title||""))
+  : sections.find(s=>s.id==="conseil-comptoir"||/à dire au comptoir/i.test(s.title||""));
+ const remainingSections=sections.filter(s=>s!==prioritySection);
+ const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
+ const children=isGroup(m)?groupChildren(m):[];
+ const subgroups=isGroup(m)?childGroups(m):[];
+ const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
+ const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
+ const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
+ const info=ingredientInfo(m);
+ const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
+ const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
+ const formBadge=!isGroup(m)&&presentationForms.length
+   ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
+ $("detail").innerHTML=`<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
+ ${prioritySection?(isGroup(m)?`<div class="group-glance">${renderSection(prioritySection,targetSectionId)}</div>`:renderSection(prioritySection,targetSectionId)):""}
+ ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Sous-groupes (${subgroups.length})</strong><div>${subgroups.map(g=>`<button type="button" data-group-open="${esc(g.id)}">▣ ${esc(g.name)} ↗</button>`).join("")||'<span class="muted">Aucun sous-groupe.</span>'}</div><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
+ ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
+ ${isGroup(m)?"":renderPresentations(m)}
+ ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
+ ${m.updated?`<div class="detail-last-updated">Date de dernière mise à jour : ${esc(formatDateFR(m.updated))}</div>`:""}`;
+ $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
+ $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreClass").value=btn.dataset.ficheCategory;renderExplorer()});
+ $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
+ $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>{showView("explore");renderExplorer();$("exploreForm").value=btn.dataset.ficheForm;renderExplorer()});
+ $("copyFicheLink").onclick=async()=>{
+  try{await navigator.clipboard.writeText(ficheUrl(m.id));toast("Lien de la fiche copié !")}
+  catch(e){window.prompt("Copie ce lien :",ficheUrl(m.id))}
+ };
+ $("editBtn").onclick=()=>{if(!admin){toast("Connecte-toi en administratrice pour modifier cette fiche.");showLogin();return;}renderEditor(m.id);};
+ $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const index=Number(sel.value);const target=$("presentation-info");if(target)target.innerHTML=presentationInfo((m.presentations||[])[index])});
+ if(targetPresentationIndex!==null){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
+ if(targetSectionId){
+   requestAnimationFrame(()=>{const target=document.getElementById("section-"+CSS.escape(targetSectionId));if(target){target.scrollIntoView({behavior:"smooth",block:"start"});target.classList.add("direct-target")}});
+ }
+}
+// Copie enrichie d'un passage sélectionné dans une fiche, sans bouton supplémentaire.
+// Les styles utiles sont intégrés au HTML du presse-papiers pour les éditeurs compatibles.
+document.addEventListener("copy",event=>{
+ const selection=window.getSelection();
+ if(!selection||selection.isCollapsed||!selection.rangeCount)return;
+ const range=selection.getRangeAt(0),detail=$("detail");
+ if(!detail||detail.classList.contains("hidden")||!detail.contains(range.commonAncestorContainer))return;
+ if(!event.clipboardData)return; // conserver la copie native si l'API est indisponible
+ const fragment=range.cloneContents();
+ const wrapper=document.createElement("div");wrapper.appendChild(fragment);
+ const originalRoot=range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
+ const originalElements=[];
+ if(originalRoot&&originalRoot.nodeType===1){
+  if(range.intersectsNode(originalRoot))originalElements.push(originalRoot);
+  const walker=document.createTreeWalker(originalRoot,NodeFilter.SHOW_ELEMENT);
+  while(walker.nextNode())if(range.intersectsNode(walker.currentNode))originalElements.push(walker.currentNode);
+ }
+ const clonedElements=[...wrapper.querySelectorAll("*")];
+ let cursor=0;
+ for(const clone of clonedElements){
+  let match=-1;
+  for(let i=cursor;i<originalElements.length;i++)if(originalElements[i].tagName===clone.tagName){match=i;break}
+  if(match<0)continue;
+  const computed=getComputedStyle(originalElements[match]);
+  for(const property of ["color","background-color","font-weight","font-style","text-decoration","text-align","font-size","border-collapse","border","padding"]){
+   const value=computed.getPropertyValue(property);
+   if(value)clone.style.setProperty(property,value);
+  }
+  cursor=match+1;
+ }
+ // Conserver les tableaux et leur structure HTML ; texte brut en solution de repli.
+ event.clipboardData.setData("text/html",wrapper.innerHTML);
+ event.clipboardData.setData("text/plain",selection.toString());
+ event.preventDefault();
+});
+function formatDateFR(raw){const m=String(raw||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(raw||"")}
+function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
+function presentationInfo(p){
+ if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
+ const img=safeHttp(p.imageUrl||"");
+ const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
+ const rows=[
+  line("showCip","CIP",p.cip||"Non renseigné"),
+  line("showLab","Laboratoire",p.lab||"À renseigner"),
+  line("showAspect","Aspect",p.description||"Non documenté"),
+  line("showMarking","Marquage / sécabilité",p.marking||"Non documenté"),
+  p.showSplit===true?`<p><strong>Fractionnement :</strong> <span class="${p.cannotSplit===true?"presentation-status-note":""}">${p.cannotSplit===true?"Impossible":p.canSplit===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.cannotSplit===true&&p.splitReason?` — ${esc(p.splitReason)}`:""}</span></p>`:"",
+  p.showCrush===true?`<p><strong>Écrasement :</strong> <span class="${p.cannotCrush===true?"presentation-status-note":""}">${p.cannotCrush===true?"Impossible":p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}${p.cannotCrush===true&&p.crushReason?` — ${esc(p.crushReason)}`:""}</span></p>`:"",
+  p.showPhoto===true&&img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""
+ ].filter(Boolean);
+ return rows.length?rows.join("")+'<p class="hint">L’aspect seul ne permet pas d’identifier avec certitude un médicament. Vérifier les informations pour la présentation exacte.</p>':'<p class="muted">Aucun critère de présentation affiché pour le moment.</p>';
+}
+function presentationLabel(p,m,i){
+ const name=(p.name||m.name||"").trim();
+ const lab=(p.lab||"").trim();
+ const showLab=true;
+ const form=(p.form||"").trim();
+ const dosage=(p.dosage||m.dosage||"").trim();
+ return [name,showLab&&lab?lab:"",dosage,form].filter(Boolean).join(" · ")||"Présentation "+(i+1);
+}
+function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const chosen=targetPresentationIndex!==null&&ps[targetPresentationIndex]?targetPresentationIndex:0;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[chosen])}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
+
+function presentationEditor(p,i){
+ const currentPhoto=safeHttp(p.imageUrl||"");
+ const pending=pendingPresentationPhotos.get(editorId)?.get(i);
+ const check=(key,label)=>`<label class="presentation-toggle"><input type="checkbox" data-show-field="${key}" ${p[key]===true?"checked":""}><span>${label}</span></label>`;
+ const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
+ return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
+ <p class="hint">Coche les critères à afficher sur la fiche. Aucun n'est visible par défaut ; les informations masquées restent enregistrées.</p>
+ <div class="presentation-fields">
+ ${field("cip","CIP","showCip")}
+ ${field("lab","Laboratoire","showLab")}
+ ${field("description","Aspect","showAspect")}
+ ${field("marking","Marquage / sécabilité","showMarking")}
+ <div class="full presentation-edit-row">${check("showSplit","Fractionnement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-split ${p.canSplit===true&&!p.cannotSplit?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-split ${p.cannotSplit===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="splitReason" value="${esc(p.splitReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="split" ${p.cannotSplit===true?"":"hidden"}></div></div>
+ <div class="full presentation-edit-row">${check("showCrush","Écrasement")}<div class="presentation-status-row"><label class="presentation-verified"><input type="checkbox" data-can-crush ${p.canCrush===true&&!p.cannotCrush?"checked":""}>Possible (confirmé)</label><label class="presentation-verified"><input type="checkbox" data-cannot-crush ${p.cannotCrush===true?"checked":""}>Impossible (confirmé)</label><input type="text" data-pfield="crushReason" value="${esc(p.crushReason||"")}" placeholder="Pourquoi ? (facultatif)" data-reason-for="crush" ${p.cannotCrush===true?"":"hidden"}></div></div>
+ <div class="full presentation-edit-row">${check("showPhoto","Photo")}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div>
+ <div class="full"><details><summary>Informations internes de la présentation (non affichées dans l'encart)</summary><div class="presentation-fields">${[["name","Nom du médicament / de la molécule"],["dosage","Dosage"],["form","Forme"],["cis","Code CIS"],["sourceUrl","URL de la source officielle (https)"]].map(([key,label])=>`<div><label>${label}</label><input data-pfield="${key}" value="${esc(p[key]||"")}"></div>`).join("")}</div></details></div>
+ <p class="hint full">Sans case « Possible » ni « Impossible », le statut reste « non confirmé ». Vérifier chaque présentation auprès d’une source fiable.</p>
+ </div></div>`;
+}
+function wirePhotoInputs(){
+ $("presentationEditors").querySelectorAll("[data-photo-file]").forEach(input=>{
+  const i=Number(input.dataset.photoFile);
+  input.addEventListener("change",()=>{
+   const file=input.files?.[0];if(!file)return;
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>MAX_PHOTO_SIZE){toast("Choisis une image JPG, PNG ou WebP de 2 Mo maximum");input.value="";return}
+   if(!pendingPresentationPhotos.has(editorId))pendingPresentationPhotos.set(editorId,new Map());
+   pendingPresentationPhotos.get(editorId).set(i,file);
+   const hint=$("presentationEditors").querySelector(`[data-photo-hint="${i}"]`);
+   if(hint)hint.textContent="Photo prête à envoyer : "+file.name+" (clique sur Enregistrer)";
+  });
+ });
+}
+async function uploadPresentationPhotos(m){
+ const pending=pendingPresentationPhotos.get(m.id);if(!pending?.size)return;
+ for(const [i,file] of pending){
+  if(!m.presentations[i])continue;
+  const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
+  if(!ext||file.size>MAX_PHOTO_SIZE)throw new Error("Image invalide ou trop volumineuse");
+  const path=`${currentUser.id}/${m.id}/${crypto.randomUUID()}.${ext}`;
+  const {error}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+  if(error)throw error;
+  const {data}=supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+  m.presentations[i].imageUrl=data.publicUrl;
+  pending.delete(i);
+ }
+ if(!pending.size)pendingPresentationPhotos.delete(m.id);
+}
+
+// Format léger et sécurisé : seules les marques créées par la barre d'outils sont interprétées.
+const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#abb8c3'};
+function richInline(raw){
+ let html=esc(raw);
+ html=html.replace(/\[\[(default|green|red|orange|blue|gray)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
+ html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+ html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
+ html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+ return html;
+}
+function richText(raw){
+ const lines=String(raw||'').split('\n');let html='',list=null;
+ const close=()=>{if(list){html+=`</${list}>`;list=null}};
+ for(const line of lines){
+  const bullet=line.match(/^\s*[-•] (.*)$/),number=line.match(/^\s*\d+\. (.*)$/);
+  const kind=bullet?'ul':number?'ol':null;
+  if(kind){if(list!==kind){close();html+=`<${kind}>`;list=kind}html+=`<li>${richInline((bullet||number)[1])}</li>`}
+  else{close();html+=`<p>${richInline(line)||'&nbsp;'}</p>`}
+ }
+ close();return html;
+}
+function wireTextFormatting(){
+ document.querySelectorAll('#sectionEditors .section-editor').forEach(card=>{
+  const area=card.querySelector('textarea[data-field="content"]');
+  const bubble=card.querySelector('.text-format-bubble');
+  const preview=card.querySelector('.rich-preview');
+  if(!area||!bubble||!preview)return;
+  const refresh=()=>{preview.innerHTML=richText(area.value)};
+  const show=()=>{bubble.hidden=area.selectionStart===area.selectionEnd};
+  area.addEventListener('select',show);area.addEventListener('mouseup',show);area.addEventListener('keyup',show);
+  area.addEventListener('input',refresh);
+  // Ne pas perdre la sélection quand on clique sur la barre flottante.
+  bubble.addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault()});
+  const apply=(mode)=>{
+   const start=area.selectionStart,end=area.selectionEnd,selected=area.value.slice(start,end);
+   if(!selected)return;
+   let replacement=selected;
+   if(mode==='bold')replacement=`**${selected}**`;
+   if(mode==='italic')replacement=`*${selected}*`;
+   if(mode==='underline')replacement=`__${selected}__`;
+   if(mode==='bullets')replacement=selected.split('\n').map(x=>'- '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
+   if(mode==='numbers')replacement=selected.split('\n').map((x,i)=>(i+1)+'. '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
+   if(mode.startsWith('color:'))replacement=`[[${mode.slice(6)}|${selected}]]`;
+   area.setRangeText(replacement,start,end,'select');
+   area.dispatchEvent(new Event('input',{bubbles:true}));
+   bubble.hidden=true;area.focus();
+  };
+  bubble.querySelectorAll('[data-format]').forEach(btn=>btn.addEventListener('click',()=>apply(btn.dataset.format)));
+  const picker=bubble.querySelector('[data-text-color]');
+  picker.addEventListener('change',()=>{if(picker.value)apply('color:'+picker.value);picker.value=''});
+  refresh();
+ });
+}
+function renderSection(s,targetSectionId=null){
+ let content="";
+ if(s.type==="table"){
+   const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split(/\s+\|\s+/).map(x=>x.trim()));
+   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===r.length-1)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${richInline(c).replace(/\[\[newline\]\]/g,"<br>")}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
+ }else{content=richText(s.content||"")}
+ const imageSrc=s.imageData||s.imageUrl||"";
+ const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
+ const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
+ return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${imageHtml}${content}</section>`;
+}
+function setAdmin(value){admin=value;$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults()}
+function showLogin(){
+ $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><p>Connecte-toi avec le compte créé dans Supabase Authentication. Les inscriptions publiques doivent rester désactivées.</p><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
+ $("cancelLogin").onclick=()=>$("modalRoot").innerHTML="";
+ $("confirmLogin").onclick=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){toast("Renseigne ton adresse e-mail et ton mot de passe");return}
+ const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){toast("Connexion impossible : vérifie l'adresse et le mot de passe");console.error(error);return}$("modalRoot").innerHTML="";};
+}
+async function logout(){clearLocalDraft();editorId=null;const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
+function scrollToNewEditor(){
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const editor=$("editor");
+  if(editor&&!editor.classList.contains("hidden")){
+   const top=editor.getBoundingClientRect().top+window.scrollY-16;
+   window.scrollTo({top:Math.max(0,top),behavior:"instant"});
+   viewScrollPositions.home=window.scrollY;
+  }
+ }));
+}
+function addMedication(){
+ showView("home");$("searchLayout").classList.remove("hidden");
+ if(!admin){toast("Connecte-toi pour ajouter une fiche");return}
+ const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dosage:"",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
+ meds.unshift(m);selectedId=m.id;openedSearchFiche=true;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
+}
+function addGroup(){
+ if(!admin)return;
+ addMedication();
+ const m=meds.find(x=>x.id===selectedId);if(!m)return;
+ m.name="Nouveau groupe";m.entry_type="dci";m.sections=clone(GROUP_SECTIONS);setHierarchy(m,"groupe","");
+ renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
+}
+function renderEditor(id){
+ openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
+ const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;editorLocation(id);
+ $("detail").classList.add("hidden");$("editor").classList.remove("hidden");
+ $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
+ <div class="admin-grid" style="margin-top:18px">
+  <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
+  <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dosage-wrap"><label for="f-dosage">Dosage</label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div><p class="muted">Unité proposée selon la forme, modifiable. Pour les dosages complexes, choisir « autre » et saisir la valeur complète.</p></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><label class="ingredient-title-choice"><input type="checkbox" id="f-dose-in-title"> Afficher les dosages dans le titre de la fiche</label><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
+ <div class="full explorer-class-custom"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="category" ${explorerBadgeVisible(m,"category")?"checked":""}> <span>Classe·s thérapeutique·s</span></label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
+ <div class="full explorer-class-custom"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="indications" ${explorerBadgeVisible(m,"indications")?"checked":""}> <span>Indication·s thérapeutique·s</span></label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
+ <div class="full explorer-form-visibility" id="explorer-form-visibility-wrap"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""}> <span>Forme·s pharmaceutique·s</span></label></div>
+ 
+
+ </div>
+  <div id="presentation-editor-wrap" class="full" style="margin-top:18px">
+    <h3>💊 Présentation</h3>
+    <p class="muted">Renseigner les présentations des différents laboratoires correspondant à cette substance et à ce dosage. Ajouter une URL d’image documentée si disponible.</p>
+    <div id="presentationEditors">${(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("")}</div>
+    <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
+  </div>
+
+ <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
+ <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div><div class="section-bottom-actions"><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" id="editorBackToTop">↑ Retour en haut</button></div>
+ <div class="admin-grid admin-meta" style="margin-top:24px"><div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(v=>`<option ${m.status===v?"selected":""}>${v}</option>`).join("")}</select></div><div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?"selected":""}>Brouillon — privé</option><option value="true" ${m.published?"selected":""}>Publié — visible publiquement</option></select></div><div class="full"><label for="f-updated">Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div></div>`;
+const toggleType = () => {
+  const isGroupType = $("f-entry-type").value === "groupe";
+  const isDci = $("f-entry-type").value === "dci" || isGroupType;
+  $("presentation-editor-wrap").classList.toggle("hidden",isGroupType);
+  $("explorer-form-visibility-wrap").classList.toggle("hidden",isGroupType);
+  $("parent-group-wrap").classList.remove("hidden");
+  $("f-dosage-wrap").classList.toggle("hidden",isGroupType || $("f-entry-type").value === "specialite");
+
+  const nameLabel = $("f-name-label");
+  if (nameLabel) {
+    nameLabel.textContent = isGroupType ? "Nom du groupe" : isDci ? "Nom de la DCI" : "Nom de la spécialité";
+  }
+
+  ["f-dci-wrap"]
+    .forEach(id => {
+      const element = $(id);
+
+      if (element) {
+        element.classList.toggle("hidden", isDci);
+      } else {
+        console.warn("Élément introuvable :", id);
+      }
+    });
+};
+ $("f-entry-type").onchange=toggleType;toggleType();
+ const doseUnit=$("f-dosage-unit");
+ if(doseUnit&&!m.dosage){const initialForm=(m.presentations||[])[0]?.form||m.form||"";doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(initialForm)?"mL":"mg"}
+ $("presentationEditors").addEventListener("change",e=>{if(e.target.matches("[data-pfield=form]")&&!$("f-dosage").value.trim())doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(e.target.value)?"mL":"mg"});
+ const dciRoot=$("dciEntries");
+ function readIngredientEntries(){return [...dciRoot.querySelectorAll(".ingredient-editor-row")].map(row=>({name:row.querySelector("[data-dci-entry]").value,dose:row.querySelector("[data-ingredient-dose]").value,salt:row.querySelector("[data-ingredient-salt]").value,saltDose:row.querySelector("[data-salt-dose]").value}));}
+ function renderDciEntries(values){
+  const entries=values.length?values:[{name:"",dose:"",salt:"",saltDose:""}];
+  dciRoot.innerHTML=entries.map((e,i)=>`<div class="ingredient-editor-row"><div class="ingredient-editor-head"><strong>DCI ${i+1}</strong><button type="button" data-remove-dci="${i}" ${entries.length===1?'disabled':''}>− Retirer</button></div><div class="ingredient-editor-grid"><label>Substance active<input data-dci-entry value="${esc(e.name||"")}" placeholder="Ex. : substance active"></label><label>Dosage actif<input data-ingredient-dose value="${esc(e.dose||"")}" placeholder="Ex. : 500 mg"></label><label>Sel utilisé (facultatif)<input data-ingredient-salt value="${esc(e.salt||"")}" placeholder="Ex. : fumarate ferreux"></label><label>Quantité de sel (facultatif)<input data-salt-dose value="${esc(e.saltDose||"")}" placeholder="Ex. : 150 mg"></label></div></div>`).join("");
+  dciRoot.querySelectorAll("[data-remove-dci]").forEach(button=>button.onclick=()=>{const values=readIngredientEntries();values.splice(Number(button.dataset.removeDci),1);renderDciEntries(values)});
+ }
+ const storedIngredientInfo=ingredientInfo(m);
+ const initialDci=splitDci(m.dci);
+ const storedEntries=storedIngredientInfo?.entries||[];
+ renderDciEntries(initialDci.map((name,i)=>({name,...(storedEntries.find(e=>e.name===name)||storedEntries[i]||{})})).map((e,i)=>({...e,name:initialDci[i]})));
+ $("f-dose-in-title").checked=storedIngredientInfo?!!storedIngredientInfo.showInTitle:!!m.dosage;
+ $("addDciEntry").onclick=()=>{renderDciEntries([...readIngredientEntries(),{name:"",dose:"",salt:"",saltDose:""}]);[...dciRoot.querySelectorAll("[data-dci-entry]")].at(-1)?.focus();};
+ const parentSelect=$("f-parent-group");
+ function refreshParentGroups(){
+  const selected=parentSelect.value||parentGroupId(m);
+  const matches=groupOptions(m);
+  parentSelect.innerHTML='<option value="">Aucun groupe</option>'+matches.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}${g.category?" — "+esc(g.category):""}</option>`).join("");
+  if(matches.some(g=>g.id===selected))parentSelect.value=selected;
+  $("group-parent-help").textContent=matches.length?"Tu peux choisir n’importe quel groupe parent, quelle que soit sa classe thérapeutique.":"Aucun groupe disponible pour le moment. Tu peux laisser « Aucun groupe ».";
+ }
+ refreshParentGroups();
+ function wireIndividualBadges(inputId,choicesId,hiddenKey){
+  const input=$(inputId),choices=$(choicesId);
+  let hidden=new Set((m.sections||[])[0]?.[hiddenKey]||[]);
+  const render=()=>{
+   choices.querySelectorAll("input[data-badge-choice]").forEach(el=>{if(el.checked)hidden.delete(el.value);else hidden.add(el.value)});
+   const names=[...new Set(input.value.split(",").map(t=>t.trim()).filter(Boolean))];
+   choices.innerHTML=names.map(name=>`<label><input type="checkbox" data-badge-choice value="${esc(name)}" ${hidden.has(name)?"":"checked"}> ${esc(name)}</label>`).join("")||'<span class="muted">Ajoute une étiquette pour choisir son affichage.</span>';
+  };
+  input.addEventListener("input",render);render();
+ }
+ wireIndividualBadges("f-extra-classes","explorer-class-choices","explorerHiddenClasses");
+ wireIndividualBadges("f-indications","explorer-indication-choices","explorerHiddenIndications");
+ $("backBtn").onclick=()=>{clearLocalDraft();detailLocation(id);renderDetail()};
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=!no.checked;}));};
+ $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
+ wirePhotoInputs();
+ $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
+ wireTextFormatting();
+ wireTableGrids(m);
+ wireTableCellFormatting();
+ $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
+ $("editorBackToTop").onclick=()=>{window.scrollTo({top:0,behavior:"smooth"});};
+ $("editor").oninput=saveLocalDraft;
+ $("editor").onchange=saveLocalDraft;
+ $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
+}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true};card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
+function tableRows(content){
+ const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
+ if(!rows.length)return [["",""],["",""]];
+ const count=Math.max(1,...rows.map(row=>row.length));
+ return rows.map(row=>Array.from({length:count},(_,i)=>(row[i]||"").replace(/\[\[newline\]\]/g,"\n")));
+}
+function tableCellToolbar(){
+ return `<div class="table-cell-toolbar" hidden>
+ <button type="button" data-cell-format="bold" title="Gras"><b>G</b></button>
+ <button type="button" data-cell-format="italic" title="Italique"><i>I</i></button>
+ <button type="button" data-cell-format="underline" title="Souligné"><u>S</u></button>
+ <select data-cell-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select>
+ </div><div class="table-cell-preview" hidden></div>`;
+}
+function tableGridEditor(content){
+ const rows=tableRows(content);
+ return `<div class="table-grid-wrap">${tableCellToolbar()}<table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><textarea rows="3" data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}">${esc(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les intitulés, sans gras imposé. Utilise Entrée pour aller à la ligne dans une cellule. Les modifications sont sauvegardées dans le brouillon.</p>`;
+}
+function readTableGrid(card){
+ const trs=[...card.querySelectorAll(".table-grid-editor tr")];
+ return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/\r\n?/g,"\n").replace(/\n/g,"[[newline]]").trim()).join(" | ")).join("\n");
+}
+function wireTableCellFormatting(){
+ document.querySelectorAll("#sectionEditors .table-grid-wrap").forEach(wrap=>{
+  const toolbar=wrap.querySelector(".table-cell-toolbar");
+  const preview=wrap.querySelector(".table-cell-preview");
+  let active=null, range=null;
+  const update=()=>{
+   if(!active)return;
+   const selected=active.selectionStart!==active.selectionEnd;
+   if(selected)range=[active.selectionStart,active.selectionEnd];
+   toolbar.hidden=!selected;
+   preview.hidden=false;
+   preview.innerHTML=richInline(active.value).replace(/\\n/g,"<br>")||"&nbsp;";
+  };
+  wrap.querySelectorAll("[data-table-cell]").forEach(input=>{
+   input.addEventListener("focus",()=>{active=input;range=null;update()});
+   input.addEventListener("select",update);
+   input.addEventListener("mouseup",update);
+   input.addEventListener("keyup",update);
+   input.addEventListener("input",update);
+  });
+  toolbar.addEventListener("mousedown",e=>{if(e.target.closest("button"))e.preventDefault()});
+  const apply=(mode)=>{
+   if(!active||!range)return;
+   const [start,end]=range;
+   const selected=active.value.slice(start,end);
+   if(!selected)return;
+   let replacement=selected;
+   if(mode==="bold")replacement=`**${selected}**`;
+   if(mode==="italic")replacement=`*${selected}*`;
+   if(mode==="underline")replacement=`__${selected}__`;
+   if(mode.startsWith("color:"))replacement=`[[${mode.slice(6)}|${selected}]]`;
+   active.setRangeText(replacement,start,end,"end");
+   active.dispatchEvent(new Event("input",{bubbles:true}));
+   active.focus();
+   toolbar.hidden=true;range=null;
+  };
+  toolbar.querySelectorAll("[data-cell-format]").forEach(button=>button.addEventListener("click",()=>apply(button.dataset.cellFormat)));
+  const color=toolbar.querySelector("[data-cell-color]");
+  color.addEventListener("change",()=>{if(color.value)apply("color:"+color.value);color.value=""});
+ });
+}
+function wireTableGrids(m){
+ $("sectionEditors").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
+  const card=button.closest(".section-editor"),i=Number(card.dataset.section);
+  captureEditorFields(m);
+  let rows=tableRows(m.sections[i].content);
+  const action=button.dataset.gridAction;
+  if(action==="add-row")rows.push(Array(rows[0].length).fill(""));
+  if(action==="remove-row"&&rows.length>1)rows.pop();
+  if(action==="add-col")rows.forEach(row=>row.push(""));
+  if(action==="remove-col"&&rows[0].length>1)rows.forEach(row=>row.pop());
+  m.sections[i].content=rows.map(row=>row.join(" | ")).join("\n");
+  renderEditor(m.id);saveLocalDraft();
+ });
+ $("sectionEditors").querySelectorAll('[data-field="type"]').forEach(select=>select.onchange=()=>{
+  const card=select.closest(".section-editor"),i=Number(card.dataset.section);
+  // Capture all other fields before replacing the editor control.
+  captureEditorFields(m);
+  const section=m.sections[i],oldType=section.type,newType=select.value;
+  if(oldType==="table"&&newType==="text"){
+   const rows=tableRows(section.content||"");
+   // Preserve all information in a readable, editable text layout.
+   section.content=rows.map(row=>row.map(cell=>String(cell||"").replace(/\[\[newline\]\]/g,"\n")).join(" — ")).join("\n");
+  }
+  section.type=newType;
+  renderEditor(m.id);saveLocalDraft();
+ });
+}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function captureEditorFields(m){
+ const get=id=>$(id)?.value;
+ if(get("f-entry-type")===undefined)return;
+ const kind=get("f-entry-type");
+ m.entry_type=kind==="groupe"?"dci":kind;
+ setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=kind==="groupe"?"":(get("f-dosage")||"").trim();if(m.dosage&&get("f-dosage-unit")!=="autre")m.dosage+=" "+get("f-dosage-unit");
+ m.dci=m.entry_type==="dci"?"":[...($("dciEntries")?.querySelectorAll("[data-dci-entry]")||[])].map(input=>input.value.trim()).filter(Boolean).join(" + ");
+ m.parent_dci=m.entry_type==="dci"?"":m.dci;
+ const ingredientRows=[...($('dciEntries')?.querySelectorAll('.ingredient-editor-row')||[])].map(row=>({name:row.querySelector('[data-dci-entry]')?.value.trim()||"",dose:row.querySelector('[data-ingredient-dose]')?.value.trim()||"",salt:row.querySelector('[data-ingredient-salt]')?.value.trim()||"",saltDose:row.querySelector('[data-salt-dose]')?.value.trim()||""})).filter(e=>e.name);
+ const ingredientData={showInTitle:!!$('f-dose-in-title')?.checked,entries:ingredientRows};
+ if(kind==='specialite'&&m.sections?.length){m.sections.forEach(sec=>sec.ingredientDosages=ingredientData);m.dosage=ingredientRows.map(e=>e.dose).filter(Boolean).join('/')||m.dosage;}
+
+ if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:"",enabled:false}];
+ m.sections[0].explorerVisibility=Object.fromEntries([...document.querySelectorAll("[data-explorer-visibility]")].map(input=>[input.dataset.explorerVisibility,input.checked]));
+ const classes=[...new Set((get("f-extra-classes")||"").split(",").map(t=>t.trim()).filter(Boolean))];
+ m.category=classes[0]||"Autres";
+ m.sections[0].explorerExtraClasses=classes.slice(1);
+ m.sections[0].explorerHiddenClasses=[...$("explorer-class-choices").querySelectorAll("[data-badge-choice]")].filter(input=>!input.checked).map(input=>input.value);
+ m.sections[0].explorerHiddenIndications=[...$("explorer-indication-choices").querySelectorAll("[data-badge-choice]")].filter(input=>!input.checked).map(input=>input.value);
+
+
+
+ // Alias conservés dans la base, sans champ visible dans l’éditeur.
+ const indicationSection=m.sections.find(sec=>sec.id==="indications");
+ if(indicationSection)indicationSection.indicationTags=(get("f-indications")||"").split(",").map(x=>x.trim()).filter(Boolean);
+ m.status=get("f-status");m.published=get("f-published")==="true";
+ m.updated=get("f-updated"); // Source principale historique conservée.
+ readPresentationEditors(m);
+ const cards=[...$("sectionEditors").querySelectorAll(".section-editor")];
+ cards.forEach((card,i)=>{if(!m.sections[i])return;
+   for(const field of ["title","type","content"]){
+     const el=card.querySelector(`[data-field="${field}"]`);
+     if(el)m.sections[i][field]=el.value;
+   }
+   if(m.sections[i].type==="table"&&card.querySelector(".table-grid-editor"))m.sections[i].content=readTableGrid(card);
+ });
+}
+function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);const ss=m.sections;
+ if(action==="up"&&index>0)[ss[index-1],ss[index]]=[ss[index],ss[index-1]];
+ if(action==="down"&&index<ss.length-1)[ss[index+1],ss[index]]=[ss[index],ss[index+1]];
+ if(action==="toggle"){
+  ss[index].enabled=!(ss[index].enabled!==false&&ss[index].enabled!=="false");
+  const card=$('sectionEditors')?.querySelector(`.section-editor[data-section="${index}"]`);
+  if(card){
+   card.classList.toggle('is-disabled',ss[index].enabled===false);
+   const button=card.querySelector('[data-act="toggle"]');
+   if(button){button.textContent=ss[index].enabled===false?'Afficher':'Masquer';button.setAttribute('aria-pressed',String(ss[index].enabled!==false));}
+  }
+  saveLocalDraft();
+  return;
+ }
+ if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
+ renderEditor(id);saveLocalDraft()}
+function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id);saveLocalDraft()}
+let editorSaveInProgress=false;
+async function saveEditor(id){
+ if(editorSaveInProgress)return;
+ const m=meds.find(x=>x.id===id);if(!m)return;
+ editorSaveInProgress=true;
+ const button=$("saveMed");
+ if(button){button.disabled=true;button.textContent="Enregistrement…"}
+ try{
+  captureEditorFields(m);
+  await uploadPresentationPhotos(m);
+  await syncMedication(m);
+  clearLocalDraft();
+  detailLocation(id);renderDetail();
+  // Après la sauvegarde, afficher le début de la fiche qui vient d'être modifiée.
+  // Deux frames laissent au navigateur le temps d'afficher la vue consultation.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   const detail=$("detail");
+   if(detail&&!detail.classList.contains("hidden")&&selectedId===id){
+    const top=detail.getBoundingClientRect().top+window.scrollY-16;
+    window.scrollTo({top:Math.max(0,top),behavior:"instant"});
+    viewScrollPositions.home=window.scrollY;
+   }
+  }));
+  toast("Fiche enregistrée et photos synchronisées");
+ }catch(e){
+  console.error(e);
+  toast("Échec de l’enregistrement : "+(e.message||"vérifie Supabase Storage"));
+ }finally{
+  editorSaveInProgress=false;
+  const currentButton=$("saveMed");
+  if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
+ }
+}
+// Ctrl+Alt+N : crée une nouvelle fiche sans interférer avec Ctrl+N du navigateur.
+document.addEventListener("keydown",event=>{
+ if(!event.ctrlKey||!event.altKey||event.metaKey||event.shiftKey||event.key.toLowerCase()!=="n")return;
+ if(event.repeat||!admin)return;
+ // Ne pas interrompre une édition déjà ouverte, notamment un brouillon non enregistré.
+ if(editorId&&!$("editor").classList.contains("hidden"))return;
+ event.preventDefault();
+ addMedication();
+});
+// Ctrl+M / Cmd+M : ouvre l'édition de la fiche actuellement consultée.
+// Ne détourne pas le raccourci hors d'une fiche, ni quand l'éditeur est déjà ouvert.
+document.addEventListener("keydown",event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="m")return;
+ if(event.repeat||editorId||!selectedId||$("detail").classList.contains("hidden")||!admin)return;
+ const med=meds.find(m=>m.id===selectedId&&!isSourcesRecord(m));
+ if(!med)return;
+ event.preventDefault();
+ renderEditor(med.id);
+});
+// Ctrl+S / Cmd+S : enregistre uniquement lorsque l'éditeur d'une fiche est ouvert.
+document.addEventListener("keydown",event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="s")return;
+ if(!editorId||$("editor").classList.contains("hidden"))return;
+ event.preventDefault();
+ if(!event.repeat)saveEditor(editorId);
+});
+function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
+async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();navigateToView("explore");toast("Fiche supprimée de la base en ligne")}
+
+// Les références communes sont stockées dans un enregistrement dédié de la table existante.
+// Il est exclu des recherches et du catalogue médicaments.
+const SOURCES_RECORD_ID="7d8a2e1b-6f4c-4f83-9e91-7c62ab90d415";
+function isSourcesRecord(m){return m.id===SOURCES_RECORD_ID||(m.sections||[]).some(s=>s.memofficineKind==="sources_communes")}
+function sourcesRecord(){return meds.find(isSourcesRecord)}
+function sourceItems(){const section=(sourcesRecord()?.sections||[]).find(s=>s.memofficineKind==="sources_communes");return Array.isArray(section?.items)?section.items:[]}
+function safeSourceUrl(raw){try{const u=new URL(raw);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
+function renderSources(){
+ const items=sourceItems();
+ $("sourcesList").innerHTML=items.length?items.map(item=>{
+  const url=safeSourceUrl(item.url||"");
+  return `<article class="source-card"><h3>${esc(item.title||"Ressource sans titre")}</h3>${item.organization?`<div class="muted">${esc(item.organization)}</div>`:""}${item.description?`<p>${esc(item.description)}</p>`:""}${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Consulter la source ↗</a>`:""}</article>`;
+ }).join(""):'<div class="source-empty">Aucune source commune publiée pour le moment.</div>';
+ $("sourcesAdmin").classList.toggle("hidden",!admin);
+ if(admin)renderSourcesEditor();
+}
+let pendingSources=null;
+function sourceField(item,i,key,label){return `<label>${label}<input data-source-index="${i}" data-source-key="${key}" value="${esc(item[key]||"")}" placeholder="${label}"></label>`}
+function renderSourcesEditor(){
+ if(!admin)return;
+ const items=pendingSources===null?clone(sourceItems()):pendingSources;
+ $("sourcesAdmin").innerHTML=`<h3 style="margin-top:0">Gérer les sources communes</h3><p class="muted">Ajoute des ressources vérifiables. Les modifications sont publiques après enregistrement.</p><div id="sourcesEntries">${items.map((item,i)=>`<div class="source-entry"><div class="sources-toolbar"><strong>Source ${i+1}</strong><button type="button" data-remove-source="${i}" class="danger">Supprimer</button></div><div class="admin-grid">${sourceField(item,i,"title","Titre de la ressource")}${sourceField(item,i,"organization","Organisme / éditeur")}${sourceField(item,i,"url","Adresse URL")}${sourceField(item,i,"description","Description (facultative)")}</div></div>`).join("")}</div><div class="sources-toolbar"><button type="button" id="addCommonSource" class="soft">+ Ajouter une source</button><button type="button" id="saveCommonSources" class="primary">Enregistrer les sources</button></div>`;
+ $("sourcesAdmin").querySelectorAll("[data-source-key]").forEach(input=>input.addEventListener("input",()=>{items[Number(input.dataset.sourceIndex)][input.dataset.sourceKey]=input.value;pendingSources=items}));
+ $("sourcesAdmin").querySelectorAll("[data-remove-source]").forEach(btn=>btn.onclick=()=>{items.splice(Number(btn.dataset.removeSource),1);pendingSources=items;renderSourcesEditor()});
+ $("addCommonSource").onclick=()=>{items.push({title:"",organization:"",url:"",description:""});pendingSources=items;renderSourcesEditor();const fields=$("sourcesEntries").querySelectorAll('[data-source-key="title"]');fields[fields.length-1]?.focus()};
+ $("saveCommonSources").onclick=saveCommonSources;
+}
+async function saveCommonSources(){
+ if(!admin)return;
+ const items=(pendingSources===null?sourceItems():pendingSources).map(item=>({title:String(item.title||"").trim(),organization:String(item.organization||"").trim(),url:String(item.url||"").trim(),description:String(item.description||"").trim()}));
+ if(items.some(item=>!item.title)){toast("Chaque source doit avoir un titre.");return}
+ if(items.some(item=>item.url&&!safeSourceUrl(item.url))){toast("Utilise des liens http:// ou https:// valides.");return}
+ const existing=sourcesRecord();
+ const record=existing?clone(existing):{id:SOURCES_RECORD_ID,name:"Sources communes Mémofficine",dci:"",dosage:"",category:"Documentation",form:"",aliases:"",entry_type:"specialite",status:"À vérifier",updated:"",source:"",presentations:[],sections:[],published:true};
+ record.sections=[{id:"sources-communes",title:"Sources communes",type:"text",content:"",enabled:true,memofficineKind:"sources_communes",items}];record.published=true;
+ const {data,error}=await supabaseClient.from("medications").upsert(medToRow(record)).select().single();
+ if(error){console.error(error);toast("Impossible d'enregistrer les sources : vérifie les permissions Supabase.");return}
+ const saved=rowToMed(data),idx=meds.findIndex(isSourcesRecord);if(idx>=0)meds[idx]=saved;else meds.push(saved);
+ pendingSources=null;renderSources();toast("Sources communes enregistrées !");
+}
+
+$("exploreNav").onclick=()=>navigateToView("explore");
+$("sourcesNav").onclick=()=>navigateToView("sources");
+document.querySelector("a.brand").addEventListener("click",event=>{
+ if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+ event.preventDefault();
+ navigateToView("home");
+});
+$("homeExploreShortcut").onclick=()=>$('exploreNav').click();
+$("homeSourcesShortcut").onclick=()=>$('sourcesNav').click();
+document.querySelectorAll('[data-example-search]').forEach(btn=>btn.addEventListener('click',()=>{
+  $("search").value=btn.dataset.exampleSearch;
+  openedSearchFiche=false;
+  renderResults();
+  $("search").focus();
+}));
+$("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;$("exploreForm").onchange=renderExplorer;
+$("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";renderExplorer()};
+$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
+$("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
+window.addEventListener("pagehide",saveLocalDraft);
+if(!location.search&&!location.hash){
+ try{
+  const last=localStorage.getItem("memofficine-last-location-v1");
+  if(last&&last.startsWith(location.pathname)&&last!==location.pathname){
+   history.replaceState({},"",last);
+  }
+ }catch(e){}
+}
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");initCloud();
+</script>
+</body></html>
