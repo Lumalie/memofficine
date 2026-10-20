@@ -182,6 +182,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-tree-children{margin-top:12px;padding-left:clamp(10px,2.5vw,24px);border-left:2px solid #dce8df;display:grid;gap:9px}
 .explore-tree-context>.explore-tree-line{opacity:.7}
 @media(max-width:650px){.explore-tree-node{padding:10px}.explore-tree-children{padding-left:10px}.explore-tree-type{margin-left:0}}
+
+/* V5.36 : arborescence pliable, compacte et lisible */
+.explore-tree{gap:8px}
+.explore-tree-node{padding:10px 12px}
+.explore-tree-group{background:#f8fbf8}
+.explore-tree-children{margin-top:8px;gap:7px}
+.explore-tree-disclosure{margin-top:7px}
+.explore-tree-disclosure>summary{cursor:pointer;display:list-item;color:#657d6e;font-size:.79rem;font-weight:600;padding:5px 2px;list-style-position:inside}
+.explore-tree-disclosure>summary:hover{color:#2d644a}
+.explore-tree-disclosure:not([open]) .explore-tree-children{display:none}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -289,6 +299,8 @@ function restoreLocalDraft(){
  try{
   const key=draftKey(),raw=key&&sessionStorage.getItem(key);if(!raw)return false;
   const draft=JSON.parse(raw);if(!draft?.med?.id||!Array.isArray(draft.med.sections))return false;
+  const params=new URLSearchParams(location.search);
+  if(params.get("edition")!=="1"||params.get("fiche")!==draft.med.id)return false;
   const i=meds.findIndex(m=>m.id===draft.med.id);
   if(i>=0)meds[i]=draft.med;else meds.unshift(draft.med);
   selectedId=draft.med.id;renderFilters();renderResults();renderEditor(selectedId);return true;
@@ -308,7 +320,17 @@ async function loadCloudMeds(){
  const requestedId=new URLSearchParams(window.location.search).get("fiche");
  selectedId=meds.find(m=>m.id===requestedId&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
  if(requestedId)openedSearchFiche=true;
- if(!restoreLocalDraft()){renderFilters();renderResults();if(requestedId)renderDetail(new URLSearchParams(location.search).get("rubrique"),new URLSearchParams(location.search).has("presentation")?Number(new URLSearchParams(location.search).get("presentation")):null);}
+ if(!restoreLocalDraft()){
+  renderFilters();renderResults();
+  if(requestedId){
+   const params=new URLSearchParams(location.search);
+   if(params.get("edition")==="1"&&admin&&meds.some(m=>m.id===requestedId)){
+    renderEditor(requestedId);
+   }else{
+    renderDetail(params.get("rubrique"),params.has("presentation")?Number(params.get("presentation")):null);
+   }
+  }
+ }
 }
 async function syncMedication(m){
  const {data,error}=await supabaseClient.from("medications").upsert(medToRow(m)).select().single();
@@ -434,7 +456,8 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
  if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
- history.pushState({fiche:id},"",url);
+ url.searchParams.delete("edition");
+ history.pushState({fiche:id},"",url);rememberNavigation();
 }
 function medicationForms(m){return [...new Set((m.presentations||[]).map(p=>String(p.form||" ").trim()).filter(Boolean))]};
 function explorerFormLabel(m){
@@ -442,6 +465,7 @@ function explorerFormLabel(m){
  if(!forms.length)return "";
  return `<span class="explore-form-inline">${esc(forms.join(" · "))}</span>`;
 }
+const exploreExpandedGroups=new Set();
 function renderExplorer(){
  const entries=publicMeds();
  const classes=[...new Set(entries.map(m=>m.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
@@ -486,10 +510,14 @@ function renderExplorer(){
     <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
    </div>
    ${isMatch?`<div class="explore-tree-tags">${m.category?`<button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category)}</button>`:""}${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
-   ${kids.length?`<div class="explore-tree-children">${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
+   ${kids.length?`<details class="explore-tree-disclosure" data-tree-id="${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"open":""}><summary>${kids.length} élément${kids.length>1?"s":""} · Afficher / masquer</summary><div class="explore-tree-children">${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div></details>`:""}
   </div>`;
  };
  $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche pour ces filtres.</div>';
+ $("exploreCards").querySelectorAll("details[data-tree-id]").forEach(d=>d.addEventListener("toggle",()=>{
+  if(d.open)exploreExpandedGroups.add(d.dataset.treeId);
+  else exploreExpandedGroups.delete(d.dataset.treeId);
+ }));
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
@@ -509,13 +537,24 @@ function selectFiche(id,addHistory=true){
  renderResults();
 }
 // L'historique suit la page réellement consultée, et pas seulement la fiche sélectionnée.
+function rememberNavigation(){try{localStorage.setItem("memofficine-last-location-v1",location.pathname+location.search+location.hash)}catch(e){}}
+function editorLocation(id){
+ const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
+ url.searchParams.set("edition","1");url.searchParams.delete("presentation");url.searchParams.delete("rubrique");
+ history.replaceState({edition:id},"",url);rememberNavigation();
+}
+function detailLocation(id){
+ const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
+ url.searchParams.delete("edition");history.replaceState({fiche:id},"",url);rememberNavigation();
+}
 function navigateToView(view){
  const url=new URL(location.href);
  url.searchParams.delete("fiche");
+ url.searchParams.delete("edition");
  url.searchParams.delete("presentation");
  url.searchParams.delete("rubrique");
  url.hash=view==="explore"?"explorer":view==="sources"?"sources":"";
- history.pushState({view},"",url);
+ history.pushState({view},"",url);rememberNavigation();
  editorId=null;
  openedSearchFiche=false;
  $("search").value="";
@@ -542,13 +581,14 @@ function restoreHistoryPage(){
  renderResults();
  if(med){
   showView("home");
+  if(params.get("edition")==="1"&&admin){renderEditor(med.id);return}
   renderDetail(params.get("rubrique"),params.has("presentation")?Number(params.get("presentation")):null);
  }else{
   showView(location.hash==="#explorer"?"explore":location.hash==="#sources"?"sources":"home");
  }
  window.scrollTo({top:0,behavior:"instant"});
 }
-window.addEventListener("popstate",restoreHistoryPage);
+window.addEventListener("popstate",()=>{rememberNavigation();restoreHistoryPage()});
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
 function categories(){return ["Toutes",...new Set(meds.filter(m=>!isSourcesRecord(m)).map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
@@ -898,7 +938,7 @@ function addGroup(){
 }
 function renderEditor(id){
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
- const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;
+ const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;editorLocation(id);
  // Conversion non destructive des anciennes interactions de groupe en tableau éditable.
  // Elle n'est persistée qu'au clic sur Enregistrer.
  if(isGroup(m)){
@@ -998,7 +1038,7 @@ const toggleType = () => {
   });
   m.sections=[...replacement,...archived];setHierarchy(m,"groupe",parentGroupId(m));renderEditor(m.id);saveLocalDraft();toast("Modèle groupe appliqué : vérifie les rubriques avant d’enregistrer.");
  };
- $("backBtn").onclick=()=>renderDetail();
+ $("backBtn").onclick=()=>{clearLocalDraft();detailLocation(id);renderDetail()};
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=!no.checked;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
@@ -1156,7 +1196,7 @@ async function saveEditor(id){
   await uploadPresentationPhotos(m);
   await syncMedication(m);
   clearLocalDraft();
-  renderDetail();
+  detailLocation(id);renderDetail();
   toast("Fiche enregistrée et photos synchronisées");
  }catch(e){
   console.error(e);
@@ -1240,6 +1280,14 @@ $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{t
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
 window.addEventListener("pagehide",saveLocalDraft);
+if(!location.search&&!location.hash){
+ try{
+  const last=localStorage.getItem("memofficine-last-location-v1");
+  if(last&&last.startsWith(location.pathname)&&last!==location.pathname){
+   history.replaceState({},"",last);
+  }
+ }catch(e){}
+}
 openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");initCloud();
 </script>
 </body></html>
