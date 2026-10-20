@@ -57,6 +57,14 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 .med-table .interaction-orange th,.med-table .interaction-orange td{color:#a76a20}
 .med-table .interaction-muted td{color:#abb8c3}
 .section.conseil-comptoir p{padding-left:3px}
+
+/* Barre contextuelle de mise en forme des cellules */
+.table-grid-wrap{position:relative}
+.table-cell-toolbar{position:sticky;top:4px;z-index:3;display:flex;gap:5px;align-items:center;flex-wrap:wrap;width:max-content;max-width:100%;padding:7px;border:1px solid #b9cbbd;background:#fff;box-shadow:0 4px 16px #193f3422;border-radius:10px;margin-bottom:6px}
+.table-cell-toolbar[hidden],.table-cell-preview[hidden]{display:none!important}
+.table-cell-toolbar button{padding:4px 9px}
+.table-cell-toolbar select{width:auto;max-width:165px;padding:5px}
+.table-cell-preview{border:1px dashed #c8d5cb;background:#f7faf7;padding:7px 10px;border-radius:8px;margin:6px 0;font-size:.86rem;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -376,8 +384,8 @@ function wireTextFormatting(){
 function renderSection(s,targetSectionId=null){
  let content="";
  if(s.type==="table"){
-   const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split("|").map(x=>x.trim()));
-   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===2)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${esc(c)}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
+   const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split(/\s+\|\s+/).map(x=>x.trim()));
+   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===2)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${richInline(c)}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
  }else{content=richText(s.content||"")}
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
@@ -449,6 +457,7 @@ const toggleType = () => {
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  wireTextFormatting();
  wireTableGrids(m);
+ wireTableCellFormatting();
  $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
  $("editor").oninput=saveLocalDraft;
  $("editor").onchange=saveLocalDraft;
@@ -456,18 +465,67 @@ const toggleType = () => {
 }
 function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",showLab:card.querySelector("[data-show-lab]")?.checked!==false,canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
 function tableRows(content){
- const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split("|").map(cell=>cell.trim()));
+ const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
  const count=Math.max(1,...rows.map(row=>row.length));
  return rows.map(row=>Array.from({length:count},(_,i)=>row[i]||""));
 }
+function tableCellToolbar(){
+ return `<div class="table-cell-toolbar" hidden>
+ <button type="button" data-cell-format="bold" title="Gras"><b>G</b></button>
+ <button type="button" data-cell-format="italic" title="Italique"><i>I</i></button>
+ <button type="button" data-cell-format="underline" title="Souligné"><u>S</u></button>
+ <select data-cell-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select>
+ </div><div class="table-cell-preview" hidden></div>`;
+}
 function tableGridEditor(content){
  const rows=tableRows(content);
- return `<div class="table-grid-wrap"><table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><input data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}" value="${esc(cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les en-têtes (dans les tableaux prévus à cet effet). Les modifications sont sauvegardées dans le brouillon.</p>`;
+ return `<div class="table-grid-wrap">${tableCellToolbar()}<table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><input data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}" value="${esc(cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les en-têtes (dans les tableaux prévus à cet effet). Les modifications sont sauvegardées dans le brouillon.</p>`;
 }
 function readTableGrid(card){
  const trs=[...card.querySelectorAll(".table-grid-editor tr")];
- return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[|\r\n]/g," ").trim()).join(" | ")).join("\n");
+ return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[\r\n]/g," ").trim()).join(" | ")).join("\n");
+}
+function wireTableCellFormatting(){
+ document.querySelectorAll("#sectionEditors .table-grid-wrap").forEach(wrap=>{
+  const toolbar=wrap.querySelector(".table-cell-toolbar");
+  const preview=wrap.querySelector(".table-cell-preview");
+  let active=null, range=null;
+  const update=()=>{
+   if(!active)return;
+   const selected=active.selectionStart!==active.selectionEnd;
+   if(selected)range=[active.selectionStart,active.selectionEnd];
+   toolbar.hidden=!selected;
+   preview.hidden=false;
+   preview.innerHTML=richInline(active.value)||"&nbsp;";
+  };
+  wrap.querySelectorAll("[data-table-cell]").forEach(input=>{
+   input.addEventListener("focus",()=>{active=input;range=null;update()});
+   input.addEventListener("select",update);
+   input.addEventListener("mouseup",update);
+   input.addEventListener("keyup",update);
+   input.addEventListener("input",update);
+  });
+  toolbar.addEventListener("mousedown",e=>{if(e.target.closest("button"))e.preventDefault()});
+  const apply=(mode)=>{
+   if(!active||!range)return;
+   const [start,end]=range;
+   const selected=active.value.slice(start,end);
+   if(!selected)return;
+   let replacement=selected;
+   if(mode==="bold")replacement=`**${selected}**`;
+   if(mode==="italic")replacement=`*${selected}*`;
+   if(mode==="underline")replacement=`__${selected}__`;
+   if(mode.startsWith("color:"))replacement=`[[${mode.slice(6)}|${selected}]]`;
+   active.setRangeText(replacement,start,end,"end");
+   active.dispatchEvent(new Event("input",{bubbles:true}));
+   active.focus();
+   toolbar.hidden=true;range=null;
+  };
+  toolbar.querySelectorAll("[data-cell-format]").forEach(button=>button.addEventListener("click",()=>apply(button.dataset.cellFormat)));
+  const color=toolbar.querySelector("[data-cell-color]");
+  color.addEventListener("change",()=>{if(color.value)apply("color:"+color.value);color.value=""});
+ });
 }
 function wireTableGrids(m){
  $("sectionEditors").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
