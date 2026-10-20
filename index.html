@@ -889,7 +889,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
   catch(e){window.prompt("Copie ce lien :",ficheUrl(m.id))}
  };
  $("editBtn").onclick=()=>{if(!admin){toast("Connecte-toi en administratrice pour modifier cette fiche.");showLogin();return;}renderEditor(m.id);};
- $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const index=Number(sel.value);const target=$("presentation-info");if(target)target.innerHTML=presentationInfo((m.presentations||[])[index])});
+ $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index]):""});
  if(targetPresentationIndex!==null){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
    // Attendre la restauration de la position de la vue avant le saut ciblé.
@@ -966,7 +966,7 @@ function presentationLabel(p,m,i){
  const dosage=(p.dosage||m.dosage||"").trim();
  return [name,showLab&&lab?lab:"",dosage,form].filter(Boolean).join(" · ")||"Présentation "+(i+1);
 }
-function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const chosen=targetPresentationIndex!==null&&ps[targetPresentationIndex]?targetPresentationIndex:0;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[chosen])}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
+function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];const chosen=targetPresentationIndex!==null&&ps[targetPresentationIndex]?targetPresentationIndex:null;return `<section class="section presentation-fixed" id="presentations-details"><h3>💊 Présentation</h3>${ps.length?`${ps.length>1?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select><option value="" ${chosen===null?"selected":""}>— Choisir une présentation —</option>${ps.map((p,i)=>`<option value="${i}" ${i===chosen?"selected":""}>${esc(presentationLabel(p,m,i))}</option>`).join("")}</select>`:""}<div id="presentation-info" style="margin-top:12px">${chosen!==null?presentationInfo(ps[chosen]):ps.length===1?presentationInfo(ps[0]):""}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</section>`}
 
 const MEMO_CHOICES_KEY="memofficine_field_choices_v1";
 function memoChoices(kind){
