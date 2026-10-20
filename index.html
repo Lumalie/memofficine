@@ -211,6 +211,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explorer-class-choices{display:flex;gap:8px 16px;flex-wrap:wrap;margin-top:10px}
 .explorer-class-choices label{display:flex;align-items:center;gap:6px;font-weight:500}
 .explorer-class-choices input{width:auto;accent-color:#59896b}
+.explorer-section-heading{display:flex!important;align-items:center;gap:9px;margin-bottom:10px!important;font-weight:700!important;font-size:1rem!important}.explorer-section-heading input{width:auto!important;margin:0;accent-color:#59896b}.explorer-form-visibility{padding:10px 4px}.explorer-class-custom .explorer-class-choices{margin:12px 0}.explorer-class-custom .muted{margin-top:9px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -540,7 +541,7 @@ function renderExplorer(){
     <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}">${esc(displayMedName(m))}</button>
     <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
    </div>
-   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"indications")?indicationTags(m):[]).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"forms")?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"indications")?indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)):[]).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"forms")?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
    ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
@@ -995,10 +996,9 @@ function renderEditor(id){
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dosage-wrap"><label for="f-dosage">Dosage</label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div><p class="muted">Unité proposée selon la forme, modifiable. Pour les dosages complexes, choisir « autre » et saisir la valeur complète.</p></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><label class="ingredient-title-choice"><input type="checkbox" id="f-dose-in-title"> Afficher les dosages dans le titre de la fiche</label><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
- <div class="full explorer-visibility-editor"><strong>Affichage dans Explorer</strong><p class="muted">Choisis les étiquettes visibles sous cette fiche dans Explorer. Les informations restent enregistrées sur la fiche et disponibles pour les filtres.</p><div class="explorer-visibility-options">${[["category","Classe thérapeutique"],["indications","Indications thérapeutiques"],["forms","Formes pharmaceutiques"]].map(([key,label])=>`<label><input type="checkbox" data-explorer-visibility="${key}" ${explorerBadgeVisible(m,key)?"checked":""}> ${label}</label>`).join("")}</div></div>
- <div class="full explorer-class-custom"><label for="f-extra-classes">Autres étiquettes de classe thérapeutique (facultatif)</label><input id="f-extra-classes" value="${esc(((m.sections||[])[0]?.explorerExtraClasses||[]).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines"><p class="muted">Sépare les étiquettes par des virgules. La classe principale reste définie dans le champ « Classe thérapeutique ».</p><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
- <div class="full"><label for="f-indications">Indications thérapeutiques (badges Explorer, séparées par des virgules)</label><input id="f-indications" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Carence en fer, Anémie ferriprive"><div class="muted">Étiquettes de navigation : vérifier les indications officielles avant de les ajouter.</div></div>
- <div><label for="f-category">Classe thérapeutique</label><select id="f-category"><option value="">— Choisir une classe —</option>${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}" ${m.category===c?"selected":""}>${esc(c)}</option>`).join("")}<option value="__new__">＋ Créer une nouvelle classe…</option></select><input id="f-category-new" class="hidden" placeholder="Nom de la nouvelle classe thérapeutique" aria-label="Nouvelle classe thérapeutique"><div class="muted" id="category-help">La classe thérapeutique est indépendante du groupe parent.</div></div>
+ <div class="full explorer-class-custom"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="category" ${explorerBadgeVisible(m,"category")?"checked":""}> <span>Classe·s thérapeutique·s</span></label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
+ <div class="full explorer-class-custom"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="indications" ${explorerBadgeVisible(m,"indications")?"checked":""}> <span>Indication·s thérapeutique·s</span></label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
+ <div class="full explorer-form-visibility"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""}> <span>Forme·s pharmaceutique·s</span></label></div>
  
 
  </div>
@@ -1008,7 +1008,7 @@ function renderEditor(id){
     <div id="presentationEditors">${(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("")}</div>
     <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
   </div>
- <div id="group-template-tools" class="admin-actions"><button type="button" id="applyGroupTemplate">🌿 Appliquer le modèle de fiche groupe</button><span class="muted">Les anciennes rubriques seront conservées, mais masquées.</span></div>
+
  <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
  <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div>
  <div class="admin-grid admin-meta" style="margin-top:24px"><div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(v=>`<option ${m.status===v?"selected":""}>${v}</option>`).join("")}</select></div><div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?"selected":""}>Brouillon — privé</option><option value="true" ${m.published?"selected":""}>Publié — visible publiquement</option></select></div><div class="full"><label for="f-updated">Date de mise à jour</label><input id="f-updated" type="date" value="${esc(m.updated)}"></div></div>`;
@@ -1053,45 +1053,27 @@ const toggleType = () => {
  renderDciEntries(initialDci.map((name,i)=>({name,...(storedEntries.find(e=>e.name===name)||storedEntries[i]||{})})).map((e,i)=>({...e,name:initialDci[i]})));
  $("f-dose-in-title").checked=storedIngredientInfo?!!storedIngredientInfo.showInTitle:!!m.dosage;
  $("addDciEntry").onclick=()=>{renderDciEntries([...readIngredientEntries(),{name:"",dose:"",salt:"",saltDose:""}]);[...dciRoot.querySelectorAll("[data-dci-entry]")].at(-1)?.focus();};
- const categorySelect=$("f-category"),categoryNew=$("f-category-new"),parentSelect=$("f-parent-group");
+ const parentSelect=$("f-parent-group");
  function refreshParentGroups(){
-  const custom=categorySelect.value==="__new__";
-  categoryNew.classList.toggle("hidden",!custom);
   const selected=parentSelect.value||parentGroupId(m);
   const matches=groupOptions(m);
   parentSelect.innerHTML='<option value="">Aucun groupe</option>'+matches.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}${g.category?" — "+esc(g.category):""}</option>`).join("");
   if(matches.some(g=>g.id===selected))parentSelect.value=selected;
-  $("category-help").textContent="La classe thérapeutique est indépendante du groupe parent.";
   $("group-parent-help").textContent=matches.length?"Tu peux choisir n’importe quel groupe parent, quelle que soit sa classe thérapeutique.":"Aucun groupe disponible pour le moment. Tu peux laisser « Aucun groupe ».";
  }
- categorySelect.addEventListener("change",refreshParentGroups);
- categoryNew.addEventListener("input",refreshParentGroups);
  refreshParentGroups();
- const extraClassInput=$("f-extra-classes"),classChoices=$("explorer-class-choices");
- let chosenHidden=new Set((m.sections||[])[0]?.explorerHiddenClasses||[]);
- function renderClassChoices(){
-  classChoices.querySelectorAll("[data-explorer-class-choice]").forEach(input=>{
-   if(input.checked)chosenHidden.delete(input.value);else chosenHidden.add(input.value);
-  });
-  const primary=categorySelect.value==="__new__"?categoryNew.value:categorySelect.value;
-  const names=[...new Set([primary,...extraClassInput.value.split(",")].map(t=>t.trim()).filter(Boolean))];
-  classChoices.innerHTML=names.map(name=>`<label><input type="checkbox" data-explorer-class-choice value="${esc(name)}" ${chosenHidden.has(name)?"":"checked"}> ${esc(name)}</label>`).join("")||'<span class="muted">Ajoute une classe pour régler son affichage.</span>';
+ function wireIndividualBadges(inputId,choicesId,hiddenKey){
+  const input=$(inputId),choices=$(choicesId);
+  let hidden=new Set((m.sections||[])[0]?.[hiddenKey]||[]);
+  const render=()=>{
+   choices.querySelectorAll("input[data-badge-choice]").forEach(el=>{if(el.checked)hidden.delete(el.value);else hidden.add(el.value)});
+   const names=[...new Set(input.value.split(",").map(t=>t.trim()).filter(Boolean))];
+   choices.innerHTML=names.map(name=>`<label><input type="checkbox" data-badge-choice value="${esc(name)}" ${hidden.has(name)?"":"checked"}> ${esc(name)}</label>`).join("")||'<span class="muted">Ajoute une étiquette pour choisir son affichage.</span>';
+  };
+  input.addEventListener("input",render);render();
  }
- extraClassInput.addEventListener("input",renderClassChoices);
- categorySelect.addEventListener("change",renderClassChoices);
- categoryNew.addEventListener("input",renderClassChoices);
- renderClassChoices();
- $("applyGroupTemplate").onclick=()=>{
-  if(!confirm("Appliquer le modèle groupe ? Les rubriques actuelles seront conservées mais masquées, sans effacer leur contenu."))return;
-  captureEditorFields(m);
-  const archived=m.sections.filter(sec=>!GROUP_SECTIONS.some(t=>t.id===sec.id)).map(sec=>({...sec,enabled:false}));
-  const existing=m.sections.filter(sec=>GROUP_SECTIONS.some(t=>t.id===sec.id));
-  const replacement=clone(GROUP_SECTIONS).map(template=>{
-   const old=existing.find(sec=>sec.id===template.id);
-   return old?{...template,content:old.content,indicationTags:old.indicationTags||template.indicationTags}:template;
-  });
-  m.sections=[...replacement,...archived];setHierarchy(m,"groupe",parentGroupId(m));renderEditor(m.id);saveLocalDraft();toast("Modèle groupe appliqué : vérifie les rubriques avant d’enregistrer.");
- };
+ wireIndividualBadges("f-extra-classes","explorer-class-choices","explorerHiddenClasses");
+ wireIndividualBadges("f-indications","explorer-indication-choices","explorerHiddenIndications");
  $("backBtn").onclick=()=>{clearLocalDraft();detailLocation(id);renderDetail()};
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=!no.checked;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
@@ -1205,10 +1187,11 @@ function captureEditorFields(m){
 
  if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:"",enabled:false}];
  m.sections[0].explorerVisibility=Object.fromEntries([...document.querySelectorAll("[data-explorer-visibility]")].map(input=>[input.dataset.explorerVisibility,input.checked]));
- m.category=(get("f-category")==="__new__"?(get("f-category-new")||""):get("f-category")||"").trim()||"Autres";
- const extraClasses=(get("f-extra-classes")||"").split(",").map(t=>t.trim()).filter(Boolean);
- m.sections[0].explorerExtraClasses=[...new Set(extraClasses.filter(t=>t!==m.category))];
- m.sections[0].explorerHiddenClasses=[...document.querySelectorAll("[data-explorer-class-choice]")].filter(input=>!input.checked).map(input=>input.value);
+ const classes=[...new Set((get("f-extra-classes")||"").split(",").map(t=>t.trim()).filter(Boolean))];
+ m.category=classes[0]||"Autres";
+ m.sections[0].explorerExtraClasses=classes.slice(1);
+ m.sections[0].explorerHiddenClasses=[...$("explorer-class-choices").querySelectorAll("[data-badge-choice]")].filter(input=>!input.checked).map(input=>input.value);
+ m.sections[0].explorerHiddenIndications=[...$("explorer-indication-choices").querySelectorAll("[data-badge-choice]")].filter(input=>!input.checked).map(input=>input.value);
 
 
 
