@@ -47,9 +47,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 .table-grid-editor{border-collapse:separate;border-spacing:4px;width:100%;min-width:310px}
 .table-grid-editor td{padding:0;min-width:105px}
 .table-grid-editor input{width:100%;min-width:95px;padding:9px 8px;border-radius:7px}
-.table-grid-editor tr:first-child input{background:#eaf2ec;font-weight:700}
+.table-grid-editor td:first-child input{background:#eaf2ec;font-weight:700}
 .table-grid-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .table-grid-actions button{font-size:.82rem;padding:6px 9px}
+
+.med-table th[scope="row"]{background:#eef5ef;font-weight:700}
+.med-table .table-explanation{color:#abb8c3}
+.med-table .interaction-red th,.med-table .interaction-red td{color:#a44c43}
+.med-table .interaction-orange th,.med-table .interaction-orange td{color:#a76a20}
+.med-table .interaction-muted td{color:#abb8c3}
+.section.conseil-comptoir p{padding-left:3px}
 </style>
 </head>
 <body>
@@ -91,15 +98,14 @@ const PHOTO_BUCKET = "presentation-photos";
 const pendingPresentationPhotos = new Map();
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 const DEFAULT_SECTIONS = [
- {id:"conseil-comptoir",title:"📣 À DIRE AU COMPTOIR",type:"text",content:"À compléter : 3 à 5 messages prioritaires, vérifiés dans les sources officielles.",enabled:true},
+ {id:"conseil-comptoir",title:"📣 À DIRE AU COMPTOIR",type:"text",content:"💧 Mode d’administration : préciser le liquide et les modalités de prise après vérification de la présentation.\n⚠️ Effets indésirables à signaler : préciser les signes et la conduite à tenir selon les sources officielles.\n💬 Conseil associé : à adapter au médicament et à la situation du patient.",enabled:true},
  {id:"indications",title:"📍 Indications",type:"text",content:"À compléter à partir d’une source officielle vérifiée.",enabled:true},
  {id:"posologie",title:"🔢 Posologie",type:"text",content:"À compléter selon la spécialité, le dosage et l’indication. Vérifier la prescription et les sources officielles.",enabled:true},
- {id:"prise",title:"🕐 Modalités de prise",type:"table",content:"Repas | À renseigner | Pourquoi ?\nLiquide | À renseigner | Pourquoi ?\nAliments à privilégier | À renseigner | Pourquoi ?\nAliments à éviter | À renseigner | Pourquoi ?\nPosition particulière | À renseigner | Pourquoi ?",enabled:true},
- {id:"fractionnement",title:"⚪ Fractionnement / écrasement",type:"table",content:"Fractionner | À vérifier | Justification / source\nÉcraser | À vérifier | Justification / source",enabled:true},
+ {id:"prise",title:"🕐 Modalités de prise",type:"table",content:"🍽️ | moment du repas | pourquoi ?\n💧 | avec quel liquide | pourquoi ?\n🍎✅ | aliments à privilégier | exemple 1 ; exemple 2\n🍎❌ | aliments à éviter | exemple 1\n🧍‍♀️ | position particulière | pourquoi ?",enabled:true},
  {id:"effets",title:"🌀 Effets indésirables",type:"text",content:"À compléter : effets pertinents, fréquence si documentée et signes nécessitant un avis professionnel.",enabled:true},
  {id:"age",title:"🧒 Âge minimum",type:"text",content:"À vérifier selon la spécialité, la forme et l’indication.",enabled:true},
  {id:"grossesse",title:"🤰 Grossesse et allaitement",type:"text",content:"Grossesse : à vérifier dans les sources de référence.\nAllaitement : à vérifier dans les sources de référence.",enabled:true},
- {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"table",content:"Contre-indications | À renseigner\nAssociations déconseillées | À renseigner\nPrécautions / à prendre en compte | À renseigner",enabled:true},
+ {id:"interactions",title:"⚠️ Interactions médicamenteuses",type:"table",content:"CONTRE-INDICATION | exemple\nassociation déconseillée | exemple\nprécaution d’emploi | exemple\nà prendre en compte | exemple",enabled:true},
  {id:"oubli",title:"🗓️ En cas d’oubli de prise",type:"text",content:"Conduite à tenir à relever dans la notice officielle de la spécialité exacte.",enabled:true},
  {id:"manipulation",title:"💉 Manipulation / reconstitution",type:"text",content:"À compléter si pertinent : reconstitution, manipulation, modalités d’administration ou d’injection.",enabled:true},
  {id:"conservation",title:"❄️ Modalités de conservation",type:"text",content:"À vérifier : température, durée après ouverture/reconstitution et durée hors réfrigérateur si documentées.",enabled:true},
@@ -264,7 +270,7 @@ function renderDetail(targetSectionId=null){
 function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
 function presentationInfo(p){if(!p)return '<p class="muted">Aucune présentation documentée.</p>';
  const img=safeHttp(p.imageUrl||"");const src=safeHttp(p.sourceUrl||"");
- return `<p><strong>Médicament / molécule :</strong> ${esc(p.name||"À renseigner")}</p><p><strong>Laboratoire :</strong> ${esc(p.lab||"À renseigner")}</p><p><strong>Dosage :</strong> ${esc(p.dosage||"À renseigner")} · <strong>Forme :</strong> ${esc(p.form||"À renseigner")}</p><p><strong>Aspect :</strong> ${esc(p.description||"Non documenté")}</p><p><strong>Marquage / sécabilité :</strong> ${esc(p.marking||"Non documenté")}</p><p><strong>CIS :</strong> ${esc(p.cis||"Non renseigné")} · <strong>CIP :</strong> ${esc(p.cip||"Non renseigné")}</p>${img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""}${src?`<p><a href="${esc(src)}" target="_blank" rel="noopener noreferrer">Consulter la source de cette présentation ↗</a></p>`:""}<p class="hint">L'aspect seul ne permet pas d'identifier avec certitude un médicament. Ne pas déduire une équivalence ou une sécabilité d'une photographie.</p>`;
+ return `<p><strong>Médicament / molécule :</strong> ${esc(p.name||"À renseigner")}</p><p><strong>Laboratoire :</strong> ${esc(p.lab||"À renseigner")}</p><p><strong>Dosage :</strong> ${esc(p.dosage||"À renseigner")} · <strong>Forme :</strong> ${esc(p.form||"À renseigner")}</p><p><strong>Aspect :</strong> ${esc(p.description||"Non documenté")}</p><p><strong>Marquage / sécabilité :</strong> ${esc(p.marking||"Non documenté")}</p><p><strong>Fractionnement :</strong> ${p.canSplit===true?"Possible selon vérification":"Non confirmé — vérifier"} · <strong>Écrasement :</strong> ${p.canCrush===true?"Possible selon vérification":"Non confirmé — vérifier"}</p><p><strong>CIS :</strong> ${esc(p.cis||"Non renseigné")} · <strong>CIP :</strong> ${esc(p.cip||"Non renseigné")}</p>${img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""}${src?`<p><a href="${esc(src)}" target="_blank" rel="noopener noreferrer">Consulter la source de cette présentation ↗</a></p>`:""}<p class="hint">L'aspect seul ne permet pas d'identifier avec certitude un médicament. Ne pas déduire une équivalence ou une sécabilité d'une photographie.</p>`;
 }
 function presentationLabel(p,m,i){
  const name=(p.name||m.name||"").trim();
@@ -282,6 +288,7 @@ function presentationEditor(p,i){
  const pending=pendingPresentationPhotos.get(editorId)?.get(i);
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div><div class="presentation-fields">${fields.map(([key,label])=>`<div class="${["description","marking","sourceUrl"].includes(key)?"full":""}"><label>${label}</label><input data-pfield="${key}" value="${esc(p[key]||"")}"></div>`).join("")}
  <div class="full"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-show-lab style="width:auto" ${p.showLab!==false?"checked":""}>Afficher le laboratoire dans le menu déroulant</label></div>
+ <div class="full"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-can-split style="width:auto" ${p.canSplit===true?"checked":""}>Peut être fractionné (si confirmé par une source officielle)</label><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-can-crush style="width:auto" ${p.canCrush===true?"checked":""}>Peut être écrasé (si confirmé par une source officielle)</label><p class="hint">Une case non cochée signifie « non confirmé », pas « interdit ». Vérifier chaque présentation.</p></div>
  <div class="full"><label>Photographie de cette présentation</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div></div></div>`;
 }
 function wirePhotoInputs(){
@@ -370,7 +377,7 @@ function renderSection(s,targetSectionId=null){
  let content="";
  if(s.type==="table"){
    const rows=(s.content||"").split("\n").filter(Boolean).map(line=>line.split("|").map(x=>x.trim()));
-   content=rows.length?`<table><tbody>${rows.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${esc(c)}</th>`:`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
+   content=rows.length?`<table class="med-table"><tbody>${rows.map((r,i)=>`<tr class="${s.id==="interactions"?(i===0?"interaction-red":i===1?"interaction-orange":"interaction-muted"):""}">${r.map((c,j)=>{const isHeading=j===0||(s.id==="prise"&&j===1);const isExplanation=(s.id==="prise"&&j===2)||(s.id==="interactions"&&i>=2&&j===1);return `<${isHeading?"th":"td"} scope="${isHeading?"row":"auto"}" class="${isExplanation?"table-explanation":""}">${esc(c)}</${isHeading?"th":"td"}>`}).join("")}</tr>`).join("")}</tbody></table>`:'<p class="muted">Aucun contenu renseigné.</p>';
  }else{content=richText(s.content||"")}
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
@@ -447,20 +454,20 @@ const toggleType = () => {
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",showLab:card.querySelector("[data-show-lab]")?.checked!==false};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",showLab:card.querySelector("[data-show-lab]")?.checked!==false,canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
 function tableRows(content){
- const rows=String(content||"").split("\\n").filter(line=>line.trim()).map(line=>line.split("|").map(cell=>cell.trim()));
+ const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split("|").map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
  const count=Math.max(1,...rows.map(row=>row.length));
  return rows.map(row=>Array.from({length:count},(_,i)=>row[i]||""));
 }
 function tableGridEditor(content){
  const rows=tableRows(content);
- return `<div class="table-grid-wrap"><table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><input data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}" value="${esc(cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première ligne correspond aux en-têtes. Les modifications sont sauvegardées dans le brouillon.</p>`;
+ return `<div class="table-grid-wrap"><table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><input data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}" value="${esc(cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première colonne contient les en-têtes (dans les tableaux prévus à cet effet). Les modifications sont sauvegardées dans le brouillon.</p>`;
 }
 function readTableGrid(card){
  const trs=[...card.querySelectorAll(".table-grid-editor tr")];
- return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[|\\r\\n]/g," ").trim()).join(" | ")).join("\\n");
+ return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[|\\r\\n]/g," ").trim()).join(" | ")).join("\n");
 }
 function wireTableGrids(m){
  $("sectionEditors").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
@@ -472,7 +479,7 @@ function wireTableGrids(m){
   if(action==="remove-row"&&rows.length>1)rows.pop();
   if(action==="add-col")rows.forEach(row=>row.push(""));
   if(action==="remove-col"&&rows[0].length>1)rows.forEach(row=>row.pop());
-  m.sections[i].content=rows.map(row=>row.join(" | ")).join("\\n");
+  m.sections[i].content=rows.map(row=>row.join(" | ")).join("\n");
   renderEditor(m.id);saveLocalDraft();
  });
  $("sectionEditors").querySelectorAll('[data-field="type"]').forEach(select=>select.onchange=()=>{
