@@ -1224,6 +1224,16 @@ async function saveEditor(id){
   if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
  }
 }
+// Ctrl+M / Cmd+M : ouvre l'édition de la fiche actuellement consultée.
+// Ne détourne pas le raccourci hors d'une fiche, ni quand l'éditeur est déjà ouvert.
+document.addEventListener("keydown",event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="m")return;
+ if(event.repeat||editorId||!selectedId||$("detail").classList.contains("hidden")||!admin)return;
+ const med=meds.find(m=>m.id===selectedId&&!isSourcesRecord(m));
+ if(!med)return;
+ event.preventDefault();
+ renderEditor(med.id);
+});
 // Ctrl+S / Cmd+S : enregistre uniquement lorsque l'éditeur d'une fiche est ouvert.
 document.addEventListener("keydown",event=>{
  if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="s")return;
