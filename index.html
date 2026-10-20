@@ -513,8 +513,8 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
  $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
- if(!m){$("detailHeading").textContent="Fiche médicament";$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
- $("detailHeading").textContent=isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament";
+ if(!m){$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
+ 
  const sections=(m.sections||[]).filter(s=>s.enabled!==false);
  const prioritySection=isGroup(m)
   ? sections.find(s=>s.id==="coup-oeil"||/en un coup d[’']œil/i.test(s.title||""))
@@ -732,7 +732,7 @@ function renderEditor(id){
    interaction.content="Interaction / association | Points de vigilance / conduite à tenir\n"+(oldText&&oldText!==placeholder?"Notes déjà saisies | "+safeCell:"À renseigner | À vérifier dans les sources officielles");
   }
  }
- $("detail").classList.add("hidden");$("editor").classList.remove("hidden");$("detailHeading").textContent="Administration de la fiche";
+ $("detail").classList.add("hidden");$("editor").classList.remove("hidden");
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="header-actions editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
