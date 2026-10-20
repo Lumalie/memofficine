@@ -236,6 +236,15 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .group-glance .priority-points{list-style:none!important;margin:0!important;padding:0!important;display:grid;gap:10px}
 .group-glance .priority-points li{list-style:none;position:relative;padding:11px 14px 11px 40px;background:rgba(255,255,255,.6);border-radius:11px;line-height:1.55}
 .group-glance .priority-points li::before{content:"";position:absolute;left:15px;top:18px;width:10px;height:10px;border-radius:50%;background:#6f9f80;box-shadow:0 0 0 3px #d8eadc}
+
+/* V5.54 : nom DCI, puis dosage et option de titre côte à côte */
+.admin-grid.dci-dose-layout>div:has(> #f-name){order:10;grid-column:1/-1}
+.admin-grid.dci-dose-layout>#f-dosage-wrap{order:11;grid-column:1}
+.admin-grid.dci-dose-layout>#f-dose-title-wrap{order:12;grid-column:2;align-self:center;padding:0}
+.admin-grid.dci-dose-layout>#f-dose-title-wrap .muted{margin:5px 0 0}
+.admin-grid.dci-dose-layout>#f-dci-form-wrap{order:13;grid-column:1/-1}
+.admin-grid.dci-dose-layout>div:not(:has(> #f-name)):not(#f-dosage-wrap):not(#f-dose-title-wrap):not(#f-dci-form-wrap){order:14}
+@media(max-width:760px){.admin-grid.dci-dose-layout>#f-dosage-wrap,.admin-grid.dci-dose-layout>#f-dose-title-wrap,.admin-grid.dci-dose-layout>#f-dci-form-wrap{grid-column:1}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1049,6 +1058,7 @@ const toggleType = () => {
   $("f-dosage-wrap").classList.toggle("hidden",isGroupType || $("f-entry-type").value === "specialite");
   $("f-dose-title-wrap").classList.toggle("hidden",isGroupType);
 
+  $("f-name").closest(".admin-grid").classList.toggle("dci-dose-layout",$("f-entry-type").value==="dci");
   const nameLabel = $("f-name-label");
   if (nameLabel) {
     nameLabel.textContent = isGroupType ? "Nom du groupe" : isDci ? "Nom de la DCI" : "Nom de la spécialité";
