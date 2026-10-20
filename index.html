@@ -111,6 +111,17 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .fiche-open #headerSearchSlot .search-suggestions{left:0;right:0;top:calc(100% + 3px)}
 .fiche-open #searchLayout{margin-top:0;scroll-margin-top:16px}
 @media(max-width:760px){.fiche-open #headerSearchSlot{max-width:none;margin:12px 0 0}.fiche-open #headerSearchSlot .searchrow{flex-direction:row}.fiche-open #headerSearchSlot #clearSearch{padding:8px}}
+
+/* V5.15 — Recherche sur la même ligne que le titre et la navigation */
+.topline{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.topline .brand{flex:0 0 auto}
+.topline .header-actions{flex:0 0 auto;margin-left:auto}
+.fiche-open #headerSearchSlot{flex:1 1 240px;min-width:180px;max-width:none;margin:0}
+.fiche-open #headerSearchSlot .searchcard{margin:0}
+@media(max-width:760px){
+ .fiche-open #headerSearchSlot{order:3;flex:1 1 100%;min-width:0;margin:0}
+ .topline .header-actions{margin-left:auto}
+}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -129,9 +140,9 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
     <h1>Mémofficine</h1>
   </div>
 </a>
+    <div id="headerSearchSlot" class="header-search-slot"></div>
     <div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button></div>
   </div>
-  <div id="headerSearchSlot" class="header-search-slot"></div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
 <main>
