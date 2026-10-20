@@ -165,6 +165,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #detail .detailtop .tags button.tag{appearance:none;cursor:pointer}
 #detail .detailtop .tags button.tag:hover{filter:brightness(.96)}
 #detail .detailtop .tags button.tag:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.explore-card-form{margin:2px 0 9px}.explore-form-inline{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:7px;background:#e9e5f5;color:#62528c;font-size:.78rem;font-weight:600;line-height:1.4}.explore-card-form .explore-form-inline{margin-left:0}.group-members button .explore-form-inline{vertical-align:middle}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -401,6 +402,11 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  history.pushState({fiche:id},"",url);
 }
 function medicationForms(m){return [...new Set((m.presentations||[]).map(p=>String(p.form||" ").trim()).filter(Boolean))]};
+function explorerFormLabel(m){
+ const forms=medicationForms(m);
+ if(!forms.length)return "";
+ return `<span class="explore-form-inline">${esc(forms.join(" · "))}</span>`;
+}
 function renderExplorer(){
  const entries=publicMeds();
  const classes=[...new Set(entries.map(m=>m.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
@@ -418,7 +424,7 @@ function renderExplorer(){
  const card=m=>{
   const items=specialtyItems(m),forms=[...new Set(items.map(x=>x.p.form).filter(Boolean))];
   const children=isGroup(m)?groupChildren(m,entries):[];
-  return `<article class="explore-card ${isGroup(m)?"group-card":""}"><div class="group-label">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3><div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}" title="Explorer cette forme">${esc(t)}</button>`).join("")}</div>${isGroup(m)?`<div class="group-members"><div class="muted">${children.length} fiche(s) médicament associée(s)</div>${children.length?children.map(c=>`<button type="button" data-open-med="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join(""):'<p class="muted">Aucune fiche rattachée pour le moment.</p>'}</div>`:""}${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
+  return `<article class="explore-card ${isGroup(m)?"group-card":""}"><div class="group-label">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3>${!isGroup(m)?`<div class="explore-card-form">${explorerFormLabel(m)}</div>`:""}<div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}" title="Explorer cette forme">${esc(t)}</button>`).join("")}</div>${isGroup(m)?`<div class="group-members"><div class="muted">${children.length} fiche(s) médicament associée(s)</div>${children.length?children.map(c=>`<button type="button" data-open-med="${esc(c.id)}">${esc(displayMedName(c))}${explorerFormLabel(c)} ↗</button>`).join(""):'<p class="muted">Aucune fiche rattachée pour le moment.</p>'}</div>`:""}${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
  };
  $("exploreCards").innerHTML=filtered.length?[...groups,...standalone].map(card).join(""):'<div class="empty">Aucune fiche pour ces filtres.</div>';
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
