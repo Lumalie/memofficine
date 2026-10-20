@@ -524,18 +524,28 @@ function showLogin(){
  const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){toast("Connexion impossible : vérifie l'adresse et le mot de passe");console.error(error);return}$("modalRoot").innerHTML="";};
 }
 async function logout(){clearLocalDraft();editorId=null;const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
+function scrollToNewEditor(){
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const editor=$("editor");
+  if(editor&&!editor.classList.contains("hidden")){
+   const top=editor.getBoundingClientRect().top+window.scrollY-16;
+   window.scrollTo({top:Math.max(0,top),behavior:"instant"});
+   viewScrollPositions.home=window.scrollY;
+  }
+ }));
+}
 function addMedication(){
  showView("home");$("searchLayout").classList.remove("hidden");
  if(!admin){toast("Connecte-toi pour ajouter une fiche");return}
  const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dosage:"",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
- meds.unshift(m);selectedId=m.id;openedSearchFiche=true;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();
+ meds.unshift(m);selectedId=m.id;openedSearchFiche=true;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
 }
 function addGroup(){
  if(!admin)return;
  addMedication();
  const m=meds.find(x=>x.id===selectedId);if(!m)return;
  m.name="Nouveau groupe";m.entry_type="dci";m.sections=clone(GROUP_SECTIONS);setHierarchy(m,"groupe","");
- renderEditor(m.id);saveLocalDraft();
+ renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
 }
 function renderEditor(id){
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
