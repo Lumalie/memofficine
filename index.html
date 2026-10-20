@@ -248,6 +248,15 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 
 /* V5.55 — noms de princeps plus visibles */
 .princeps-name{color:#247257;font-weight:650;font-style:italic;}
+
+/* V5.56 : recherche intégrée à la bibliothèque Explorer */
+.explore-search{max-width:820px;margin:8px auto 32px}
+.explore-search>label{display:block;font-size:.92rem;font-weight:750;margin-bottom:9px;color:var(--ink)}
+.explore-search-row{display:flex;gap:10px;align-items:center}
+.explore-search-row input{flex:1;min-width:0;font-size:1rem;padding:14px 16px}
+.explore-search-row button{white-space:nowrap}
+#exploreSearchCount{margin:8px 2px 0;min-height:1.1em;text-align:left}
+@media(max-width:600px){.explore-search{margin-bottom:22px}.explore-search-row{gap:7px}.explore-search-row button{padding:10px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -294,7 +303,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <div id="searchLayout" class="layout hidden">
     <section class="panel" aria-live="polite"><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
   </div>
-  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémofficine.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
+  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-search"><label for="exploreSearch">Rechercher dans les fiches</label><div class="explore-search-row"><input id="exploreSearch" type="search" autocomplete="off" placeholder="Ex. : amoxicilline, oubli de prise, CIP, conservation…"><button id="clearExploreSearch" type="button">Effacer</button></div><p id="exploreSearchCount" class="muted" aria-live="polite"></p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémofficine.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 </main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
@@ -549,7 +558,11 @@ function renderExplorer(){
  indSel.innerHTML='<option value="">Toutes les indications</option>'+indications.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  formSel.innerHTML='<option value="">Toutes les formes</option>'+forms.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";formSel.value=forms.includes(oldForm)?oldForm:"";
- const filtered=entries.filter(m=>(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
+ const query=$("exploreSearch").value.trim();
+ const searchMatches=query?getSearchMatches(query):[];
+ const matchingIds=query?new Set(searchMatches.map(x=>x.med.id)):null;
+ const filtered=entries.filter(m=>(!matchingIds||matchingIds.has(m.id))&&(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
+ $("exploreSearchCount").textContent=query?`${filtered.length} fiche${filtered.length===1?"":"s"} trouvée${filtered.length===1?"":"s"}`:"";
  const byId=new Map(entries.map(m=>[m.id,m]));
  // Les parents des résultats restent visibles pour conserver le contexte de navigation.
  const included=new Set(filtered.map(m=>m.id));
@@ -576,16 +589,16 @@ function renderExplorer(){
   const isMatch=filtered.some(x=>x.id===m.id);
   return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
    <div class="explore-tree-line">
-    ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
+    ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
     <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}">${esc(displayMedName(m))}</button>
     <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
    </div>
    ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"indications")?indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)):[]).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${(explorerBadgeVisible(m,"forms")?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
-   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
+   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
- $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche pour ces filtres.</div>';
+ $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche trouvée. Essaie un autre terme ou modifie les filtres.</div>';
  $("exploreCards").querySelectorAll("[data-tree-toggle]").forEach(button=>button.addEventListener("click",()=>{
   const id=button.dataset.treeToggle;
   const children=document.getElementById("tree-children-"+id);
@@ -671,8 +684,8 @@ window.addEventListener("popstate",()=>{rememberNavigation();restoreHistoryPage(
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
 function categories(){return ["Toutes",...new Set(meds.filter(m=>!isSourcesRecord(m)).map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
-function getSearchMatches(){
- const q=norm($("search").value.trim());
+function getSearchMatches(queryOverride=null){
+ const q=norm(queryOverride===null?$("search").value.trim():queryOverride);
  const tokens=q.split(/\s+/).filter(Boolean);
  const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
  const found=[];
@@ -709,7 +722,7 @@ function getSearchMatches(){
 let openedSearchFiche=false;
 function updateSearchPlacement(){
  const detailMode=currentView==="home"&&openedSearchFiche&&!editorId;
- const compactMode=detailMode||currentView!=="home";
+ const compactMode=detailMode||currentView==="sources";
  document.body.classList.toggle("fiche-open",detailMode);
  document.body.classList.toggle("header-search-active",compactMode);
  const card=$("mainSearchCard");
@@ -1400,6 +1413,8 @@ document.querySelectorAll('[data-example-search]').forEach(btn=>btn.addEventList
   renderResults();
   $("search").focus();
 }));
+$("exploreSearch").addEventListener("input",renderExplorer);
+$("clearExploreSearch").onclick=()=>{$("exploreSearch").value="";renderExplorer();$("exploreSearch").focus()};
 $("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;$("exploreForm").onchange=renderExplorer;
 $("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";renderExplorer()};
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
