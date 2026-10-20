@@ -68,6 +68,10 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 const SUPABASE_URL = "https://xbhqogndzbrjhrigtncy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4cQdbKxcRjO8JH48uA8bZA_taBLuHdE";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const PHOTO_BUCKET = "presentation-photos";
+// Les fichiers choisis restent en mémoire jusqu’à l’enregistrement (pas dans sessionStorage).
+const pendingPresentationPhotos = new Map();
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 const DEFAULT_SECTIONS = [
  {id:"conseil-comptoir",title:"📣 À DIRE AU COMPTOIR",type:"text",content:"À compléter : 3 à 5 messages prioritaires, vérifiés dans les sources officielles.",enabled:true},
  {id:"indications",title:"📍 Indications",type:"text",content:"À compléter à partir d’une source officielle vérifiée.",enabled:true},
@@ -247,7 +251,42 @@ function presentationInfo(p){if(!p)return '<p class="muted">Aucune présentation
  return `<p><strong>Laboratoire :</strong> ${esc(p.lab||"À renseigner")}</p><p><strong>Dosage :</strong> ${esc(p.dosage||"À renseigner")} · <strong>Forme :</strong> ${esc(p.form||"À renseigner")}</p><p><strong>Aspect :</strong> ${esc(p.description||"Non documenté")}</p><p><strong>Marquage / sécabilité :</strong> ${esc(p.marking||"Non documenté")}</p><p><strong>CIS :</strong> ${esc(p.cis||"Non renseigné")} · <strong>CIP :</strong> ${esc(p.cip||"Non renseigné")}</p>${img?`<figure class="section-image"><img src="${esc(img)}" alt="Photographie documentée de la présentation"><figcaption>Vérifier la concordance avec la présentation exacte.</figcaption></figure>`:""}${src?`<p><a href="${esc(src)}" target="_blank" rel="noopener noreferrer">Consulter la source de cette présentation ↗</a></p>`:""}<p class="hint">L'aspect seul ne permet pas d'identifier avec certitude un médicament. Ne pas déduire une équivalence ou une sécabilité d'une photographie.</p>`;
 }
 function renderPresentations(m){const ps=m.presentations||[];return `<details><summary>💊 Présentations disponibles (${ps.length})</summary>${ps.length?`<label class="label" for="presentation-choice">Choisir une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}">${esc([p.lab,p.dosage,p.form].filter(Boolean).join(" · ")||"Présentation "+(i+1))}</option>`).join("")}</select><div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[0])}</div>`:'<p class="muted">Aucune présentation renseignée pour cette spécialité.</p>'}</details>`}
-function presentationEditor(p,i){const fields=[["lab","Laboratoire"],["dosage","Dosage"],["form","Forme"],["cip","Code CIP"],["cis","Code CIS"],["description","Aspect / description"],["marking","Marquage / sécabilité"],["imageUrl","URL de photographie (https)"],["sourceUrl","URL de la source officielle (https)"]];return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div><div class="presentation-fields">${fields.map(([key,label])=>`<div class="${["description","marking","imageUrl","sourceUrl"].includes(key)?"full":""}"><label>${label}</label><input data-pfield="${key}" value="${esc(p[key]||"")}"></div>`).join("")}</div></div>`}
+function presentationEditor(p,i){
+ const fields=[["lab","Laboratoire"],["dosage","Dosage"],["form","Forme"],["cip","Code CIP"],["cis","Code CIS"],["description","Aspect / description"],["marking","Marquage / sécabilité"],["sourceUrl","URL de la source officielle (https)"]];
+ const currentPhoto=safeHttp(p.imageUrl||"");
+ const pending=pendingPresentationPhotos.get(editorId)?.get(i);
+ return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div><div class="presentation-fields">${fields.map(([key,label])=>`<div class="${["description","marking","sourceUrl"].includes(key)?"full":""}"><label>${label}</label><input data-pfield="${key}" value="${esc(p[key]||"")}"></div>`).join("")}
+ <div class="full"><label>Photographie de cette présentation</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file="${i}"><div class="hint" data-photo-hint="${i}">${pending?"Photo sélectionnée : "+esc(pending.name):currentPhoto?"Photo enregistrée : visible ci-dessous":"JPG, PNG ou WebP · maximum 2 Mo. Envoyée lors de l’enregistrement de la fiche."}</div>${currentPhoto?`<img class="image-preview" src="${esc(currentPhoto)}" alt="Photo enregistrée de la présentation">`:""}</div></div></div>`;
+}
+function wirePhotoInputs(){
+ $("presentationEditors").querySelectorAll("[data-photo-file]").forEach(input=>{
+  const i=Number(input.dataset.photoFile);
+  input.addEventListener("change",()=>{
+   const file=input.files?.[0];if(!file)return;
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>MAX_PHOTO_SIZE){toast("Choisis une image JPG, PNG ou WebP de 2 Mo maximum");input.value="";return}
+   if(!pendingPresentationPhotos.has(editorId))pendingPresentationPhotos.set(editorId,new Map());
+   pendingPresentationPhotos.get(editorId).set(i,file);
+   const hint=$("presentationEditors").querySelector(`[data-photo-hint="${i}"]`);
+   if(hint)hint.textContent="Photo prête à envoyer : "+file.name+" (clique sur Enregistrer)";
+  });
+ });
+}
+async function uploadPresentationPhotos(m){
+ const pending=pendingPresentationPhotos.get(m.id);if(!pending?.size)return;
+ for(const [i,file] of pending){
+  if(!m.presentations[i])continue;
+  const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
+  if(!ext||file.size>MAX_PHOTO_SIZE)throw new Error("Image invalide ou trop volumineuse");
+  const path=`${currentUser.id}/${m.id}/${crypto.randomUUID()}.${ext}`;
+  const {error}=await supabaseClient.storage.from(PHOTO_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+  if(error)throw error;
+  const {data}=supabaseClient.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+  m.presentations[i].imageUrl=data.publicUrl;
+  pending.delete(i);
+ }
+ if(!pending.size)pendingPresentationPhotos.delete(m.id);
+}
+
 function renderSection(s,targetSectionId=null){
  let content="";
  if(s.type==="table"){
@@ -318,15 +357,16 @@ const toggleType = () => {
 };
  $("f-entry-type").onchange=toggleType;toggleType();
  $("backBtn").onclick=()=>renderDetail();
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);m.presentations.splice(Number(b.dataset.removePresentation),1);refreshPresentationEditors()})};
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs()};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
+ wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
  $("editor").oninput=saveLocalDraft;
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map(card=>{const p={};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||""};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
 function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><textarea data-field="content">${esc(s.content||"")}</textarea></div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
@@ -357,11 +397,11 @@ function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captur
 async function saveEditor(id){
  const m=meds.find(x=>x.id===id);if(!m)return;
  captureEditorFields(m);
- try{await syncMedication(m);clearLocalDraft();renderDetail();toast("Fiche enregistrée et synchronisée")}catch(e){}
+ try{await uploadPresentationPhotos(m);await syncMedication(m);clearLocalDraft();renderDetail();toast("Fiche enregistrée et photos synchronisées")}catch(e){console.error(e);toast("Échec de l’enregistrement : "+(e.message||"vérifie Supabase Storage"))}
 
 }
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
+async function deleteMed(id){if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",renderResults);$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
