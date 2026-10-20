@@ -166,6 +166,22 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #detail .detailtop .tags button.tag:hover{filter:brightness(.96)}
 #detail .detailtop .tags button.tag:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .explore-card-form{margin:2px 0 9px}.explore-form-inline{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:7px;background:#e9e5f5;color:#62528c;font-size:.78rem;font-weight:600;line-height:1.4}.explore-card-form .explore-form-inline{margin-left:0}.group-members button .explore-form-inline{vertical-align:middle}
+
+/* V5.35 : bibliothèque hiérarchique, groupes imbriqués et formes visibles */
+.explore-tree{display:grid;gap:12px;width:100%}
+.explore-tree-node{background:var(--card,#fff);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.explore-tree-group{border-left:4px solid #83b095;background:#f7faf7}
+.explore-tree-med{border-left:3px solid #e2d9f2}
+.explore-tree-line{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.explore-tree-icon{color:#51816a;font-size:.9rem}
+.explore-tree-med>.explore-tree-line>.explore-tree-icon{color:#8772ad}
+.explore-tree-name{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;font-size:1rem;font-weight:700;color:var(--text,#244c3b);text-align:left}
+.explore-tree-name:hover{text-decoration:underline}
+.explore-tree-type{margin-left:auto;font-size:.72rem;color:var(--muted,#718077)}
+.explore-tree-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.explore-tree-children{margin-top:12px;padding-left:clamp(10px,2.5vw,24px);border-left:2px solid #dce8df;display:grid;gap:9px}
+.explore-tree-context>.explore-tree-line{opacity:.7}
+@media(max-width:650px){.explore-tree-node{padding:10px}.explore-tree-children{padding-left:10px}.explore-tree-type{margin-left:0}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -373,14 +389,33 @@ function setHierarchy(m,kind,parent){
  for(const sec of m.sections){delete sec.memofficineKind;delete sec.memofficineParentGroup}
  if(kind==="groupe"){
   target.memofficineKind="groupe";
-  delete target.memofficineParentGroup;
+  if(parent)target.memofficineParentGroup=parent;
+  else delete target.memofficineParentGroup;
  }else{
   delete target.memofficineKind;
   if(parent)target.memofficineParentGroup=parent;
   else delete target.memofficineParentGroup;
  }
 }
-function groupOptions(m){return meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&g.id!==m.id).sort((a,b)=>a.name.localeCompare(b.name,"fr"))}
+function groupDescendantIds(id,all=meds){
+ const seen=new Set([id]),stack=[id];
+ while(stack.length){
+  const current=stack.pop();
+  for(const child of all.filter(x=>isGroup(x)&&parentGroupId(x)===current)){
+   if(!seen.has(child.id)){seen.add(child.id);stack.push(child.id)}
+  }
+ }
+ return seen;
+}
+function groupOptions(m){
+ const forbidden=groupDescendantIds(m.id);
+ return meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&!forbidden.has(g.id))
+  .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
+function childGroups(group,visible=publicMeds()){
+ return visible.filter(m=>isGroup(m)&&parentGroupId(m)===group.id)
+ .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
 function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
  return Array.isArray(raw)?raw.filter(Boolean):[];
@@ -419,14 +454,42 @@ function renderExplorer(){
  formSel.innerHTML='<option value="">Toutes les formes</option>'+forms.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";formSel.value=forms.includes(oldForm)?oldForm:"";
  const filtered=entries.filter(m=>(!classSel.value||m.category===classSel.value)&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
- const groups=filtered.filter(isGroup);
- const standalone=filtered.filter(m=>!isGroup(m)&&!groups.some(g=>g.id===parentGroupId(m)));
- const card=m=>{
-  const items=specialtyItems(m),forms=[...new Set(items.map(x=>x.p.form).filter(Boolean))];
-  const children=isGroup(m)?groupChildren(m,entries):[];
-  return `<article class="explore-card ${isGroup(m)?"group-card":""}"><div class="group-label">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3>${!isGroup(m)?`<div class="explore-card-form">${explorerFormLabel(m)}</div>`:""}<div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}" title="Explorer cette forme">${esc(t)}</button>`).join("")}</div>${isGroup(m)?`<div class="group-members"><div class="muted">${children.length} fiche(s) médicament associée(s)</div>${children.length?children.map(c=>`<button type="button" data-open-med="${esc(c.id)}">${esc(displayMedName(c))}${explorerFormLabel(c)} ↗</button>`).join(""):'<p class="muted">Aucune fiche rattachée pour le moment.</p>'}</div>`:""}${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
+ const byId=new Map(entries.map(m=>[m.id,m]));
+ // Les parents des résultats restent visibles pour conserver le contexte de navigation.
+ const included=new Set(filtered.map(m=>m.id));
+ for(const m of filtered){
+  let parentId=parentGroupId(m),seen=new Set([m.id]);
+  while(parentId&&!seen.has(parentId)){
+   seen.add(parentId);
+   const parent=byId.get(parentId);
+   if(!parent||!isGroup(parent))break;
+   included.add(parent.id);
+   parentId=parentGroupId(parent);
+  }
+ }
+ const visible=entries.filter(m=>included.has(m.id));
+ const visibleById=new Map(visible.map(m=>[m.id,m]));
+ const sortNames=(a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
+ const childrenOf=id=>visible.filter(m=>parentGroupId(m)===id).sort((a,b)=>isGroup(a)===isGroup(b)?sortNames(a,b):isGroup(a)?-1:1);
+ const rootEntries=visible.filter(m=>!visibleById.has(parentGroupId(m))||parentGroupId(m)===m.id).sort((a,b)=>isGroup(a)===isGroup(b)?sortNames(a,b):isGroup(a)?-1:1);
+ const renderNode=(m,depth=0,ancestors=new Set())=>{
+  if(ancestors.has(m.id))return "";
+  const next=new Set(ancestors);next.add(m.id);
+  const kids=isGroup(m)?childrenOf(m.id):[];
+  const forms=medicationForms(m);
+  const isMatch=filtered.some(x=>x.id===m.id);
+  return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
+   <div class="explore-tree-line">
+    <span class="explore-tree-icon" aria-hidden="true">${isGroup(m)?"▣":"●"}</span>
+    <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}">${esc(displayMedName(m))}</button>
+    ${!isGroup(m)?explorerFormLabel(m):""}
+    <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
+   </div>
+   ${isMatch?`<div class="explore-tree-tags">${m.category?`<button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category)}</button>`:""}${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${kids.length?`<div class="explore-tree-children">${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
+  </div>`;
  };
- $("exploreCards").innerHTML=filtered.length?[...groups,...standalone].map(card).join(""):'<div class="empty">Aucune fiche pour ces filtres.</div>';
+ $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche pour ces filtres.</div>';
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
@@ -597,6 +660,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const remainingSections=sections.filter(s=>s!==prioritySection);
  const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
  const children=isGroup(m)?groupChildren(m):[];
+ const subgroups=isGroup(m)?childGroups(m):[];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
  const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
@@ -607,7 +671,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
  $("detail").innerHTML=`<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
  ${prioritySection?(isGroup(m)?`<div class="group-glance">${renderSection(prioritySection,targetSectionId)}</div>`:renderSection(prioritySection,targetSectionId)):""}
- ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
+ ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Sous-groupes (${subgroups.length})</strong><div>${subgroups.map(g=>`<button type="button" data-group-open="${esc(g.id)}">▣ ${esc(g.name)} ↗</button>`).join("")||'<span class="muted">Aucun sous-groupe.</span>'}</div><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
  ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
  ${isGroup(m)?"":renderPresentations(m)}
  ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
@@ -873,7 +937,7 @@ const toggleType = () => {
   const isDci = $("f-entry-type").value === "dci" || isGroupType;
   $("presentation-editor-wrap").classList.toggle("hidden",isGroupType);
   $("group-template-tools").classList.toggle("hidden",!isGroupType);
-  $("parent-group-wrap").classList.toggle("hidden",isGroupType);
+  $("parent-group-wrap").classList.remove("hidden");
   $("f-dosage-wrap").classList.toggle("hidden",isGroupType || $("f-entry-type").value === "specialite");
 
   const nameLabel = $("f-name-label");
@@ -932,7 +996,7 @@ const toggleType = () => {
    const old=existing.find(sec=>sec.id===template.id);
    return old?{...template,content:old.content,indicationTags:old.indicationTags||template.indicationTags}:template;
   });
-  m.sections=[...replacement,...archived];setHierarchy(m,"groupe","");renderEditor(m.id);saveLocalDraft();toast("Modèle groupe appliqué : vérifie les rubriques avant d’enregistrer.");
+  m.sections=[...replacement,...archived];setHierarchy(m,"groupe",parentGroupId(m));renderEditor(m.id);saveLocalDraft();toast("Modèle groupe appliqué : vérifie les rubriques avant d’enregistrer.");
  };
  $("backBtn").onclick=()=>renderDetail();
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=!no.checked;}));};
@@ -1179,4 +1243,3 @@ window.addEventListener("pagehide",saveLocalDraft);
 openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");initCloud();
 </script>
 </body></html>
-<!-- Relance du déploiement Mémofficine -->
