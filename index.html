@@ -257,6 +257,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-search-row button{white-space:nowrap}
 #exploreSearchCount{margin:8px 2px 0;min-height:1.1em;text-align:left}
 @media(max-width:600px){.explore-search{margin-bottom:22px}.explore-search-row{gap:7px}.explore-search-row button{padding:10px}}
+
+/* V5.57 : résultats de recherche contextuels dans Explorer */
+.explore-hits{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:12px}
+.explore-hit{display:flex;flex-direction:column;align-items:flex-start;gap:7px;width:100%;padding:17px 19px;border:1px solid #d2e1d6;border-left:4px solid #83b095;border-radius:14px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 3px 12px #193f3409}
+.explore-hit:hover,.explore-hit:focus-visible{background:#f2f8f3;border-color:#85b398;outline-offset:2px}
+.explore-hit-name{font-size:1.05rem;line-height:1.4}
+.explore-hit-meta{font-size:.85rem;color:var(--muted)}
+.explore-hit-path{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.83rem;color:#456858}
+.explore-hit-path span:last-child{font-weight:700;color:#235d48}
+.explore-hit-direct{display:inline-block;margin-top:3px;padding:6px 10px;border-radius:8px;background:#e5f0e8;color:#245d4b;font-size:.84rem;font-weight:700}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -563,6 +573,34 @@ function renderExplorer(){
  const matchingIds=query?new Set(searchMatches.map(x=>x.med.id)):null;
  const filtered=entries.filter(m=>(!matchingIds||matchingIds.has(m.id))&&(!classSel.value||explorerClasses(m).includes(classSel.value))&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
  $("exploreSearchCount").textContent=query?`${filtered.length} fiche${filtered.length===1?"":"s"} trouvée${filtered.length===1?"":"s"}`:"";
+ // En mode recherche, afficher les correspondances précises à la place de l'arborescence.
+ if(query){
+  const allowed=new Set(filtered.map(m=>m.id));
+  const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
+  const byIdForPath=new Map(entries.map(m=>[m.id,m]));
+  const pathFor=m=>{
+   const names=[],seen=new Set([m.id]);let parentId=parentGroupId(m);
+   while(parentId&&!seen.has(parentId)){
+    seen.add(parentId);const parent=byIdForPath.get(parentId);
+    if(!parent||!isGroup(parent))break;
+    names.unshift(parent.name);parentId=parentGroupId(parent);
+   }
+   return names;
+  };
+  $("exploreSearchCount").textContent=`${hits.length} résultat${hits.length===1?"":"s"} dans ${filtered.length} fiche${filtered.length===1?"":"s"}`;
+  $("exploreCards").innerHTML=hits.length?`<div class="explore-hits">${hits.slice(0,80).map(hit=>{
+   const m=hit.med,sec=hit.section;
+   const path=[...pathFor(m),m.name,...(sec?[sec.title]:[])];
+   return `<button type="button" class="explore-hit" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">
+    <strong class="explore-hit-name">${esc(searchResultLabel(hit))}</strong>
+    <span class="explore-hit-meta">${isGroup(m)?"🌿 Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span>
+    <span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>
+    ${sec?`<span class="explore-hit-direct">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}
+   </button>`;
+  }).join("")}</div>`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
+  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null));
+  return;
+ }
  const byId=new Map(entries.map(m=>[m.id,m]));
  // Les parents des résultats restent visibles pour conserver le contexte de navigation.
  const included=new Set(filtered.map(m=>m.id));
