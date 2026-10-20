@@ -436,27 +436,59 @@ function restoreViewScroll(view){
  }));
 }
 let editorReturnFocus=null;
+let editorFocusReturnPending=false;
 function rememberEditorFocus(){
- if(!editorId||currentView!=="home")return;
+ if(!editorId||currentView!=="home"||$("editor").classList.contains("hidden"))return;
  const el=document.activeElement;
  if(!el||!$("editor").contains(el)||!el.matches('input,textarea,[contenteditable="true"]'))return;
  const section=el.closest('.section-editor');
  const pres=el.closest('[data-presentation-index]');
- editorReturnFocus={id:editorId,elementId:el.id||"",sectionIndex:section?.dataset.section??null,presentationIndex:pres?.dataset.presentationIndex??null,field:el.dataset.field||"",name:el.name||"",tag:el.tagName};
+ const saved={id:editorId,element:el,elementId:el.id||"",sectionIndex:section?.dataset.section??null,presentationIndex:pres?.dataset.presentationIndex??null,field:el.dataset.field||"",name:el.name||"",tag:el.tagName};
+ if(typeof el.selectionStart==="number"){
+  saved.start=el.selectionStart;saved.end=el.selectionEnd;saved.direction=el.selectionDirection;
+ }else if(el.isContentEditable){
+  const selection=window.getSelection();
+  if(selection&&selection.rangeCount&&el.contains(selection.anchorNode)){
+   saved.range=selection.getRangeAt(0).cloneRange();
+  }
+ }
+ editorReturnFocus=saved;
 }
 function restoreEditorFocus(){
  const saved=editorReturnFocus;
  if(!saved||!editorId||saved.id!==editorId)return;
  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  if(currentView!=="home"||editorId!==saved.id)return;
-  let el=saved.elementId?document.getElementById(saved.elementId):null;
+  if(currentView!=="home"||editorId!==saved.id||$("editor").classList.contains("hidden"))return;
+  let el=saved.element?.isConnected?saved.element:null;
+  if(!el&&saved.elementId)el=document.getElementById(saved.elementId);
   if(!el&&saved.sectionIndex!==null){const card=[...$("sectionEditors").querySelectorAll('.section-editor')][Number(saved.sectionIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
   if(!el&&saved.presentationIndex!==null){const card=[...$("presentationEditors").children][Number(saved.presentationIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
-  if(!el)return;
+  if(!el||!$("editor").contains(el))return;
+  // Ne pas interrompre une nouvelle interaction volontaire.
+  const active=document.activeElement;
+  if(active&&active!==document.body&&active!==document.documentElement&&active!==el&&document.hasFocus())return;
   el.focus({preventScroll:true});
-  if(typeof el.setSelectionRange==='function'&&['text','search','url','tel','password','textarea'].includes(el.type||'textarea')){const end=el.value.length;el.setSelectionRange(end,end);}
+  if(typeof saved.start==="number"&&typeof el.setSelectionRange==="function"){
+   try{el.setSelectionRange(saved.start,saved.end,saved.direction||"none")}catch(e){}
+  }else if(saved.range&&el.isContentEditable){
+   try{const selection=window.getSelection();selection.removeAllRanges();selection.addRange(saved.range)}catch(e){}
+  }
  }));
 }
+// Garder la dernière zone de rédaction, même si le navigateur déplace le focus.
+document.addEventListener("focusin",event=>{
+ if(editorId&&currentView==="home"&&$("editor").contains(event.target)){
+  editorFocusReturnPending=false;
+  rememberEditorFocus();
+ }
+});
+document.addEventListener("keyup",event=>{if($("editor").contains(event.target))rememberEditorFocus()});
+document.addEventListener("mouseup",event=>{if($("editor").contains(event.target))rememberEditorFocus()});
+document.addEventListener("select",event=>{if($("editor").contains(event.target))rememberEditorFocus()},true);
+window.addEventListener("blur",()=>{rememberEditorFocus();editorFocusReturnPending=!!editorReturnFocus&&!!editorId&&currentView==="home"});
+window.addEventListener("focus",()=>{
+ if(editorFocusReturnPending){editorFocusReturnPending=false;restoreEditorFocus()}
+});
 function showView(view){
  if(currentView==="home"&&view!=="home"&&editorId){rememberEditorFocus();saveLocalDraft();}
  const changing=currentView!==view;
@@ -1468,7 +1500,16 @@ $("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication")
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="hidden"){
+  rememberEditorFocus();
+  editorFocusReturnPending=!!editorReturnFocus&&!!editorId&&currentView==="home";
+  saveLocalDraft();
+ }else if(editorFocusReturnPending){
+  editorFocusReturnPending=false;
+  restoreEditorFocus();
+ }
+});
 window.addEventListener("pagehide",saveLocalDraft);
 if(!location.search&&!location.hash){
  try{
