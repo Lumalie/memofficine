@@ -122,6 +122,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
  .fiche-open #headerSearchSlot{order:3;flex:1 1 100%;min-width:0;margin:0}
  .topline .header-actions{margin-left:auto}
 }
+/* V5.16 — header search sizing and readable suggestions */
+.fiche-open #headerSearchSlot{flex:0 1 420px;max-width:420px;margin-left:22px;margin-right:auto}
+.fiche-open #headerSearchSlot .search-suggestions{background:#fff;color:#25352e;box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.fiche-open #headerSearchSlot .search-suggestions .result,
+.fiche-open #headerSearchSlot .search-suggestions .result strong{color:#25352e}
+.fiche-open #headerSearchSlot .search-suggestions .sub{color:#586a60}
+.fiche-open #headerSearchSlot .search-suggestions .direct-hit{color:#356b54}
+.search-suggestions .result[aria-selected="true"]{background:#e1eee5;outline:2px solid #8ab59a;outline-offset:-2px}
+@media(max-width:900px){.fiche-open #headerSearchSlot{flex:1 1 220px;min-width:160px;margin-left:8px;max-width:380px}}
+@media(max-width:760px){.fiche-open #headerSearchSlot{flex:1 1 100%;max-width:none;margin:0}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -278,7 +288,30 @@ function restoreViewScroll(view){
   requestAnimationFrame(()=>{restoringViewScroll=false;});
  }));
 }
+let editorReturnFocus=null;
+function rememberEditorFocus(){
+ if(!editorId||currentView!=="home")return;
+ const el=document.activeElement;
+ if(!el||!$("editor").contains(el)||!el.matches('input,textarea,[contenteditable="true"]'))return;
+ const section=el.closest('.section-editor');
+ const pres=el.closest('[data-presentation-index]');
+ editorReturnFocus={id:editorId,elementId:el.id||"",sectionIndex:section?.dataset.section??null,presentationIndex:pres?.dataset.presentationIndex??null,field:el.dataset.field||"",name:el.name||"",tag:el.tagName};
+}
+function restoreEditorFocus(){
+ const saved=editorReturnFocus;
+ if(!saved||!editorId||saved.id!==editorId)return;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  if(currentView!=="home"||editorId!==saved.id)return;
+  let el=saved.elementId?document.getElementById(saved.elementId):null;
+  if(!el&&saved.sectionIndex!==null){const card=[...$("sectionEditors").querySelectorAll('.section-editor')][Number(saved.sectionIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
+  if(!el&&saved.presentationIndex!==null){const card=[...$("presentationEditors").children][Number(saved.presentationIndex)];el=saved.field?card?.querySelector(`[data-field="${saved.field}"]`):null;}
+  if(!el)return;
+  el.focus({preventScroll:true});
+  if(typeof el.setSelectionRange==='function'&&['text','search','url','tel','password','textarea'].includes(el.type||'textarea')){const end=el.value.length;el.setSelectionRange(end,end);}
+ }));
+}
 function showView(view){
+ if(currentView==="home"&&view!=="home"&&editorId){rememberEditorFocus();saveLocalDraft();}
  const changing=currentView!==view;
  if(changing&&!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
  currentView=view;
@@ -292,6 +325,7 @@ function showView(view){
  if(view==="sources")renderSources();
  updateSearchPlacement();
  if(changing)restoreViewScroll(view);
+ if(view==="home"&&editorId)restoreEditorFocus();
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
@@ -417,25 +451,55 @@ function updateSearchPlacement(){
  const target=detailMode?$("headerSearchSlot"):$("homeSearchSlot");
  if(card.parentElement!==target)target.appendChild(card);
 }
+let highlightedSearchIndex=-1;
+function searchResultLabel(item){
+ const m=item.med;
+ if(isGroup(m))return m.name;
+ const p=item.presentation!==null?m.presentations?.[item.presentation]:null;
+ const name=(p?.name||m.name||"").trim();
+ const dose=(p?.dosage||m.dosage||"").trim();
+ const lab=m.entry_type==="dci"?(p?.lab||"").trim():"";
+ const form=(p?.form||m.form||"").trim();
+ return [name,...(dose&&!norm(name).endsWith(norm(dose))?[dose]:[]),lab,form].filter(Boolean).join(" · ");
+}
+function updateSearchHighlight(){
+ const els=[...$('results').querySelectorAll('.result')];
+ els.forEach((el,i)=>el.setAttribute('aria-selected',String(i===highlightedSearchIndex)));
+ if(highlightedSearchIndex>=0)els[highlightedSearchIndex]?.scrollIntoView({block:'nearest'});
+}
 function renderResults(){
  const query=$('search').value.trim();
  const found=query?getSearchMatches():[];
  const dropdown=$('searchSuggestions');
  dropdown.classList.toggle('hidden',!query);
+ highlightedSearchIndex=-1;
  $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
  $('results').innerHTML=found.length?found.slice(0,35).map(item=>{
    const m=item.med,sec=item.section;
-   return `<div class="result" role="option" tabindex="0" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:''}</div>`;
+   return `<div class="result" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(searchResultLabel(item))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:''}</div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $('results').querySelectorAll('.result').forEach(el=>{
    const choose=()=>openMedication(el.dataset.id,el.dataset.presentation===''?null:Number(el.dataset.presentation),el.dataset.section||null);
    el.onclick=choose;
    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
  });
- // La fiche reste visible pendant une nouvelle recherche ; seule une sélection la remplace.
  $('searchLayout').classList.toggle('hidden',!openedSearchFiche&&!editorId);
  updateSearchPlacement();
 }
+$('search').addEventListener('keydown',e=>{
+ const results=[...$('results').querySelectorAll('.result')];
+ if($('searchSuggestions').classList.contains('hidden')||!results.length)return;
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+  e.preventDefault();
+  highlightedSearchIndex=e.key==='ArrowDown'?(highlightedSearchIndex+1)%results.length:(highlightedSearchIndex<0?results.length-1:(highlightedSearchIndex-1+results.length)%results.length);
+  updateSearchHighlight();
+ }else if(e.key==='Enter'){
+  e.preventDefault();
+  results[highlightedSearchIndex>=0?highlightedSearchIndex:0].click();
+ }else if(e.key==='Escape'){
+  e.preventDefault();$('searchSuggestions').classList.add('hidden');highlightedSearchIndex=-1;
+ }
+});
 
 function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  editorId=null;
