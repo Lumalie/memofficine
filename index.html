@@ -461,7 +461,7 @@ function searchResultLabel(item){
  const p=item.presentation!==null?m.presentations?.[item.presentation]:null;
  const name=(p?.name||m.name||"").trim();
  const dose=(p?.dosage||m.dosage||"").trim();
- const lab=m.entry_type==="dci"?(p?.lab||"").trim():"";
+ const lab="";
  const form=(p?.form||m.form||"").trim();
  return [name,...(dose&&!norm(name).endsWith(norm(dose))?[dose]:[]),lab,form].filter(Boolean).join(" · ");
 }
@@ -883,7 +883,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
@@ -915,7 +915,7 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
  if(action==="up"&&index>0)[ss[index-1],ss[index]]=[ss[index],ss[index-1]];
  if(action==="down"&&index<ss.length-1)[ss[index+1],ss[index]]=[ss[index],ss[index+1]];
  if(action==="toggle"){
-  ss[index].enabled=ss[index].enabled===false;
+  ss[index].enabled=!(ss[index].enabled!==false&&ss[index].enabled!=="false");
   const card=$('sectionEditors')?.querySelector(`.section-editor[data-section="${index}"]`);
   if(card){
    card.classList.toggle('is-disabled',ss[index].enabled===false);
