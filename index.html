@@ -133,12 +133,14 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .search-suggestions .result[aria-selected="true"]{background:#e1eee5;outline:2px solid #8ab59a;outline-offset:-2px}
 @media(max-width:900px){.header-search-active #headerSearchSlot{flex:1 1 220px;min-width:160px;max-width:380px;margin-left:auto}}
 @media(max-width:760px){.header-search-active #headerSearchSlot{flex:1 1 100%;max-width:none;margin:0}}
+.editor-warning{color:#a72f35;font-size:.83rem;font-weight:650;margin-top:6px}
+.needs-attention{border:2px solid #c8484e!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
 .group-glance h3{color:#245d4b;margin-top:0;font-size:1.25rem}
 .group-glance .section{margin:0;border:0;background:transparent;padding:0;box-shadow:none}
-.group-glance .section h3{display:none}
+.group-glance .section h3{display:block}
 </style>
 </head>
 <body>
@@ -730,10 +732,10 @@ function renderEditor(id){
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><button id="backBtn">Retour à la fiche</button></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
-  <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted">Seuls les groupes de la même classe thérapeutique sont proposés. Enregistre d'abord la classe si tu viens de la modifier.</div></div>
+  <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="editor-warning" id="group-parent-help">⚠️ Choisis d’abord une classe thérapeutique ci-dessous : seuls les groupes appartenant à cette même classe seront proposés.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div><label for="f-dosage">Dosage de la fiche</label><input id="f-dosage" value="${esc(m.dosage||"")}" placeholder="Ex. : 80 mg"></div><div id="f-dci-wrap" class="full"><label for="f-dci">DCI / substance(s) active(s)</label><input id="f-dci" value="${esc(m.dci)}" placeholder="Ex. : sulfate ferreux"></div>
  <div class="full"><label for="f-indications">Indications thérapeutiques (badges Explorer, séparées par des virgules)</label><input id="f-indications" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Carence en fer, Anémie ferriprive"><div class="muted">Étiquettes de navigation : vérifier les indications officielles avant de les ajouter.</div></div>
- <div><label>Famille</label><input id="f-category" list="cats" value="${esc(m.category)}"><datalist id="cats">${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
+ <div><label for="f-category">Classe thérapeutique</label><select id="f-category"><option value="">— Choisir une classe —</option>${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}" ${m.category===c?"selected":""}>${esc(c)}</option>`).join("")}<option value="__new__">＋ Créer une nouvelle classe…</option></select><input id="f-category-new" class="hidden" placeholder="Nom de la nouvelle classe thérapeutique" aria-label="Nouvelle classe thérapeutique"><div class="editor-warning" id="category-help">⚠️ Renseigne la classe thérapeutique avant de choisir un groupe parent.</div></div>
  <div class="full"><label>Alias / termes de recherche</label><input id="f-aliases" value="${esc(m.aliases)}"></div>
  <div><label>Statut de vérification</label><select id="f-status">${["À vérifier","En cours de vérification","Vérifiée"].map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join("")}</select></div>
  <div><label>Publication</label><select id="f-published"><option value="false" ${!m.published?'selected':''}>Brouillon — privé</option><option value="true" ${m.published?'selected':''}>Publié — visible publiquement</option></select></div>
@@ -774,6 +776,25 @@ const toggleType = () => {
     });
 };
  $("f-entry-type").onchange=toggleType;toggleType();
+ const categorySelect=$("f-category"),categoryNew=$("f-category-new"),parentSelect=$("f-parent-group");
+ function refreshParentGroups(){
+  const custom=categorySelect.value==="__new__";
+  categoryNew.classList.toggle("hidden",!custom);
+  const category=custom?categoryNew.value.trim():categorySelect.value;
+  const selected=parentSelect.value;
+  const matches=meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&g.id!==m.id&&g.category===category).sort((a,b)=>a.name.localeCompare(b.name,"fr"));
+  parentSelect.innerHTML='<option value="">Aucun groupe</option>'+matches.map(g=>`<option value="${esc(g.id)}">${esc(g.name)} — ${esc(g.category)}</option>`).join("");
+  if(matches.some(g=>g.id===selected))parentSelect.value=selected;
+  const warning=$("category-help");
+  warning.textContent=category?"Classe sélectionnée : "+category+". Tu peux maintenant choisir un groupe parent.":"⚠️ Renseigne la classe thérapeutique avant de choisir un groupe parent.";
+  warning.classList.toggle("editor-warning",!category);
+  categorySelect.classList.toggle("needs-attention",!category);
+  parentSelect.classList.toggle("needs-attention",!category);
+  $("group-parent-help").textContent=category?(matches.length? "Groupes proposés pour la classe « "+category+" »." : "⚠️ Aucun groupe disponible pour cette classe. Tu peux laisser « Aucun groupe »."):"⚠️ Choisis d’abord une classe thérapeutique pour afficher les groupes compatibles.";
+ }
+ categorySelect.addEventListener("change",refreshParentGroups);
+ categoryNew.addEventListener("input",refreshParentGroups);
+ refreshParentGroups();
  $("applyGroupTemplate").onclick=()=>{
   if(!confirm("Appliquer le modèle groupe ? Les rubriques actuelles seront conservées mais masquées, sans effacer leur contenu."))return;
   captureEditorFields(m);
@@ -892,7 +913,7 @@ function captureEditorFields(m){
  setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=(get("f-dosage")||"").trim();
  m.dci=m.entry_type==="dci"?"":(get("f-dci")||"").trim();
  m.parent_dci=m.entry_type==="dci"?"":m.dci;
- m.category=(get("f-category")||"").trim()||"Autres";
+ m.category=(get("f-category")==="__new__"?(get("f-category-new")||""):get("f-category")||"").trim()||"Autres";
  const linked=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g));
  if(linked&&linked.category!==m.category){setHierarchy(m,kind,"");toast("Groupe parent retiré : la classe thérapeutique a changé.")}
 
