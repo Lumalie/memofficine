@@ -84,7 +84,9 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #searchLayout.hidden{display:none!important}
 .detailtop h2{font-variant:normal;text-transform:uppercase;letter-spacing:.035em}.group-kicker{margin-bottom:4px;font-variant:all-small-caps;letter-spacing:.09em;font-weight:800;font-size:1.08rem;color:var(--green)}
 .group-glance>.section{border-top:0;padding:0}
-.presentation-toggle{display:flex;align-items:center;gap:9px;font-weight:700}.presentation-toggle input,.presentation-verified input{width:auto;flex-shrink:0}.presentation-edit-row{border-bottom:1px solid var(--line);padding:8px 0}.presentation-edit-row>input:not([type="checkbox"]){margin-top:6px}.presentation-verified{display:flex;align-items:center;gap:8px;margin:8px 0 0 25px;font-size:.83rem}</style>
+.presentation-toggle{display:flex;align-items:center;gap:9px;font-weight:700}.presentation-toggle input,.presentation-verified input{width:auto;flex-shrink:0}.presentation-edit-row{border-bottom:1px solid var(--line);padding:8px 0}.presentation-edit-row>input:not([type="checkbox"]){margin-top:6px}.presentation-verified{display:flex;align-items:center;gap:8px;margin:8px 0 0 25px;font-size:.83rem}/* Bibliothèque de sources communes */
+.sources-list{display:grid;gap:12px;margin-top:20px}.source-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}.source-card h3{margin:0 0 5px;font-size:1.07rem}.source-card p{margin:6px 0}.source-card a{color:var(--green);overflow-wrap:anywhere}.source-entry{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fbfcfa}.source-entry .admin-grid{margin-top:10px}.sources-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.source-empty{padding:20px;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+</style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
 .group-glance h3{color:#245d4b;margin-top:0;font-size:1.25rem}
@@ -102,7 +104,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
     <h1>Mémofficine</h1>
   </div>
 </a>
-    <div class="header-actions"><button id="homeNav" type="button">Accueil</button><button id="exploreNav" type="button">Explorer</button><button id="loginBtn">Connexion administrateur</button></div>
+    <div class="header-actions"><button id="homeNav" type="button">Accueil</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
@@ -117,7 +119,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <div id="searchLayout" class="layout hidden">
     <section class="panel" aria-live="polite"><div class="panelhead"><span id="detailHeading">Fiche médicament</span><span class="muted">Vue détaillée</span></div><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
   </div>
-  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
+  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémofficine.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 </main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
@@ -193,8 +195,9 @@ async function loadCloudMeds(){
  const wasEditing=admin&&editorId&&!$("editor").classList.contains("hidden");
  if(wasEditing)saveLocalDraft();
  meds=(data||[]).map(rowToMed);
+ renderSources();
  const requestedId=new URLSearchParams(window.location.search).get("fiche");
- selectedId=meds.find(m=>m.id===requestedId)?.id||meds[0]?.id||null;
+ selectedId=meds.find(m=>m.id===requestedId&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
  if(requestedId)openedSearchFiche=true;
  if(!restoreLocalDraft()){renderFilters();renderResults();if(requestedId)renderDetail(new URLSearchParams(location.search).get("rubrique"),new URLSearchParams(location.search).has("presentation")?Number(new URLSearchParams(location.search).get("presentation")):null);}
 }
@@ -211,7 +214,7 @@ async function initCloud(){
  supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();},0);});
 }
 let currentView="home";
-const viewScrollPositions={home:0,explore:0};
+const viewScrollPositions={home:0,explore:0,sources:0};
 let restoringViewScroll=false;
 // Mémoriser la position pendant la lecture, avant qu'une vue masquée réduise la page.
 window.addEventListener("scroll",()=>{
@@ -232,9 +235,12 @@ function showView(view){
  currentView=view;
  $("homeView").classList.toggle("hidden",view!=="home");
  $("exploreView").classList.toggle("hidden",view!=="explore");
+ $("sourcesView").classList.toggle("hidden",view!=="sources");
  $("homeNav").setAttribute("aria-current",view==="home"?"page":"false");
  $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
+ $("sourcesNav").setAttribute("aria-current",view==="sources"?"page":"false");
  if(view==="explore")renderExplorer();
+ if(view==="sources")renderSources();
  if(changing)restoreViewScroll(view);
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
@@ -254,12 +260,12 @@ function setHierarchy(m,kind,parent){
   else delete target.memofficineParentGroup;
  }
 }
-function groupOptions(m){return meds.filter(g=>isGroup(g)&&g.id!==m.id&&g.category===m.category).sort((a,b)=>a.name.localeCompare(b.name,"fr"))}
+function groupOptions(m){return meds.filter(g=>!isSourcesRecord(g)&&isGroup(g)&&g.id!==m.id&&g.category===m.category).sort((a,b)=>a.name.localeCompare(b.name,"fr"))}
 function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
  return Array.isArray(raw)?raw.filter(Boolean):[];
 }
-function publicMeds(){return meds.filter(m=>admin||m.published)}
+function publicMeds(){return meds.filter(m=>!isSourcesRecord(m)&&(admin||m.published))}
 function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
 }
@@ -310,13 +316,13 @@ function selectFiche(id,addHistory=true){
 }
 window.addEventListener("popstate",()=>{
  const id=new URLSearchParams(window.location.search).get("fiche");
- selectedId=meds.find(m=>m.id===id)?.id||meds[0]?.id||null;
+ selectedId=meds.find(m=>m.id===id&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
  activeCategory="Toutes";$("search").value="";openedSearchFiche=!!id;renderFilters();renderResults();
- if(location.hash==="#explorer")showView("explore");else showView("home");
+ if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else showView("home");
  if(id)renderDetail(new URLSearchParams(location.search).get("rubrique"),new URLSearchParams(location.search).has("presentation")?Number(new URLSearchParams(location.search).get("presentation")):null);
 });
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
-function categories(){return ["Toutes",...new Set(meds.map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
+function categories(){return ["Toutes",...new Set(meds.filter(m=>!isSourcesRecord(m)).map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
 function getSearchMatches(){
  const q=norm($("search").value.trim());
@@ -803,9 +809,52 @@ async function saveEditor(id){
 
 }
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
+async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
+
+// Les références communes sont stockées dans un enregistrement dédié de la table existante.
+// Il est exclu des recherches et du catalogue médicaments.
+const SOURCES_RECORD_ID="7d8a2e1b-6f4c-4f83-9e91-7c62ab90d415";
+function isSourcesRecord(m){return m.id===SOURCES_RECORD_ID||(m.sections||[]).some(s=>s.memofficineKind==="sources_communes")}
+function sourcesRecord(){return meds.find(isSourcesRecord)}
+function sourceItems(){const section=(sourcesRecord()?.sections||[]).find(s=>s.memofficineKind==="sources_communes");return Array.isArray(section?.items)?section.items:[]}
+function safeSourceUrl(raw){try{const u=new URL(raw);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
+function renderSources(){
+ const items=sourceItems();
+ $("sourcesList").innerHTML=items.length?items.map(item=>{
+  const url=safeSourceUrl(item.url||"");
+  return `<article class="source-card"><h3>${esc(item.title||"Ressource sans titre")}</h3>${item.organization?`<div class="muted">${esc(item.organization)}</div>`:""}${item.description?`<p>${esc(item.description)}</p>`:""}${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Consulter la source ↗</a>`:""}</article>`;
+ }).join(""):'<div class="source-empty">Aucune source commune publiée pour le moment.</div>';
+ $("sourcesAdmin").classList.toggle("hidden",!admin);
+ if(admin)renderSourcesEditor();
+}
+let pendingSources=null;
+function sourceField(item,i,key,label){return `<label>${label}<input data-source-index="${i}" data-source-key="${key}" value="${esc(item[key]||"")}" placeholder="${label}"></label>`}
+function renderSourcesEditor(){
+ if(!admin)return;
+ const items=pendingSources===null?clone(sourceItems()):pendingSources;
+ $("sourcesAdmin").innerHTML=`<h3 style="margin-top:0">Gérer les sources communes</h3><p class="muted">Ajoute des ressources vérifiables. Les modifications sont publiques après enregistrement.</p><div id="sourcesEntries">${items.map((item,i)=>`<div class="source-entry"><div class="sources-toolbar"><strong>Source ${i+1}</strong><button type="button" data-remove-source="${i}" class="danger">Supprimer</button></div><div class="admin-grid">${sourceField(item,i,"title","Titre de la ressource")}${sourceField(item,i,"organization","Organisme / éditeur")}${sourceField(item,i,"url","Adresse URL")}${sourceField(item,i,"description","Description (facultative)")}</div></div>`).join("")}</div><div class="sources-toolbar"><button type="button" id="addCommonSource" class="soft">+ Ajouter une source</button><button type="button" id="saveCommonSources" class="primary">Enregistrer les sources</button></div>`;
+ $("sourcesAdmin").querySelectorAll("[data-source-key]").forEach(input=>input.addEventListener("input",()=>{items[Number(input.dataset.sourceIndex)][input.dataset.sourceKey]=input.value;pendingSources=items}));
+ $("sourcesAdmin").querySelectorAll("[data-remove-source]").forEach(btn=>btn.onclick=()=>{items.splice(Number(btn.dataset.removeSource),1);pendingSources=items;renderSourcesEditor()});
+ $("addCommonSource").onclick=()=>{items.push({title:"",organization:"",url:"",description:""});pendingSources=items;renderSourcesEditor();const fields=$("sourcesEntries").querySelectorAll('[data-source-key="title"]');fields[fields.length-1]?.focus()};
+ $("saveCommonSources").onclick=saveCommonSources;
+}
+async function saveCommonSources(){
+ if(!admin)return;
+ const items=(pendingSources===null?sourceItems():pendingSources).map(item=>({title:String(item.title||"").trim(),organization:String(item.organization||"").trim(),url:String(item.url||"").trim(),description:String(item.description||"").trim()}));
+ if(items.some(item=>!item.title)){toast("Chaque source doit avoir un titre.");return}
+ if(items.some(item=>item.url&&!safeSourceUrl(item.url))){toast("Utilise des liens http:// ou https:// valides.");return}
+ const existing=sourcesRecord();
+ const record=existing?clone(existing):{id:SOURCES_RECORD_ID,name:"Sources communes Mémofficine",dci:"",dosage:"",category:"Documentation",form:"",aliases:"",entry_type:"specialite",status:"À vérifier",updated:"",source:"",presentations:[],sections:[],published:true};
+ record.sections=[{id:"sources-communes",title:"Sources communes",type:"text",content:"",enabled:true,memofficineKind:"sources_communes",items}];record.published=true;
+ const {data,error}=await supabaseClient.from("medications").upsert(medToRow(record)).select().single();
+ if(error){console.error(error);toast("Impossible d'enregistrer les sources : vérifie les permissions Supabase.");return}
+ const saved=rowToMed(data),idx=meds.findIndex(isSourcesRecord);if(idx>=0)meds[idx]=saved;else meds.push(saved);
+ pendingSources=null;renderSources();toast("Sources communes enregistrées !");
+}
+
 $("homeNav").onclick=()=>{history.pushState({},"",location.pathname);$("search").value="";openedSearchFiche=false;editorId=null;$("searchSuggestions").classList.add("hidden");showView("home");renderResults()};
 $("exploreNav").onclick=()=>{history.pushState({},"",location.pathname+"#explorer");showView("explore")};
+$("sourcesNav").onclick=()=>{history.pushState({},"",location.pathname+"#sources");showView("sources")};
 $("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;
 $("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";renderExplorer()};
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
@@ -813,6 +862,6 @@ $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{t
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
 window.addEventListener("pagehide",saveLocalDraft);
-openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");initCloud();
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");initCloud();
 </script>
 </body></html>
