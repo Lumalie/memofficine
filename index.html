@@ -297,6 +297,17 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .group-associations .associated-group{background:#deede2;border-color:#a8ccb3;color:#245b42}
 .group-associations .associated-med{background:#e6eef9;border-color:#b7cbe4;color:#275277}
 @media(max-width:600px){.group-associations .associated-items{display:grid;grid-template-columns:1fr}.group-associations .associated-item{justify-content:flex-start}}
+
+/* V5.70 : navigation par fil d'Ariane, fiches associées allégées */
+.fiche-breadcrumb{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:0 0 17px;padding:0;color:#567268;font-size:.88rem;line-height:1.6}
+.fiche-breadcrumb .breadcrumb-link{appearance:none;border:0;background:transparent;padding:2px 1px;margin:0;color:#39775e;font:inherit;font-weight:650;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.fiche-breadcrumb .breadcrumb-link:hover,.fiche-breadcrumb .breadcrumb-link:focus-visible{text-decoration-color:currentColor;background:transparent}
+.fiche-breadcrumb .breadcrumb-separator{color:#8aa49a;font-size:1.15em;padding:0 2px}
+.fiche-breadcrumb .breadcrumb-current{font-weight:700;color:#274c3d}
+.group-associations{border:0;background:transparent;border-radius:0;padding:0;margin:22px 0 16px}
+.group-associations .group-members{border:0;padding:0;margin:0}
+.group-associations .group-members h3{margin:0 0 14px}
+.group-associations .associated-section+.associated-section{margin-top:17px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -574,6 +585,19 @@ function groupOptions(m){
 function childGroups(group,visible=publicMeds()){
  return visible.filter(m=>isGroup(m)&&parentGroupId(m)===group.id)
  .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
+function ficheBreadcrumb(m){
+ const visible=publicMeds(),byId=new Map(visible.map(x=>[String(x.id),x]));
+ const chain=[],seen=new Set([String(m.id)]);
+ let id=String(parentGroupId(m)||"");
+ while(id&&!seen.has(id)){
+  seen.add(id);
+  const group=byId.get(id);
+  if(!group||!isGroup(group))break;
+  chain.unshift(group);
+  id=String(parentGroupId(group)||"");
+ }
+ return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map(g=>`<button type="button" class="breadcrumb-link" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current" aria-current="page">${esc(displayMedName(m))}</span></nav>`;
 }
 function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
@@ -902,11 +926,11 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
  ${prioritySection?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${m.entry_type==="dci"&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
- ${isGroup(m)?`<div class="group-detail group-associations">${subgroups.length||children.length?`<div class="group-members"><h3>Fiches associées</h3>${subgroups.length?`<div class="associated-section"><h4>Sous-groupes</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" type="button" data-group-open="${esc(g.id)}"><span aria-hidden="true">▣</span> ${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}${children.length?`<div class="associated-section"><h4>Fiches médicaments associées</h4><div class="associated-items">${children.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}"><span aria-hidden="true">💊</span> ${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}</div>`:""}</div>`:""}
- ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
+ ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>${subgroups.length?`<div class="associated-section"><h4>Sous-groupes</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" type="button" data-group-open="${esc(g.id)}"><span aria-hidden="true">▣</span> ${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}${children.length?`<div class="associated-section"><h4>Fiches médicaments associées</h4><div class="associated-items">${children.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}"><span aria-hidden="true">💊</span> ${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}</div></div>`:""}
+
  ${isGroup(m)?"":renderPresentations(m)}
  ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
  ${m.updated?`<div class="detail-last-updated">Date de dernière mise à jour : ${esc(formatDateFR(m.updated))}</div>`:""}`;
