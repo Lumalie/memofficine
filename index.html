@@ -82,6 +82,8 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #searchLayout{display:block;margin-top:18px}
 #searchLayout>.panel{width:100%}
 #searchLayout.hidden{display:none!important}
+.group-kicker{font-variant:all-small-caps;letter-spacing:.09em;font-weight:800;font-size:1.08rem;color:var(--green)}
+.group-glance>.section{border-top:0;padding:0}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -365,26 +367,24 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const m=meds.find(x=>x.id===selectedId);
  $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
  if(!m){$("detailHeading").textContent="Fiche médicament";$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
- $("detailHeading").textContent="Fiche médicament";
+ $("detailHeading").textContent=isGroup(m)?"FICHE GROUPE":"Fiche médicament";
  const sections=(m.sections||[]).filter(s=>s.enabled!==false);
+ const prioritySection=isGroup(m)
+  ? sections.find(s=>s.id==="coup-oeil"||/en un coup d[’']œil/i.test(s.title||""))
+  : sections.find(s=>s.id==="conseil-comptoir"||/à dire au comptoir/i.test(s.title||""));
+ const remainingSections=sections.filter(s=>s!==prioritySection);
  const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
  const children=isGroup(m)?groupChildren(m):[];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
  const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
  const formBadge=!isGroup(m)&&presentationForms.length
    ? `<span class="tag tag-form">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
- $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div>${isGroup(m)?"Fiche groupe · repères communs":m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
- <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
+ $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div class="${isGroup(m)?"group-kicker":""}">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
+ ${prioritySection?(isGroup(m)?`<div class="group-glance">${renderSection(prioritySection,targetSectionId)}</div>`:renderSection(prioritySection,targetSectionId)):""}
  ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
  ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
  ${isGroup(m)?"":renderPresentations(m)}
- ${isGroup(m)?[
-  ...sections.filter(s=>s.id==="coup-oeil"),
-  ...sections.filter(s=>s.id!=="coup-oeil")
- ].map(s=>s.id==="coup-oeil"?`<div class="group-glance" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${renderSection(s,targetSectionId)}</div>`:renderSection(s,targetSectionId)).join(""):[
-  ...sections.filter(s => (s.title || "").toLowerCase().includes("à dire au comptoir")),
-  ...sections.filter(s => !(s.title || "").toLowerCase().includes("à dire au comptoir"))
-].map(s=>renderSection(s,targetSectionId)).join("")}
+ ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
  ${hasSourcesSection?"":`<div class="section sources"><h3>📚 Sources et traçabilité</h3><p><strong>Source principale :</strong> ${m.source?`<a href="${esc(m.source)}" target="_blank" rel="noopener">${esc(m.source)}</a>`:"À renseigner"}</p><p><strong>Mise à jour :</strong> ${esc(m.updated||"Non renseignée")}</p><p><strong>Statut :</strong> ${esc(m.status||"À vérifier")}</p></div>`}`;
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
