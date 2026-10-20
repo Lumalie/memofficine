@@ -217,6 +217,19 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .section-bottom-actions button:last-child{margin-left:auto;background:white}
 .section-bottom-actions button:hover{background:#e8f3eb}
 @media(max-width:600px){.section-bottom-actions button:last-child{margin-left:0}}
+/* V5.51 : encarts prioritaires harmonisés */
+.group-glance>.section.conseil-comptoir{background:transparent;border:0;border-radius:0;box-shadow:none;margin:0;padding:0}
+.group-glance>.section.conseil-comptoir h3{color:#245d4b;font-size:1.25rem;margin:0 0 12px}
+#f-dose-title-wrap{padding:8px 0}
+#f-dose-title-wrap .ingredient-title-choice{display:flex;align-items:center;gap:8px}
+#f-dose-title-wrap input[type="checkbox"]{width:auto;flex:0 0 auto}
+
+/* V5.52 — trois repères en liste dans les encarts prioritaires */
+.group-glance .section ul{list-style:none;padding:0;margin:10px 0 2px;display:grid;gap:10px}
+.group-glance .section ul li{position:relative;padding:10px 12px 10px 37px;border-radius:11px;background:rgba(255,255,255,.55);line-height:1.55}
+.group-glance .section ul li::before{content:"";position:absolute;left:14px;top:calc(.85em + 7px);width:10px;height:10px;border-radius:50%;background:#6f9f80;box-shadow:0 0 0 3px #d8eadc}
+.group-glance .section ol{padding-left:26px}
+#f-dci-form-wrap{min-width:0}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -277,7 +290,7 @@ const PHOTO_BUCKET = "presentation-photos";
 const pendingPresentationPhotos = new Map();
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 const DEFAULT_SECTIONS = [
- {id:"conseil-comptoir",title:"📣 À DIRE AU COMPTOIR",type:"text",content:"💧 Mode d’administration : préciser le liquide et les modalités de prise après vérification de la présentation.\n⚠️ Effets indésirables à signaler : préciser les signes et la conduite à tenir selon les sources officielles.\n💬 Conseil associé : à adapter au médicament et à la situation du patient.",enabled:true},
+ {id:"conseil-comptoir",title:"📣 À DIRE AU COMPTOIR",type:"text",content:"• Modalités de prise : à vérifier selon la présentation.\n• Point de vigilance : à documenter selon la spécialité.\n• Conseil au comptoir : à adapter à la situation du patient.",enabled:true},
  {id:"indications",title:"📍 Indications",type:"text",content:"À compléter à partir d’une source officielle vérifiée.",enabled:true},
  {id:"posologie",title:"🔢 Posologie",type:"text",content:"À compléter selon la spécialité, le dosage et l’indication. Vérifier la prescription et les sources officielles.",enabled:true},
  {id:"prise",title:"🕐 Modalités de prise",type:"table",content:"🍽️ | moment du repas | pourquoi ?\n💧 | avec quel liquide | pourquoi ?\n🍎✅ | aliments à privilégier | exemple 1 ; exemple 2\n🍎❌ | aliments à éviter | exemple 1\n🧍‍♀️ | position particulière | pourquoi ?",enabled:true},
@@ -484,7 +497,11 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  url.searchParams.delete("edition");
  history.pushState({fiche:id},"",url);rememberNavigation();
 }
-function medicationForms(m){return [...new Set((m.presentations||[]).map(p=>String(p.form||" ").trim()).filter(Boolean))]};
+function medicationForms(m){
+ const presentationForms=(m.presentations||[]).map(p=>String(p.form||"").trim()).filter(Boolean);
+ const dciForm=m.entry_type==="dci"&&!isGroup(m)?String(m.sections?.[0]?.dciForm||m.form||"").trim():"";
+ return [...new Set([...presentationForms,...(dciForm?[dciForm]:[])])];
+}
 function explorerFormLabel(m){
  const forms=medicationForms(m);
  if(!forms.length)return "";
@@ -568,7 +585,7 @@ function renderExplorer(){
  $("exploreCards").querySelectorAll("[data-filter-form]").forEach(b=>b.onclick=()=>{formSel.value=b.dataset.filterForm;renderExplorer()});
 }
 function ingredientInfo(m){return (m.sections||[]).find(s=>s.ingredientDosages)?.ingredientDosages||null}
-function ingredientTitleDose(m){const info=ingredientInfo(m);if(!info||!info.showInTitle)return "";return (info.entries||[]).map(e=>String(e.dose||"").trim()).filter(Boolean).join("/")}
+function ingredientTitleDose(m){const info=ingredientInfo(m);if(!info||!info.showInTitle)return "";return (info.entries||[]).map(e=>String(e.dose||"").trim()).filter(Boolean).join("/")||String(m.dosage||"").trim()}
 function displayMedName(m){const name=String(m.name||"Sans nom").trim(),info=ingredientInfo(m);const dose=info?(info.showInTitle?ingredientTitleDose(m):""):String(m.dosage||"").trim();return dose&&!norm(name).endsWith(norm(dose))?name+" "+dose:name}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
@@ -746,7 +763,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const children=isGroup(m)?groupChildren(m):[];
  const subgroups=isGroup(m)?childGroups(m):[];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
- const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
+ const presentationForms=medicationForms(m);
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const info=ingredientInfo(m);
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
@@ -754,7 +771,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
  $("detail").innerHTML=`<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
- ${prioritySection?(isGroup(m)?`<div class="group-glance">${renderSection(prioritySection,targetSectionId)}</div>`:renderSection(prioritySection,targetSectionId)):""}
+ ${prioritySection?`<div class="group-glance">${renderSection(prioritySection,targetSectionId)}</div>`:""}
  ${m.entry_type==="dci"&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(esc).join(", ")}</div>`:""}
  ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Sous-groupes (${subgroups.length})</strong><div>${subgroups.map(g=>`<button type="button" data-group-open="${esc(g.id)}">▣ ${esc(g.name)} ↗</button>`).join("")||'<span class="muted">Aucun sous-groupe.</span>'}</div><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
  ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
@@ -991,7 +1008,7 @@ function renderEditor(id){
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
-  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dosage-wrap"><label for="f-dosage">Dosage</label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div><p class="muted">Unité proposée selon la forme, modifiable. Pour les dosages complexes, choisir « autre » et saisir la valeur complète.</p></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><label class="ingredient-title-choice"><input type="checkbox" id="f-dose-in-title"> Afficher les dosages dans le titre de la fiche</label><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
+  <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label for="f-dci-form">Forme pharmaceutique</label><input id="f-dci-form" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div class="full" id="f-dose-title-wrap"><label class="ingredient-title-choice"><input type="checkbox" id="f-dose-in-title"> Afficher le dosage dans le titre de la fiche médicament</label><p class="muted">Le titre reprend le dosage des substances actives renseignées ci-dessous (ou le dosage existant de la fiche).</p></div><div id="f-dosage-wrap"><label for="f-dosage">Dosage</label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div><p class="muted">Unité proposée selon la forme, modifiable. Pour les dosages complexes, choisir « autre » et saisir la valeur complète.</p></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><p class="muted">Sépare les noms de spécialités par des virgules. Plusieurs noms peuvent être renseignés pour une même DCI. Vérifier le statut de princeps de chaque spécialité.</p></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="category" ${explorerBadgeVisible(m,"category")?"checked":""}> <span>Classe·s thérapeutique·s</span></label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  <div class="full explorer-class-custom"><label class="explorer-section-heading"><input type="checkbox" data-explorer-visibility="indications" ${explorerBadgeVisible(m,"indications")?"checked":""}> <span>Indication·s thérapeutique·s</span></label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
@@ -1016,7 +1033,9 @@ const toggleType = () => {
   $("explorer-form-visibility-wrap").classList.toggle("hidden",isGroupType);
   $("parent-group-wrap").classList.remove("hidden");
   $("princeps-editor-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci");
+  $("f-dci-form-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci");
   $("f-dosage-wrap").classList.toggle("hidden",isGroupType || $("f-entry-type").value === "specialite");
+  $("f-dose-title-wrap").classList.toggle("hidden",isGroupType || $("f-entry-type").value !== "specialite");
 
   const nameLabel = $("f-name-label");
   if (nameLabel) {
@@ -1191,6 +1210,10 @@ function captureEditorFields(m){
  if(kind==='specialite'&&m.sections?.length){m.sections.forEach(sec=>sec.ingredientDosages=ingredientData);m.dosage=ingredientRows.map(e=>e.dose).filter(Boolean).join('/')||m.dosage;}
 
  if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:"",enabled:false}];
+ if(kind==="dci"){
+  m.sections[0].dciForm=(get("f-dci-form")||"").trim();
+  m.form=m.sections[0].dciForm;
+ }
  if(kind==="dci")m.sections[0].princepsNames=[...new Set((get("f-princeps")||"").split(",").map(x=>x.trim()).filter(Boolean))];
  m.sections[0].explorerVisibility=Object.fromEntries([...document.querySelectorAll("[data-explorer-visibility]")].map(input=>[input.dataset.explorerVisibility,input.checked]));
  const classes=[...new Set((get("f-extra-classes")||"").split(",").map(t=>t.trim()).filter(Boolean))];
