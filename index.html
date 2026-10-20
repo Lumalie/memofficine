@@ -65,6 +65,11 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 .table-cell-toolbar button{padding:4px 9px}
 .table-cell-toolbar select{width:auto;max-width:165px;padding:5px}
 .table-cell-preview{border:1px dashed #c8d5cb;background:#f7faf7;padding:7px 10px;border-radius:8px;margin:6px 0;font-size:.86rem;overflow-wrap:anywhere}
+
+/* Confort de saisie et distinction visuelle des badges */
+.admin .section-editor textarea[data-field="content"]{min-height:118px;resize:vertical;line-height:1.55}
+.tag.tag-category{background:#e5f0e8;color:#245d4b}
+.tag.tag-form{background:#e9e5f5;color:#62528c}
 </style>
 </head>
 <body>
@@ -255,8 +260,8 @@ function renderDetail(targetSectionId=null){
  const sections=(m.sections||[]).filter(s=>s.enabled!==false);
  const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
  const formBadge=presentationForms.length
-   ? `<span class="tag">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
- $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag">${esc(m.category||"Famille à définir")}</span>${formBadge}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
+   ? `<span class="tag tag-form">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
+ $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
  <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
  ${m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
  ${renderPresentations(m)}
