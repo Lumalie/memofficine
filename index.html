@@ -98,6 +98,19 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .home-shortcut-icon{background:#e5f0e8;color:#245d4b;width:43px;height:43px;border-radius:12px;display:grid;place-items:center;font-size:1.3rem;flex-shrink:0}
 .home-shortcut strong{display:block;margin-bottom:4px}.home-shortcut small{display:block;color:var(--muted);line-height:1.4}
 @media(max-width:560px){.home-shortcuts{grid-template-columns:1fr}.home-shortcut{padding:15px}.home-extras{margin-top:15px}}
+
+/* V5.14 — Recherche contextuelle dans la bannière et fiches en priorité */
+.tag.tag-category{border:0;cursor:pointer;font:inherit;font-size:.78rem}
+.tag.tag-category:hover,.tag.tag-category:focus-visible{background:#cce4d2;outline:2px solid #8eb99a;outline-offset:1px}
+.header-search-slot:empty,.home-search-slot:empty{display:none}
+.fiche-open #homeView .home-hero,.fiche-open #homeView .home-extras{display:none}
+.fiche-open #headerSearchSlot{max-width:580px;margin:12px 0 0 auto}
+.fiche-open #headerSearchSlot .searchcard{padding:8px 10px;border-radius:13px;box-shadow:none}
+.fiche-open #headerSearchSlot .label,.fiche-open #headerSearchSlot .filters{display:none}
+.fiche-open #headerSearchSlot #search{font-size:.93rem;padding:9px 11px}
+.fiche-open #headerSearchSlot .search-suggestions{left:0;right:0;top:calc(100% + 3px)}
+.fiche-open #searchLayout{margin-top:0;scroll-margin-top:16px}
+@media(max-width:760px){.fiche-open #headerSearchSlot{max-width:none;margin:12px 0 0}.fiche-open #headerSearchSlot .searchrow{flex-direction:row}.fiche-open #headerSearchSlot #clearSearch{padding:8px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -116,13 +129,14 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
     <h1>Mémofficine</h1>
   </div>
 </a>
-    <div class="header-actions"><button id="homeNav" type="button">Accueil</button><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button></div>
+    <div class="header-actions"><button id="exploreNav" type="button">Explorer</button><button id="sourcesNav" type="button">Sources</button><button id="loginBtn">Connexion administrateur</button></div>
   </div>
+  <div id="headerSearchSlot" class="header-search-slot"></div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
 <main>
   <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémofficine</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
-  <section id="homeView"><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><section class="searchcard">
+  <section id="homeView"><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><div id="homeSearchSlot"></div><section class="searchcard" id="mainSearchCard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
     <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Suggestions de recherche"><div class="results" id="results"></div><div class="suggestion-count" id="count"></div></div>
@@ -260,11 +274,12 @@ function showView(view){
  $("homeView").classList.toggle("hidden",view!=="home");
  $("exploreView").classList.toggle("hidden",view!=="explore");
  $("sourcesView").classList.toggle("hidden",view!=="sources");
- $("homeNav").setAttribute("aria-current",view==="home"?"page":"false");
+ 
  $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
  $("sourcesNav").setAttribute("aria-current",view==="sources"?"page":"false");
  if(view==="explore")renderExplorer();
  if(view==="sources")renderSources();
+ updateSearchPlacement();
  if(changing)restoreViewScroll(view);
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
@@ -299,7 +314,7 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  showView("home");openedSearchFiche=true;renderFilters();renderResults();
  $("searchSuggestions").classList.add("hidden");
  renderDetail(sectionId,presentationIndex);
- if(!sectionId&&presentationIndex===null){viewScrollPositions.home=0;requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,0)));}
+ if(!sectionId&&presentationIndex===null){viewScrollPositions.home=0;requestAnimationFrame(()=>requestAnimationFrame(()=>$("searchLayout").scrollIntoView({block:"start"})));}
  const url=new URL(location.href);url.searchParams.set("fiche",id);
  if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
@@ -384,6 +399,13 @@ function getSearchMatches(){
  });
 }
 let openedSearchFiche=false;
+function updateSearchPlacement(){
+ const detailMode=currentView==="home"&&openedSearchFiche&&!editorId;
+ document.body.classList.toggle("fiche-open",detailMode);
+ const card=$("mainSearchCard");
+ const target=detailMode?$("headerSearchSlot"):$("homeSearchSlot");
+ if(card.parentElement!==target)target.appendChild(card);
+}
 function renderResults(){
  const query=$('search').value.trim();
  const found=query?getSearchMatches():[];
@@ -401,6 +423,7 @@ function renderResults(){
  });
  // La fiche reste visible pendant une nouvelle recherche ; seule une sélection la remplace.
  $('searchLayout').classList.toggle('hidden',!openedSearchFiche&&!editorId);
+ updateSearchPlacement();
 }
 
 function renderDetail(targetSectionId=null,targetPresentationIndex=null){
@@ -420,7 +443,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
  const formBadge=!isGroup(m)&&presentationForms.length
    ? `<span class="tag tag-form">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
- $("detail").innerHTML=`<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
+ $("detail").innerHTML=`<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
  ${prioritySection?(isGroup(m)?`<div class="group-glance">${renderSection(prioritySection,targetSectionId)}</div>`:renderSection(prioritySection,targetSectionId)):""}
  ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
  ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
@@ -428,6 +451,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
  ${hasSourcesSection?"":`<div class="section sources"><h3>📚 Sources et traçabilité</h3><p><strong>Source principale :</strong> ${m.source?`<a href="${esc(m.source)}" target="_blank" rel="noopener">${esc(m.source)}</a>`:"À renseigner"}</p><p><strong>Mise à jour :</strong> ${esc(m.updated||"Non renseignée")}</p><p><strong>Statut :</strong> ${esc(m.status||"À vérifier")}</p></div>`}`;
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
+ $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreClass").value=btn.dataset.ficheCategory;renderExplorer()});
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
  $("copyFicheLink").onclick=async()=>{
   try{await navigator.clipboard.writeText(ficheUrl(m.id));toast("Lien de la fiche copié !")}
@@ -876,7 +900,6 @@ async function saveCommonSources(){
  pendingSources=null;renderSources();toast("Sources communes enregistrées !");
 }
 
-$("homeNav").onclick=()=>{history.pushState({},"",location.pathname);$("search").value="";openedSearchFiche=false;editorId=null;$("searchSuggestions").classList.add("hidden");showView("home");renderResults()};
 $("exploreNav").onclick=()=>{history.pushState({},"",location.pathname+"#explorer");showView("explore")};
 $("sourcesNav").onclick=()=>{history.pushState({},"",location.pathname+"#sources");showView("sources")};
 $("homeExploreShortcut").onclick=()=>$('exploreNav').click();
