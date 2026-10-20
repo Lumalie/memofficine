@@ -72,6 +72,12 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 @media(max-width:760px){.home-hero{padding:48px 8px 20px}.explore-controls{display:block}.explore-controls label{display:block;margin-bottom:12px}}
 .group-card{border-left:4px solid #7ca88b}.group-members{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.group-members button,.group-parent-link{margin:4px 5px 4px 0;background:#e5f0e8;border-color:#c5dccb}.group-label{font-size:.76rem;color:#245d4b;font-weight:750;letter-spacing:.04em;text-transform:uppercase}.group-detail{border:1px solid #c5dccb;border-radius:12px;background:#f2f8f3;padding:13px;margin:12px 0}.group-detail button{background:white}.group-indent{padding-left:12px;border-left:2px solid #dce6de;margin-top:10px}
 </style>
+<style>
+.group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
+.group-glance h3{color:#245d4b;margin-top:0;font-size:1.25rem}
+.group-glance .section{margin:0;border:0;background:transparent;padding:0;box-shadow:none}
+.group-glance .section h3{display:none}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -124,6 +130,16 @@ const DEFAULT_SECTIONS = [
  {id:"manipulation",title:"💉 Manipulation / reconstitution",type:"text",content:"À compléter si pertinent : reconstitution, manipulation, modalités d’administration ou d’injection.",enabled:true},
  {id:"conservation",title:"❄️ Modalités de conservation",type:"text",content:"À vérifier : température, durée après ouverture/reconstitution et durée hors réfrigérateur si documentées.",enabled:true},
  {id:"sources",title:"📚 Sources et mise à jour",type:"sources",content:"Sources : à ajouter\nMise à jour le : à renseigner\nStatut : à vérifier",enabled:true}
+];
+const GROUP_SECTIONS = [
+ {id:"coup-oeil",title:"👀 En un coup d’œil",type:"text",content:"• Repère essentiel à documenter\n• Point de vigilance commun à vérifier\n• Question clé au comptoir",enabled:true},
+ {id:"presentation-groupe",title:"📍 Présentation du groupe",type:"text",content:"Définition, périmètre et substances concernées, à documenter avec des sources fiables.",enabled:true},
+ {id:"mecanisme",title:"⚙️ Mécanisme d’action",type:"text",content:"Expliquer simplement le mécanisme commun, sans généraliser aux exceptions.",enabled:true},
+ {id:"indications",title:"🎯 Indications thérapeutiques communes",type:"text",content:"Préciser les indications réellement partagées par les médicaments du groupe.",enabled:true,indicationTags:[]},
+ {id:"vigilance",title:"⚠️ Points de vigilance communs",type:"text",content:"Vérifier les précautions communes et signaler les exceptions éventuelles.",enabled:true},
+ {id:"interactions",title:"🔄 Interactions importantes",type:"text",content:"Documenter les interactions communes et renvoyer aux fiches médicaments pour les spécificités.",enabled:true},
+ {id:"questions-comptoir",title:"💬 Questions au comptoir",type:"text",content:"• Quel médicament et quelle présentation ?\n• Pour quelle indication ?\n• Quels autres traitements et facteurs de risque ?",enabled:true},
+ {id:"sources",title:"📚 Sources et mise à jour",type:"text",content:"Sources officielles : à renseigner\nDate de vérification : à renseigner",enabled:true}
 ];
 const starter = [
  {id:"demo-1",name:"Amoxicilline",dci:"Amoxicilline",category:"Infectiologie",form:"Gélule / poudre pour suspension (selon spécialité)",aliases:"antibiotique pénicilline",status:"À vérifier",updated:"",source:"",sections:clone(DEFAULT_SECTIONS)},
@@ -181,14 +197,17 @@ async function initCloud(){
  supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();},0);});
 }
 let currentView="home";
+const viewScrollPositions={home:0,explore:0};
 function showView(view){
+ const changing=currentView!==view;
+ if(changing)viewScrollPositions[currentView]=window.scrollY;
  currentView=view;
  $("homeView").classList.toggle("hidden",view!=="home");
  $("exploreView").classList.toggle("hidden",view!=="explore");
  $("homeNav").setAttribute("aria-current",view==="home"?"page":"false");
  $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
  if(view==="explore")renderExplorer();
- window.scrollTo({top:0,behavior:"instant"});
+ if(changing)requestAnimationFrame(()=>window.scrollTo({top:viewScrollPositions[view]||0,behavior:"instant"}));
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
 function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
@@ -220,6 +239,7 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  const m=meds.find(x=>x.id===id);if(!m)return;
  $("search").value="";activeCategory="Toutes";selectedId=id;
  showView("home");renderFilters();renderResults();
+ requestAnimationFrame(()=>window.scrollTo({top:0,behavior:"instant"}));
  $("searchLayout").classList.remove("hidden");
  renderDetail(sectionId,presentationIndex);
  const url=new URL(location.href);url.searchParams.set("fiche",id);
@@ -323,14 +343,17 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const children=isGroup(m)?groupChildren(m):[];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
  const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
- const formBadge=presentationForms.length
+ const formBadge=!isGroup(m)&&presentationForms.length
    ? `<span class="tag tag-form">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
  $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div>${isGroup(m)?"Fiche groupe · repères communs":m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
  <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
  ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
  ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
- ${renderPresentations(m)}
- ${[
+ ${isGroup(m)?"":renderPresentations(m)}
+ ${isGroup(m)?[
+  ...sections.filter(s=>s.id==="coup-oeil"),
+  ...sections.filter(s=>s.id!=="coup-oeil")
+ ].map(s=>s.id==="coup-oeil"?`<div class="group-glance" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${renderSection(s,targetSectionId)}</div>`:renderSection(s,targetSectionId)).join(""):[
   ...sections.filter(s => (s.title || "").toLowerCase().includes("à dire au comptoir")),
   ...sections.filter(s => !(s.title || "").toLowerCase().includes("à dire au comptoir"))
 ].map(s=>renderSection(s,targetSectionId)).join("")}
@@ -483,7 +506,7 @@ function addGroup(){
  if(!admin)return;
  addMedication();
  const m=meds.find(x=>x.id===selectedId);if(!m)return;
- m.name="Nouveau groupe";m.entry_type="dci";setHierarchy(m,"groupe","");
+ m.name="Nouveau groupe";m.entry_type="dci";m.sections=clone(GROUP_SECTIONS);setHierarchy(m,"groupe","");
  renderEditor(m.id);saveLocalDraft();
 }
 function renderEditor(id){
@@ -508,18 +531,21 @@ function renderEditor(id){
     <div id="presentationEditors">${(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("")}</div>
     <div class="admin-actions"><button type="button" id="addPresentation">+ Ajouter une présentation</button></div>
   </div>
+ <div id="group-template-tools" class="admin-actions"><button type="button" id="applyGroupTemplate">🌿 Appliquer le modèle de fiche groupe</button><span class="muted">Les anciennes rubriques seront conservées, mais masquées.</span></div>
  <h3>Rubriques de cette fiche</h3><p class="muted">Désactive une rubrique pour la masquer. Utilise les flèches pour changer l’ordre, ou ajoute une rubrique personnalisée.</p>
  <div id="sectionEditors">${(m.sections||[]).map((s,i)=>sectionEditor(s,i)).join("")}</div>
  <div class="admin-actions"><button id="addTextSection">+ Rubrique texte</button><button id="addTableSection">+ Rubrique tableau</button></div>
  <div class="admin-actions"><button class="primary" id="saveMed">Enregistrer</button><button id="duplicateMed">Dupliquer</button><button class="danger" id="deleteMed">Supprimer la fiche</button></div>`;
 const toggleType = () => {
-  const isDci = $("f-entry-type").value === "dci";
+  const isGroupType = $("f-entry-type").value === "groupe";
+  const isDci = $("f-entry-type").value === "dci" || isGroupType;
+  $("presentation-editor-wrap").classList.toggle("hidden",isGroupType);
+  $("group-template-tools").classList.toggle("hidden",!isGroupType);
+  $("parent-group-wrap").classList.toggle("hidden",isGroupType);
 
   const nameLabel = $("f-name-label");
   if (nameLabel) {
-    nameLabel.textContent = isDci
-      ? "Nom de la DCI"
-      : "Nom de la spécialité";
+    nameLabel.textContent = isGroupType ? "Nom du groupe" : isDci ? "Nom de la DCI" : "Nom de la spécialité";
   }
 
   ["f-dci-wrap"]
@@ -534,6 +560,17 @@ const toggleType = () => {
     });
 };
  $("f-entry-type").onchange=toggleType;toggleType();
+ $("applyGroupTemplate").onclick=()=>{
+  if(!confirm("Appliquer le modèle groupe ? Les rubriques actuelles seront conservées mais masquées, sans effacer leur contenu."))return;
+  captureEditorFields(m);
+  const archived=m.sections.filter(sec=>!GROUP_SECTIONS.some(t=>t.id===sec.id)).map(sec=>({...sec,enabled:false}));
+  const existing=m.sections.filter(sec=>GROUP_SECTIONS.some(t=>t.id===sec.id));
+  const replacement=clone(GROUP_SECTIONS).map(template=>{
+   const old=existing.find(sec=>sec.id===template.id);
+   return old?{...template,content:old.content,indicationTags:old.indicationTags||template.indicationTags}:template;
+  });
+  m.sections=[...replacement,...archived];renderEditor(m.id);saveLocalDraft();toast("Modèle groupe appliqué : vérifie les rubriques avant d’enregistrer.");
+ };
  $("backBtn").onclick=()=>renderDetail();
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs()};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:true,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
