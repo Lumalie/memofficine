@@ -395,7 +395,7 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  $("searchSuggestions").classList.add("hidden");
  renderDetail(sectionId,presentationIndex);
  if(!sectionId&&presentationIndex===null){viewScrollPositions.home=0;requestAnimationFrame(()=>requestAnimationFrame(()=>$("searchLayout").scrollIntoView({block:"start"})));}
- const url=new URL(location.href);url.searchParams.set("fiche",id);
+ const url=new URL(location.href);url.hash="";url.searchParams.set("fiche",id);
  if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
  history.pushState({fiche:id},"",url);
@@ -439,13 +439,47 @@ function selectFiche(id,addHistory=true){
  if(addHistory){const url=new URL(window.location.href);url.searchParams.set("fiche",id);history.pushState({fiche:id},"",url)}
  renderResults();
 }
-window.addEventListener("popstate",()=>{
- const id=new URLSearchParams(window.location.search).get("fiche");
- selectedId=meds.find(m=>m.id===id&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
- activeCategory="Toutes";$("search").value="";openedSearchFiche=!!id;renderFilters();renderResults();
- if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");else showView("home");
- if(id)renderDetail(new URLSearchParams(location.search).get("rubrique"),new URLSearchParams(location.search).has("presentation")?Number(new URLSearchParams(location.search).get("presentation")):null);
-});
+// L'historique suit la page réellement consultée, et pas seulement la fiche sélectionnée.
+function navigateToView(view){
+ const url=new URL(location.href);
+ url.searchParams.delete("fiche");
+ url.searchParams.delete("presentation");
+ url.searchParams.delete("rubrique");
+ url.hash=view==="explore"?"explorer":view==="sources"?"sources":"";
+ history.pushState({view},"",url);
+ editorId=null;
+ openedSearchFiche=false;
+ $("search").value="";
+ $("searchSuggestions").classList.add("hidden");
+ $("editor").classList.add("hidden");
+ $("detail").classList.remove("hidden");
+ renderResults();
+ showView(view);
+ window.scrollTo({top:0,behavior:"instant"});
+}
+function restoreHistoryPage(){
+ const params=new URLSearchParams(location.search);
+ const id=params.get("fiche");
+ const med=id?meds.find(m=>m.id===id&&!isSourcesRecord(m)&&(admin||m.published)):null;
+ editorId=null;
+ $("editor").classList.add("hidden");
+ $("detail").classList.remove("hidden");
+ $("search").value="";
+ $("searchSuggestions").classList.add("hidden");
+ activeCategory="Toutes";
+ selectedId=med?.id||null;
+ openedSearchFiche=!!med;
+ renderFilters();
+ renderResults();
+ if(med){
+  showView("home");
+  renderDetail(params.get("rubrique"),params.has("presentation")?Number(params.get("presentation")):null);
+ }else{
+  showView(location.hash==="#explorer"?"explore":location.hash==="#sources"?"sources":"home");
+ }
+ window.scrollTo({top:0,behavior:"instant"});
+}
+window.addEventListener("popstate",restoreHistoryPage);
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
 function categories(){return ["Toutes",...new Set(meds.filter(m=>!isSourcesRecord(m)).map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
@@ -1071,7 +1105,7 @@ document.addEventListener("keydown",event=>{
  if(!event.repeat)saveEditor(editorId);
 });
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();showView("explore");window.scrollTo({top:0,behavior:"instant"});toast("Fiche supprimée de la base en ligne")}
+async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();navigateToView("explore");toast("Fiche supprimée de la base en ligne")}
 
 // Les références communes sont stockées dans un enregistrement dédié de la table existante.
 // Il est exclu des recherches et du catalogue médicaments.
@@ -1114,8 +1148,13 @@ async function saveCommonSources(){
  pendingSources=null;renderSources();toast("Sources communes enregistrées !");
 }
 
-$("exploreNav").onclick=()=>{history.pushState({},"",location.pathname+"#explorer");showView("explore")};
-$("sourcesNav").onclick=()=>{history.pushState({},"",location.pathname+"#sources");showView("sources")};
+$("exploreNav").onclick=()=>navigateToView("explore");
+$("sourcesNav").onclick=()=>navigateToView("sources");
+document.querySelector("a.brand").addEventListener("click",event=>{
+ if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+ event.preventDefault();
+ navigateToView("home");
+});
 $("homeExploreShortcut").onclick=()=>$('exploreNav').click();
 $("homeSourcesShortcut").onclick=()=>$('sourcesNav').click();
 document.querySelectorAll('[data-example-search]').forEach(btn=>btn.addEventListener('click',()=>{
