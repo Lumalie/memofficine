@@ -151,6 +151,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 
 .detail-dci{margin-top:10px;font-size:.92rem;line-height:1.6;color:#64736c}.detail-dci-label{font-weight:650}.detail-dci-item{color:inherit}.detail-dci-separator{color:#9aa8a0}
 .ingredient-editor-row{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#f9fbf8}.ingredient-editor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.ingredient-editor-head button{width:auto}.ingredient-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ingredient-editor-grid label{font-weight:600}.ingredient-editor-grid input{margin-top:5px}.ingredient-title-choice{display:flex!important;gap:9px;align-items:center;margin:12px 0!important}.ingredient-title-choice input{width:auto}.ingredient-salt{font-size:.82rem;color:var(--muted);margin-top:5px}@media(max-width:600px){.ingredient-editor-grid{grid-template-columns:1fr}}
+.tag-form[data-fiche-form]{cursor:pointer;border:0;font:inherit}.badge-form[data-filter-form]{cursor:pointer}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -197,7 +198,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <div id="searchLayout" class="layout hidden">
     <section class="panel" aria-live="polite"><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
   </div>
-  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémofficine.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
+  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><label>Forme pharmaceutique<select id="exploreForm"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><section id="sourcesView" class="hidden"><div class="explore-heading"><h2>Sources documentaires</h2><p>Références communes utilisées pour construire et vérifier les fiches de Mémofficine.</p></div><div id="sourcesList" class="sources-list"></div><div id="sourcesAdmin" class="panel hidden" style="padding:18px;margin-top:18px"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 </main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
@@ -386,27 +387,31 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
  history.pushState({fiche:id},"",url);
 }
+function medicationForms(m){return [...new Set((m.presentations||[]).map(p=>String(p.form||" ").trim()).filter(Boolean))]};
 function renderExplorer(){
  const entries=publicMeds();
  const classes=[...new Set(entries.map(m=>m.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
  const indications=[...new Set(entries.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr"));
- const classSel=$("exploreClass"),indSel=$("exploreIndication");
- const oldClass=classSel.value,oldInd=indSel.value;
+ const forms=[...new Set(entries.flatMap(medicationForms))].sort((a,b)=>a.localeCompare(b,"fr",{sensitivity:"base"}));
+ const classSel=$("exploreClass"),indSel=$("exploreIndication"),formSel=$("exploreForm");
+ const oldClass=classSel.value,oldInd=indSel.value,oldForm=formSel.value;
  classSel.innerHTML='<option value="">Toutes les classes</option>'+classes.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  indSel.innerHTML='<option value="">Toutes les indications</option>'+indications.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
- classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";
- const filtered=entries.filter(m=>(!classSel.value||m.category===classSel.value)&&(!indSel.value||indicationTags(m).includes(indSel.value)));
+ formSel.innerHTML='<option value="">Toutes les formes</option>'+forms.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+ classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";formSel.value=forms.includes(oldForm)?oldForm:"";
+ const filtered=entries.filter(m=>(!classSel.value||m.category===classSel.value)&&(!indSel.value||indicationTags(m).includes(indSel.value))&&(!formSel.value||medicationForms(m).includes(formSel.value)));
  const groups=filtered.filter(isGroup);
  const standalone=filtered.filter(m=>!isGroup(m)&&!groups.some(g=>g.id===parentGroupId(m)));
  const card=m=>{
   const items=specialtyItems(m),forms=[...new Set(items.map(x=>x.p.form).filter(Boolean))];
   const children=isGroup(m)?groupChildren(m,entries):[];
-  return `<article class="explore-card ${isGroup(m)?"group-card":""}"><div class="group-label">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3><div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<span class="badge-button badge-form">${esc(t)}</span>`).join("")}</div>${isGroup(m)?`<div class="group-members"><div class="muted">${children.length} fiche(s) médicament associée(s)</div>${children.length?children.map(c=>`<button type="button" data-open-med="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join(""):'<p class="muted">Aucune fiche rattachée pour le moment.</p>'}</div>`:""}${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
+  return `<article class="explore-card ${isGroup(m)?"group-card":""}"><div class="group-label">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3><div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}" title="Explorer cette forme">${esc(t)}</button>`).join("")}</div>${isGroup(m)?`<div class="group-members"><div class="muted">${children.length} fiche(s) médicament associée(s)</div>${children.length?children.map(c=>`<button type="button" data-open-med="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join(""):'<p class="muted">Aucune fiche rattachée pour le moment.</p>'}</div>`:""}${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
  };
  $("exploreCards").innerHTML=filtered.length?[...groups,...standalone].map(card).join(""):'<div class="empty">Aucune fiche pour ces filtres.</div>';
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
+ $("exploreCards").querySelectorAll("[data-filter-form]").forEach(b=>b.onclick=()=>{formSel.value=b.dataset.filterForm;renderExplorer()});
 }
 function ingredientInfo(m){return (m.sections||[]).find(s=>s.ingredientDosages)?.ingredientDosages||null}
 function ingredientTitleDose(m){const info=ingredientInfo(m);if(!info||!info.showInTitle)return "";return (info.entries||[]).map(e=>String(e.dose||"").trim()).filter(Boolean).join("/")}
@@ -546,7 +551,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
-   ? `<span class="tag tag-form">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
+   ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
  $("detail").innerHTML=`<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
  ${prioritySection?(isGroup(m)?`<div class="group-glance">${renderSection(prioritySection,targetSectionId)}</div>`:renderSection(prioritySection,targetSectionId)):""}
  ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
@@ -557,6 +562,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreClass").value=btn.dataset.ficheCategory;renderExplorer()});
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
+ $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>{showView("explore");renderExplorer();$("exploreForm").value=btn.dataset.ficheForm;renderExplorer()});
  $("copyFicheLink").onclick=async()=>{
   try{await navigator.clipboard.writeText(ficheUrl(m.id));toast("Lien de la fiche copié !")}
   catch(e){window.prompt("Copie ce lien :",ficheUrl(m.id))}
@@ -568,6 +574,41 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
    requestAnimationFrame(()=>{const target=document.getElementById("section-"+CSS.escape(targetSectionId));if(target){target.scrollIntoView({behavior:"smooth",block:"start"});target.classList.add("direct-target")}});
  }
 }
+// Copie enrichie d'un passage sélectionné dans une fiche, sans bouton supplémentaire.
+// Les styles utiles sont intégrés au HTML du presse-papiers pour les éditeurs compatibles.
+document.addEventListener("copy",event=>{
+ const selection=window.getSelection();
+ if(!selection||selection.isCollapsed||!selection.rangeCount)return;
+ const range=selection.getRangeAt(0),detail=$("detail");
+ if(!detail||detail.classList.contains("hidden")||!detail.contains(range.commonAncestorContainer))return;
+ if(!event.clipboardData)return; // conserver la copie native si l'API est indisponible
+ const fragment=range.cloneContents();
+ const wrapper=document.createElement("div");wrapper.appendChild(fragment);
+ const originalRoot=range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
+ const originalElements=[];
+ if(originalRoot&&originalRoot.nodeType===1){
+  if(range.intersectsNode(originalRoot))originalElements.push(originalRoot);
+  const walker=document.createTreeWalker(originalRoot,NodeFilter.SHOW_ELEMENT);
+  while(walker.nextNode())if(range.intersectsNode(walker.currentNode))originalElements.push(walker.currentNode);
+ }
+ const clonedElements=[...wrapper.querySelectorAll("*")];
+ let cursor=0;
+ for(const clone of clonedElements){
+  let match=-1;
+  for(let i=cursor;i<originalElements.length;i++)if(originalElements[i].tagName===clone.tagName){match=i;break}
+  if(match<0)continue;
+  const computed=getComputedStyle(originalElements[match]);
+  for(const property of ["color","background-color","font-weight","font-style","text-decoration","text-align","font-size","border-collapse","border","padding"]){
+   const value=computed.getPropertyValue(property);
+   if(value)clone.style.setProperty(property,value);
+  }
+  cursor=match+1;
+ }
+ // Conserver les tableaux et leur structure HTML ; texte brut en solution de repli.
+ event.clipboardData.setData("text/html",wrapper.innerHTML);
+ event.clipboardData.setData("text/plain",selection.toString());
+ event.preventDefault();
+});
 function formatDateFR(raw){const m=String(raw||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(raw||"")}
 function safeHttp(url){try{const u=new URL(url);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return ""}}
 function presentationInfo(p){
@@ -1046,8 +1087,8 @@ document.querySelectorAll('[data-example-search]').forEach(btn=>btn.addEventList
   renderResults();
   $("search").focus();
 }));
-$("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;
-$("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";renderExplorer()};
+$("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;$("exploreForm").onchange=renderExplorer;
+$("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";$("exploreForm").value="";renderExplorer()};
 $("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
