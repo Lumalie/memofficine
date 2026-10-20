@@ -152,6 +152,19 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .detail-dci{margin-top:10px;font-size:.92rem;line-height:1.6;color:#64736c}.detail-dci-label{font-weight:650}.detail-dci-item{color:inherit}.detail-dci-separator{color:#9aa8a0}
 .ingredient-editor-row{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#f9fbf8}.ingredient-editor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.ingredient-editor-head button{width:auto}.ingredient-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ingredient-editor-grid label{font-weight:600}.ingredient-editor-grid input{margin-top:5px}.ingredient-title-choice{display:flex!important;gap:9px;align-items:center;margin:12px 0!important}.ingredient-title-choice input{width:auto}.ingredient-salt{font-size:.82rem;color:var(--muted);margin-top:5px}@media(max-width:600px){.ingredient-editor-grid{grid-template-columns:1fr}}
 .tag-form[data-fiche-form]{cursor:pointer;border:0;font:inherit}.badge-form[data-filter-form]{cursor:pointer}
+
+/* V5.32 : typographie uniforme des badges de fiche */
+#detail .detailtop .tags .tag{
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;min-height:26px;padding:4px 9px;
+  border:0;border-radius:7px;
+  font-family:inherit;font-size:.78rem;font-weight:600;
+  line-height:1.3;letter-spacing:normal;text-transform:none;
+  text-align:center;vertical-align:middle;
+}
+#detail .detailtop .tags button.tag{appearance:none;cursor:pointer}
+#detail .detailtop .tags button.tag:hover{filter:brightness(.96)}
+#detail .detailtop .tags button.tag:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1027,12 +1040,36 @@ function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)re
  if(action==="remove"){if(!confirm("Retirer cette rubrique de la fiche ?"))return;ss.splice(index,1)}
  renderEditor(id);saveLocalDraft()}
 function addSection(id,type){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);m.sections.push({id:"custom-"+Date.now(),title:"Nouvelle rubrique",type,content:type==="table"?"Colonne 1 | Colonne 2\nÀ renseigner | À renseigner":"À compléter à partir d’une source vérifiée.",enabled:true,imageData:"",imageUrl:"",imageCaption:""});renderEditor(id);saveLocalDraft()}
+let editorSaveInProgress=false;
 async function saveEditor(id){
+ if(editorSaveInProgress)return;
  const m=meds.find(x=>x.id===id);if(!m)return;
- captureEditorFields(m);
- try{await uploadPresentationPhotos(m);await syncMedication(m);clearLocalDraft();renderDetail();toast("Fiche enregistrée et photos synchronisées")}catch(e){console.error(e);toast("Échec de l’enregistrement : "+(e.message||"vérifie Supabase Storage"))}
-
+ editorSaveInProgress=true;
+ const button=$("saveMed");
+ if(button){button.disabled=true;button.textContent="Enregistrement…"}
+ try{
+  captureEditorFields(m);
+  await uploadPresentationPhotos(m);
+  await syncMedication(m);
+  clearLocalDraft();
+  renderDetail();
+  toast("Fiche enregistrée et photos synchronisées");
+ }catch(e){
+  console.error(e);
+  toast("Échec de l’enregistrement : "+(e.message||"vérifie Supabase Storage"));
+ }finally{
+  editorSaveInProgress=false;
+  const currentButton=$("saveMed");
+  if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
+ }
 }
+// Ctrl+S / Cmd+S : enregistre uniquement lorsque l'éditeur d'une fiche est ouvert.
+document.addEventListener("keydown",event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="s")return;
+ if(!editorId||$("editor").classList.contains("hidden"))return;
+ event.preventDefault();
+ if(!event.repeat)saveEditor(editorId);
+});
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
 async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>!isSourcesRecord(m)&&parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=null;openedSearchFiche=false;$("editor").classList.add("hidden");$("detail").classList.remove("hidden");renderFilters();renderResults();showView("explore");window.scrollTo({top:0,behavior:"instant"});toast("Fiche supprimée de la base en ligne")}
 
