@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mémofficine — V3</title>
+<title>Mémofficine — V5</title>
 <style>
 :root{--ink:#23352e;--muted:#687970;--bg:#f4f7f3;--card:#fff;--line:#dce6de;--green:#245d4b;--green2:#e5f0e8;--green3:#c5dccb;--gold:#f6edcf;--goldline:#e8d68d;--red:#a44c43}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -70,6 +70,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 .tag.tag-indication{background:#e5edf9;color:#365f8c;border:0;cursor:pointer}.tag.tag-indication:hover{background:#d5e4fa}
 .home-hero{text-align:center;padding:clamp(60px,12vh,130px) 15px 28px}.home-hero h2{font-size:clamp(1.8rem,4vw,2.8rem);margin:0}.home-hero p,.explore-heading p{color:var(--muted)}#homeView .searchcard{max-width:790px;margin:auto;padding:23px}#homeView #search{font-size:1.13rem;padding:15px 17px}#homeView .filters{display:none}#searchLayout{margin-top:24px}.explore-heading{text-align:center;padding:32px 0 14px}.explore-heading h2{font-size:1.9rem;margin:0}.explore-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:18px 0}.explore-controls label{flex:1;min-width:200px;font-weight:700}.explore-controls select{display:block;margin-top:6px}.explore-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:15px}.explore-card{background:white;border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 4px 14px #193f3408}.explore-card h3{margin:0 0 5px}.explore-card p{margin:6px 0;color:var(--muted);font-size:.87rem}.badge-button{border:0;border-radius:7px;padding:5px 9px;font-size:.79rem}.badge-class{background:#e5f0e8;color:#245d4b}.badge-indication{background:#e5edf9;color:#365f8c}.badge-form{background:#e9e5f5;color:#62528c}.explore-specialties{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.explore-specialties button{margin:3px 4px 3px 0;padding:5px 8px;font-size:.82rem}.presentation-target{outline:2px solid #8eb99a;scroll-margin-top:20px}#homeNav,#exploreNav{font-weight:700}.detail-summary{background:#f7faf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:16px}.detail-summary a{display:inline-block;margin:5px 12px 5px 0;color:var(--green);font-size:.87rem;text-decoration:none}.detail-summary a:hover{text-decoration:underline}
 @media(max-width:760px){.home-hero{padding:48px 8px 20px}.explore-controls{display:block}.explore-controls label{display:block;margin-bottom:12px}}
+.group-card{border-left:4px solid #7ca88b}.group-members{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.group-members button,.group-parent-link{margin:4px 5px 4px 0;background:#e5f0e8;border-color:#c5dccb}.group-label{font-size:.76rem;color:#245d4b;font-weight:750;letter-spacing:.04em;text-transform:uppercase}.group-detail{border:1px solid #c5dccb;border-radius:12px;background:#f2f8f3;padding:13px;margin:12px 0}.group-detail button{background:white}.group-indent{padding-left:12px;border-left:2px solid #dce6de;margin-top:10px}
 </style>
 </head>
 <body>
@@ -88,7 +89,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 </div></header>
 <main>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
-  <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémofficine</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+  <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémofficine</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   <section id="homeView"><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><section class="searchcard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
@@ -189,6 +190,24 @@ function showView(view){
  if(view==="explore")renderExplorer();
  window.scrollTo({top:0,behavior:"instant"});
 }
+function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
+function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
+function parentGroupId(m){return hierarchyMeta(m).memofficineParentGroup||""}
+function groupChildren(group,visible=publicMeds()){return visible.filter(m=>!isGroup(m)&&parentGroupId(m)===group.id)}
+function setHierarchy(m,kind,parent){
+ if(!m.sections?.length)m.sections=clone(DEFAULT_SECTIONS);
+ const target=(m.sections||[]).find(s=>s.id==="indications")||m.sections[0];
+ for(const sec of m.sections){delete sec.memofficineKind;delete sec.memofficineParentGroup}
+ if(kind==="groupe"){
+  target.memofficineKind="groupe";
+  delete target.memofficineParentGroup;
+ }else{
+  delete target.memofficineKind;
+  if(parent)target.memofficineParentGroup=parent;
+  else delete target.memofficineParentGroup;
+ }
+}
+function groupOptions(m){return meds.filter(g=>isGroup(g)&&g.id!==m.id&&g.category===m.category).sort((a,b)=>a.name.localeCompare(b.name,"fr"))}
 function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
  return Array.isArray(raw)?raw.filter(Boolean):[];
@@ -218,11 +237,14 @@ function renderExplorer(){
  indSel.innerHTML='<option value="">Toutes les indications</option>'+indications.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
  classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";
  const filtered=entries.filter(m=>(!classSel.value||m.category===classSel.value)&&(!indSel.value||indicationTags(m).includes(indSel.value)));
- $("exploreCards").innerHTML=filtered.length?filtered.map(m=>{
-  const items=specialtyItems(m);
-  const forms=[...new Set(items.map(x=>x.p.form).filter(Boolean))];
-  return `<article class="explore-card"><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3><p>${m.entry_type==="dci"?"Fiche commune / DCI":"Fiche médicament"}</p><div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<span class="badge-button badge-form">${esc(t)}</span>`).join("")}</div>${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
- }).join(""):'<div class="empty">Aucune fiche pour ces filtres. Les indications peuvent être renseignées dans l’éditeur des fiches.</div>';
+ const groups=filtered.filter(isGroup);
+ const standalone=filtered.filter(m=>!isGroup(m)&&!groups.some(g=>g.id===parentGroupId(m)));
+ const card=m=>{
+  const items=specialtyItems(m),forms=[...new Set(items.map(x=>x.p.form).filter(Boolean))];
+  const children=isGroup(m)?groupChildren(m,entries):[];
+  return `<article class="explore-card ${isGroup(m)?"group-card":""}"><div class="group-label">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3><div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<span class="badge-button badge-form">${esc(t)}</span>`).join("")}</div>${isGroup(m)?`<div class="group-members"><div class="muted">${children.length} fiche(s) médicament associée(s)</div>${children.length?children.map(c=>`<button type="button" data-open-med="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join(""):'<p class="muted">Aucune fiche rattachée pour le moment.</p>'}</div>`:""}${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
+ };
+ $("exploreCards").innerHTML=filtered.length?[...groups,...standalone].map(card).join(""):'<div class="empty">Aucune fiche pour ces filtres.</div>';
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
@@ -278,7 +300,7 @@ function renderResults(){
  $("count").textContent=found.length+" résultat"+(found.length===1?"":"s");
  $("results").innerHTML=found.length?found.map(item=>{
    const m=item.med, sec=item.section;
-   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}" data-presentation="${item.presentation===null?"":item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
+   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}" data-presentation="${item.presentation===null?"":item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
  }).join(""):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $("results").querySelectorAll(".result").forEach(el=>el.onclick=()=>{
    openMedication(el.dataset.id,el.dataset.presentation===""?null:Number(el.dataset.presentation),el.dataset.section||null);
@@ -297,19 +319,23 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  if(!m){$("detailHeading").textContent="Fiche médicament";$("detail").innerHTML='<div class="empty">Aucune fiche ne correspond à cette recherche.</div>';return}
  $("detailHeading").textContent="Fiche médicament";
  const sections=(m.sections||[]).filter(s=>s.enabled!==false);
+ const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
+ const children=isGroup(m)?groupChildren(m):[];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
  const presentationForms=[...new Set((m.presentations||[]).map(p=>(p.form||"").trim()).filter(Boolean))];
  const formBadge=presentationForms.length
    ? `<span class="tag tag-form">${esc(presentationForms.length===1?presentationForms[0]:"Plusieurs formes")}</span>`:"";
- $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div>${m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
+ $("detail").innerHTML=`<div class="detailtop"><div><h2>${esc(displayMedName(m))}</h2><div>${isGroup(m)?"Fiche groupe · repères communs":m.entry_type==="dci"?"Fiche DCI / substance active":esc(m.dci||"Substance(s) active(s) non renseignée")}</div><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}<span class="tag status">${esc(m.status||"À vérifier")}</span></div></div><div class="header-actions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button>${admin?'<button class="primary" id="editBtn">Modifier la fiche</button>':''}</div></div>
  <div class="callout"><strong>À garder en tête :</strong> confirmer la spécialité exacte, le dosage, la forme, l’indication et les sources officielles avant d’utiliser une information pour une décision de délivrance.</div>
- ${m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
+ ${isGroup(m)?`<div class="group-detail"><strong>Fiche groupe :</strong> repères généraux uniquement. Vérifier les consignes propres à chaque médicament et présentation.<div class="group-members"><strong>Fiches médicaments associées (${children.length})</strong><div>${children.map(c=>`<button type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} ↗</button>`).join("")||'<span class="muted">Aucune fiche associée.</span>'}</div></div></div>`:m.entry_type==="dci"?`<div class="callout"><strong>Synthèse DCI :</strong> vérifier les informations spécifiques dans chaque fiche de spécialité.</div>`:""}
+ ${parent?`<div class="group-detail">Groupe parent : <button type="button" class="group-parent-link" data-group-open="${esc(parent.id)}">${esc(parent.name)} ↗</button><div class="hint">Les conseils du groupe ne remplacent pas ceux de cette fiche.</div></div>`:""}
  ${renderPresentations(m)}
  ${[
   ...sections.filter(s => (s.title || "").toLowerCase().includes("à dire au comptoir")),
   ...sections.filter(s => !(s.title || "").toLowerCase().includes("à dire au comptoir"))
 ].map(s=>renderSection(s,targetSectionId)).join("")}
  ${hasSourcesSection?"":`<div class="section sources"><h3>📚 Sources et traçabilité</h3><p><strong>Source principale :</strong> ${m.source?`<a href="${esc(m.source)}" target="_blank" rel="noopener">${esc(m.source)}</a>`:"À renseigner"}</p><p><strong>Mise à jour :</strong> ${esc(m.updated||"Non renseignée")}</p><p><strong>Statut :</strong> ${esc(m.status||"À vérifier")}</p></div>`}`;
+ $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
  $("copyFicheLink").onclick=async()=>{
   try{await navigator.clipboard.writeText(ficheUrl(m.id));toast("Lien de la fiche copié !")}
@@ -317,6 +343,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  };
  if(admin)$("editBtn").onclick=()=>renderEditor(m.id);
  $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const index=Number(sel.value);const target=$("presentation-info");if(target)target.innerHTML=presentationInfo((m.presentations||[])[index])});
+ if(targetPresentationIndex!==null){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
    requestAnimationFrame(()=>{const target=document.getElementById("section-"+CSS.escape(targetSectionId));if(target){target.scrollIntoView({behavior:"smooth",block:"start"});target.classList.add("direct-target")}});
  }
@@ -452,13 +479,21 @@ function addMedication(){
  const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dosage:"",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
  meds.unshift(m);selectedId=m.id;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();
 }
+function addGroup(){
+ if(!admin)return;
+ addMedication();
+ const m=meds.find(x=>x.id===selectedId);if(!m)return;
+ m.name="Nouveau groupe";m.entry_type="dci";setHierarchy(m,"groupe","");
+ renderEditor(m.id);saveLocalDraft();
+}
 function renderEditor(id){
  showView("home");$("searchLayout").classList.remove("hidden");
  const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;
  $("detail").classList.add("hidden");$("editor").classList.remove("hidden");$("detailHeading").textContent="Administration de la fiche";
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><button id="backBtn">Retour à la fiche</button></div>
  <div class="admin-grid" style="margin-top:18px">
-  <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"?"selected":""}>DCI / substance active</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
+  <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
+  <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted">Seuls les groupes de la même classe thérapeutique sont proposés. Enregistre d'abord la classe si tu viens de la modifier.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div><label for="f-dosage">Dosage de la fiche</label><input id="f-dosage" value="${esc(m.dosage||"")}" placeholder="Ex. : 80 mg"></div><div id="f-dci-wrap" class="full"><label for="f-dci">DCI / substance(s) active(s)</label><input id="f-dci" value="${esc(m.dci)}" placeholder="Ex. : sulfate ferreux"></div>
  <div class="full"><label for="f-indications">Indications thérapeutiques (badges Explorer, séparées par des virgules)</label><input id="f-indications" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Carence en fer, Anémie ferriprive"><div class="muted">Étiquettes de navigation : vérifier les indications officielles avant de les ajouter.</div></div>
  <div><label>Famille</label><input id="f-category" list="cats" value="${esc(m.category)}"><datalist id="cats">${categories().filter(c=>c!=="Toutes").map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
@@ -601,10 +636,15 @@ function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===fal
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
- m.entry_type=get("f-entry-type");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=(get("f-dosage")||"").trim();
+ const kind=get("f-entry-type");
+ m.entry_type=kind==="groupe"?"dci":kind;
+ setHierarchy(m,kind,get("f-parent-group")||"");m.name=(get("f-name")||"").trim()||"Fiche sans nom";m.dosage=(get("f-dosage")||"").trim();
  m.dci=m.entry_type==="dci"?"":(get("f-dci")||"").trim();
  m.parent_dci=m.entry_type==="dci"?"":m.dci;
  m.category=(get("f-category")||"").trim()||"Autres";
+ const linked=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g));
+ if(linked&&linked.category!==m.category){setHierarchy(m,kind,"");toast("Groupe parent retiré : la classe thérapeutique a changé.")}
+
  m.aliases=(get("f-aliases")||"").trim();
  const indicationSection=m.sections.find(sec=>sec.id==="indications");
  if(indicationSection)indicationSection.indicationTags=(get("f-indications")||"").split(",").map(x=>x.trim()).filter(Boolean);
@@ -634,12 +674,12 @@ async function saveEditor(id){
 
 }
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
-async function deleteMed(id){if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
+async function deleteMed(id){const target=meds.find(m=>m.id===id);if(target&&isGroup(target)&&meds.some(m=>parentGroupId(m)===id)){toast("Détache d’abord les fiches médicaments de ce groupe avant de le supprimer.");return}if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
 $("homeNav").onclick=()=>{history.pushState({},"",location.pathname);$("search").value="";showView("home");renderResults()};
 $("exploreNav").onclick=()=>{history.pushState({},"",location.pathname+"#explorer");showView("explore")};
 $("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;
 $("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";renderExplorer()};
-$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
+$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("addGroupBtn").onclick=addGroup;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
