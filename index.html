@@ -67,6 +67,8 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 .admin .section-editor textarea[data-field="content"]{min-height:118px;resize:vertical;line-height:1.55}
 .tag.tag-category{background:#e5f0e8;color:#245d4b}
 .tag.tag-form{background:#e9e5f5;color:#62528c}
+.home-hero{text-align:center;padding:clamp(60px,12vh,130px) 15px 28px}.home-hero h2{font-size:clamp(1.8rem,4vw,2.8rem);margin:0}.home-hero p,.explore-heading p{color:var(--muted)}#homeView .searchcard{max-width:790px;margin:auto;padding:23px}#homeView #search{font-size:1.13rem;padding:15px 17px}#homeView .filters{display:none}#searchLayout{margin-top:24px}.explore-heading{text-align:center;padding:32px 0 14px}.explore-heading h2{font-size:1.9rem;margin:0}.explore-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:18px 0}.explore-controls label{flex:1;min-width:200px;font-weight:700}.explore-controls select{display:block;margin-top:6px}.explore-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:15px}.explore-card{background:white;border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 4px 14px #193f3408}.explore-card h3{margin:0 0 5px}.explore-card p{margin:6px 0;color:var(--muted);font-size:.87rem}.badge-button{border:0;border-radius:7px;padding:5px 9px;font-size:.79rem}.badge-class{background:#e5f0e8;color:#245d4b}.badge-indication{background:#e5edf9;color:#365f8c}.badge-form{background:#e9e5f5;color:#62528c}.explore-specialties{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.explore-specialties button{margin:3px 4px 3px 0;padding:5px 8px;font-size:.82rem}.presentation-target{outline:2px solid #8eb99a;scroll-margin-top:20px}#homeNav,#exploreNav{font-weight:700}.detail-summary{background:#f7faf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:16px}.detail-summary a{display:inline-block;margin:5px 12px 5px 0;color:var(--green);font-size:.87rem;text-decoration:none}.detail-summary a:hover{text-decoration:underline}
+@media(max-width:760px){.home-hero{padding:48px 8px 20px}.explore-controls{display:block}.explore-controls label{display:block;margin-bottom:12px}}
 </style>
 </head>
 <body>
@@ -79,23 +81,23 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
     <h1>Mémofficine</h1>
   </div>
 </a>
-    <div class="header-actions"><button id="loginBtn">Connexion administrateur</button></div>
+    <div class="header-actions"><button id="homeNav" type="button">Accueil</button><button id="exploreNav" type="button">Explorer</button><button id="loginBtn">Connexion administrateur</button></div>
   </div>
   <p>Une base de repères pour retrouver rapidement les informations utiles sur les médicaments, leurs modalités de prise et les points de vigilance.</p>
 </div></header>
 <main>
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
   <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémofficine</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
-  <section class="searchcard">
+  <section id="homeView"><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><section class="searchcard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
     <div class="filters" id="filters"></div>
   </section>
-  <div class="layout">
+  <div id="searchLayout" class="layout hidden">
     <section class="panel"><div class="panelhead"><span>Bibliothèque</span><span class="muted" id="count">0 fiche</span></div><div class="results" id="results"></div></section>
     <section class="panel" aria-live="polite"><div class="panelhead"><span id="detailHeading">Fiche médicament</span><span class="muted">Vue détaillée</span></div><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
   </div>
-  <p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
+  </section><section id="exploreView" class="hidden"><div class="explore-heading"><h2>Explorer les fiches</h2><p>Parcourez les fiches communes et leurs spécialités associées.</p></div><div class="explore-controls"><label>Classe thérapeutique<select id="exploreClass"></select></label><label>Indication thérapeutique<select id="exploreIndication"></select></label><button id="resetExplore" type="button">Effacer les filtres</button></div><div id="exploreCards" class="explore-cards"></div></section><p class="foot">Les fiches finales devront être renseignées à partir des sources officielles (notices et RCP notamment), avec date de mise à jour et statut de vérification. Mémofficine est une aide documentaire : elle ne remplace ni le jugement professionnel ni la vérification de la spécialité exacte.</p>
 </main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -176,6 +178,54 @@ async function initCloud(){
  await loadCloudMeds();
  supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();},0);});
 }
+let currentView="home";
+function showView(view){
+ currentView=view;
+ $("homeView").classList.toggle("hidden",view!=="home");
+ $("exploreView").classList.toggle("hidden",view!=="explore");
+ $("homeNav").setAttribute("aria-current",view==="home"?"page":"false");
+ $("exploreNav").setAttribute("aria-current",view==="explore"?"page":"false");
+ if(view==="explore")renderExplorer();
+ window.scrollTo({top:0,behavior:"instant"});
+}
+function indicationTags(m){
+ const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
+ return Array.isArray(raw)?raw.filter(Boolean):[];
+}
+function publicMeds(){return meds.filter(m=>admin||m.published)}
+function specialtyItems(m){
+ return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
+}
+function openMedication(id,presentationIndex=null,sectionId=null){
+ const m=meds.find(x=>x.id===id);if(!m)return;
+ $("search").value="";activeCategory="Toutes";selectedId=id;
+ showView("home");renderFilters();renderResults();
+ $("searchLayout").classList.remove("hidden");
+ renderDetail(sectionId,presentationIndex);
+ const url=new URL(location.href);url.searchParams.set("fiche",id);
+ if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
+ if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
+ history.pushState({fiche:id},"",url);
+}
+function renderExplorer(){
+ const entries=publicMeds();
+ const classes=[...new Set(entries.map(m=>m.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
+ const indications=[...new Set(entries.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr"));
+ const classSel=$("exploreClass"),indSel=$("exploreIndication");
+ const oldClass=classSel.value,oldInd=indSel.value;
+ classSel.innerHTML='<option value="">Toutes les classes</option>'+classes.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+ indSel.innerHTML='<option value="">Toutes les indications</option>'+indications.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+ classSel.value=classes.includes(oldClass)?oldClass:"";indSel.value=indications.includes(oldInd)?oldInd:"";
+ const filtered=entries.filter(m=>(!classSel.value||m.category===classSel.value)&&(!indSel.value||indicationTags(m).includes(indSel.value)));
+ $("exploreCards").innerHTML=filtered.length?filtered.map(m=>{
+  const items=specialtyItems(m);
+  const forms=[...new Set(items.map(x=>x.p.form).filter(Boolean))];
+  return `<article class="explore-card"><h3><button type="button" data-open-med="${esc(m.id)}">${esc(displayMedName(m))} ↗</button></h3><p>${m.entry_type==="dci"?"Fiche commune / DCI":"Fiche médicament"}</p><div class="tags"><button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category||"Autres")}</button>${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<span class="badge-button badge-form">${esc(t)}</span>`).join("")}</div>${items.length?`<div class="explore-specialties"><div class="muted">Spécialités / présentations</div>${items.map(x=>`<button type="button" data-open-med="${esc(m.id)}" data-open-pres="${x.i}">${esc(presentationLabel(x.p,m,x.i))} ↗</button>`).join("")}</div>`:""}</article>`;
+ }).join(""):'<div class="empty">Aucune fiche pour ces filtres. Les indications peuvent être renseignées dans l’éditeur des fiches.</div>';
+ $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
+ $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
+ $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
+}
 function displayMedName(m){const name=String(m.name||"Sans nom").trim(),dose=String(m.dosage||"").trim();return dose&&!norm(name).endsWith(norm(dose))?name+" "+dose:name}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function norm(s=""){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
@@ -191,55 +241,46 @@ window.addEventListener("popstate",()=>{
  const id=new URLSearchParams(window.location.search).get("fiche");
  selectedId=meds.find(m=>m.id===id)?.id||meds[0]?.id||null;
  activeCategory="Toutes";$("search").value="";renderFilters();renderResults();
+ if(location.hash==="#explorer")showView("explore");else showView("home");
+ if(id)renderDetail(new URLSearchParams(location.search).get("rubrique"),new URLSearchParams(location.search).has("presentation")?Number(new URLSearchParams(location.search).get("presentation")):null);
 });
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
 function categories(){return ["Toutes",...new Set(meds.map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
 function getSearchMatches(){
  const q=norm($("search").value.trim());
- const queryTokens=q.split(/\s+/).filter(Boolean);
- const stopWords=new Set(["de","du","des","la","le","les","un","une","et","a","au","aux","en","pour","sur","avec","sans","dans","d"]);
- const matches=[];
- meds.forEach(m=>{
-   if(activeCategory!=="Toutes"&&m.category!==activeCategory)return;
-   const identity=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.form,m.aliases,...(m.presentations||[]).flatMap(p=>[p.lab,p.dosage,p.form,p.cip,p.cis,p.description,p.marking])].join(" "));
-   const allText=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.form,m.aliases,...(m.presentations||[]).flatMap(p=>[p.lab,p.dosage,p.form,p.cip,p.cis,p.description,p.marking]),...(m.sections||[]).map(s=>s.title+" "+s.content)].join(" "));
-   if(!q){matches.push({med:m,section:null});return}
-   if(!allText.includes(q)&&!queryTokens.every(t=>allText.includes(t)))return;
-   // If the query identifies a medication and also names a section, prefer a direct section result.
-   const identityTokens=new Set(identity.split(/\s+/).filter(Boolean));
-   const sectionTerms=queryTokens.filter(t=>!identityTokens.has(t)&&!stopWords.has(t));
-   let sectionHits=[];
-   if(sectionTerms.length){
-     sectionHits=(m.sections||[]).filter(s=>{
-       if(s.enabled===false)return false;
-       const sectionText=norm([s.title,s.content].join(" "));
-       return sectionTerms.every(t=>sectionText.includes(t));
-     });
-   }
-   if(sectionHits.length){
-     sectionHits.forEach(section=>matches.push({med:m,section}));
-   }else if(allText.includes(q)||queryTokens.every(t=>allText.includes(t))){
-     matches.push({med:m,section:null});
-   }
+ const tokens=q.split(/\s+/).filter(Boolean);
+ const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
+ const found=[];
+ publicMeds().forEach(m=>{
+  const pres=specialtyItems(m);
+  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m)].join(" "));
+  const matchedPres=pres.filter(x=>tokens.some(t=>norm([x.name,x.p.dosage,x.p.lab,x.p.cip,x.p.cis].join(" ")).includes(t)));
+  const identity=norm([base,...pres.flatMap(x=>[x.name,x.p.dosage,x.p.lab,x.p.form,x.p.cip,x.p.cis])].join(" "));
+  const sections=(m.sections||[]).filter(x=>x.enabled!==false);
+  const all=norm([identity,...sections.map(x=>x.title+" "+x.content)].join(" "));
+  if(!q){found.push({med:m,section:null,presentation:null});return}
+  if(!tokens.every(t=>all.includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&sections.some(sec=>norm(sec.id+" "+sec.title).includes(key)))))return;
+  const sectionMatches=sections.filter(sec=>{
+   const text=norm(sec.title+" "+sec.content);
+   return tokens.some(t=>!identity.includes(t)&& (text.includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key))));
+  });
+  const chosenPres=matchedPres.length?matchedPres[0].i:null;
+  if(sectionMatches.length)sectionMatches.forEach(section=>found.push({med:m,section,presentation:chosenPres}));
+  else found.push({med:m,section:null,presentation:chosenPres});
  });
- // Prefer direct section hits, then avoid duplicate medication rows.
- const seen=new Set();
- return matches.filter(item=>{
-   const key=item.med.id+"::"+(item.section?.id||"med");
-   if(seen.has(key))return false;seen.add(key);return true;
- });
+ return found;
 }
 function renderResults(){
+ $("searchLayout").classList.toggle("hidden",!$("search").value.trim()&&!new URLSearchParams(location.search).has("fiche")&&!admin);
  const found=getSearchMatches();
  $("count").textContent=found.length+" résultat"+(found.length===1?"":"s");
  $("results").innerHTML=found.length?found.map(item=>{
    const m=item.med, sec=item.section;
-   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}"><strong>${esc(displayMedName(m))}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
+   return `<div class="result ${m.id===selectedId?'selected':''}" data-id="${esc(m.id)}" data-section="${esc(sec?.id||"")}" data-presentation="${item.presentation===null?"":item.presentation}"><strong>${esc(item.presentation!==null?presentationLabel(m.presentations[item.presentation],m,item.presentation):displayMedName(m))}</strong><div class="sub">${m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Substance(s) active(s) à renseigner")} · ${esc(m.category||"Sans famille")}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}</div>`;
  }).join(""):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $("results").querySelectorAll(".result").forEach(el=>el.onclick=()=>{
-   selectFiche(el.dataset.id);
-   renderDetail(el.dataset.section||null);
+   openMedication(el.dataset.id,el.dataset.presentation===""?null:Number(el.dataset.presentation),el.dataset.section||null);
  });
  const validIds=new Set(found.map(x=>x.med.id));
  if(!validIds.has(selectedId)){selectedId=found[0]?.med.id||null}
@@ -248,7 +289,7 @@ function renderResults(){
  if(!found.some(x=>x.med.id===selectedId)){selectedId=found[0].med.id}
  renderDetail();
 }
-function renderDetail(targetSectionId=null){
+function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
  $("detail").classList.remove("hidden");$("editor").classList.add("hidden");
@@ -290,7 +331,7 @@ function presentationLabel(p,m,i){
  const dosage=(p.dosage||m.dosage||"").trim();
  return [name,showLab&&lab?lab:"",dosage,form].filter(Boolean).join(" · ")||"Présentation "+(i+1);
 }
-function renderPresentations(m){const ps=m.presentations||[];return `<details><summary>💊 Présentations disponibles (${ps.length})</summary>${ps.length?`<label class="label" for="presentation-choice">Choisir un médicament / une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}">${esc(presentationLabel(p,m,i))}</option>`).join("")}</select><div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[0])}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</details>`}
+function renderPresentations(m,targetPresentationIndex=null){const ps=m.presentations||[];return `<details id="presentations-details" ${targetPresentationIndex!==null?"open":""}><summary>💊 Présentations disponibles (${ps.length})</summary>${ps.length?`<label class="label" for="presentation-choice">Choisir un médicament / une présentation</label><select id="presentation-choice" data-presentation-select>${ps.map((p,i)=>`<option value="${i}">${esc(presentationLabel(p,m,i))}</option>`).join("")}</select><div id="presentation-info" style="margin-top:12px">${presentationInfo(ps[0])}</div>`:'<p class="muted">Aucune présentation renseignée.</p>'}</details>`}
 
 function presentationEditor(p,i){
  const fields=[["name","Nom du médicament / de la molécule"],["lab","Laboratoire"],["dosage","Dosage"],["form","Forme"],["cip","Code CIP"],["cis","Code CIS"],["description","Aspect / description"],["marking","Marquage / sécabilité"],["sourceUrl","URL de la source officielle (https)"]];
@@ -403,11 +444,13 @@ function showLogin(){
 }
 async function logout(){clearLocalDraft();editorId=null;const {error}=await supabaseClient.auth.signOut();if(error){toast("Déconnexion impossible");return}currentUser=null;admin=false;setAdmin(false);await loadCloudMeds();toast("Déconnexion effectuée")}
 function addMedication(){
+ showView("home");$("searchLayout").classList.remove("hidden");
  if(!admin){toast("Connecte-toi pour ajouter une fiche");return}
  const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dosage:"",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
  meds.unshift(m);selectedId=m.id;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();
 }
 function renderEditor(id){
+ showView("home");$("searchLayout").classList.remove("hidden");
  const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;
  $("detail").classList.add("hidden");$("editor").classList.remove("hidden");$("detailHeading").textContent="Administration de la fiche";
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><button id="backBtn">Retour à la fiche</button></div>
@@ -586,11 +629,15 @@ async function saveEditor(id){
 }
 function duplicateMed(id){const m=meds.find(x=>x.id===id);if(!m)return;const copy=clone(m);copy.id=crypto.randomUUID();copy.name=m.name+" (copie)";copy.status="À vérifier";copy.updated="";copy.published=false;meds.unshift(copy);selectedId=copy.id;renderFilters();renderResults();renderEditor(copy.id);saveLocalDraft();toast("Copie créée : enregistre-la pour la synchroniser")}
 async function deleteMed(id){if(!confirm("Supprimer définitivement cette fiche de la base en ligne ?"))return;const {error}=await supabaseClient.from("medications").delete().eq("id",id);if(error){console.error(error);toast("Suppression refusée par Supabase");return}clearLocalDraft();pendingPresentationPhotos.delete(id);editorId=null;meds=meds.filter(m=>m.id!==id);selectedId=meds[0]?.id||null;renderFilters();renderResults();toast("Fiche supprimée de la base en ligne")}
-$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",renderResults);$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
+$("homeNav").onclick=()=>{history.pushState({},"",location.pathname);$("search").value="";showView("home");renderResults()};
+$("exploreNav").onclick=()=>{history.pushState({},"",location.pathname+"#explorer");showView("explore")};
+$("exploreClass").onchange=renderExplorer;$("exploreIndication").onchange=renderExplorer;
+$("resetExplore").onclick=()=>{$("exploreClass").value="";$("exploreIndication").value="";renderExplorer()};
+$("loginBtn").onclick=showLogin;$("logoutBtn").onclick=logout;$("addMedBtn").onclick=addMedication;$("search").addEventListener("input",()=>{renderResults()});$("clearSearch").onclick=()=>{$("search").value="";renderResults()};
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(meds,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memofficine-sauvegarde-cloud.json";a.click();URL.revokeObjectURL(a.href)};
 $("importBtn").onclick=()=>toast("Import JSON désactivé temporairement : nous le relierons à la base avec validation.");$("importFile").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!Array.isArray(parsed)||!parsed.every(m=>m.name&&Array.isArray(m.sections)))throw new Error("Format");if(!confirm("Remplacer les fiches locales par ce fichier ?"))return;toast("Import JSON non disponible dans cette version connectée : aucune donnée modifiée")}catch(err){toast("Fichier JSON non reconnu")}e.target.value=""};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveLocalDraft()});
 window.addEventListener("pagehide",saveLocalDraft);
-renderFilters();renderResults();initCloud();
+renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");initCloud();
 </script>
 </body></html>
