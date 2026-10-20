@@ -140,6 +140,14 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .editor-warning{color:#a72f35;font-size:.83rem;font-weight:650;margin-top:6px}
 .needs-attention{border:2px solid #c8484e!important}
 .editor-top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.editor-top-actions button{font-size:.85rem;padding:9px 12px;background:#fff;color:var(--ink);border:1px solid #bdcec2;border-radius:10px;font-weight:650}.editor-top-actions button.primary{background:var(--green);color:#fff;border-color:var(--green)}.editor-top-actions button.danger{background:#a44c43;color:#fff;border-color:#a44c43}.editor-top-actions button:hover{filter:brightness(.96)}.dosage-fields{display:flex;gap:8px}.dosage-fields input{flex:1;min-width:0}.dosage-fields select{width:120px}.detail-last-updated{font-size:.78rem;color:var(--muted);text-align:right;margin-top:25px}.admin-meta{border-top:1px solid var(--line);padding-top:18px}.admin-meta input[type=date]{max-width:220px}@media(max-width:800px){.editor .detailtop{flex-direction:column}.editor-top-actions{justify-content:flex-start}}
+
+/* Barre d'actions de l'éditeur : styles indépendants de la navigation */
+#editor .editor-top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px}
+#editor .editor-top-actions button{appearance:none;display:inline-flex;align-items:center;justify-content:center;width:auto;min-height:38px;padding:9px 13px;border:1px solid #b9cbbd;border-radius:10px;background:#fff;color:#254b3c;font-weight:650;box-shadow:0 1px 2px #193f3410}
+#editor .editor-top-actions button.primary{background:var(--green);border-color:var(--green);color:#fff}
+#editor .editor-top-actions button.danger{background:#a44c43;border-color:#a44c43;color:#fff}
+#editor .editor-top-actions button:hover{filter:brightness(.96)}
+@media(max-width:800px){#editor .editor-top-actions{justify-content:flex-start}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -737,7 +745,7 @@ function renderEditor(id){
   }
  }
  $("detail").classList.add("hidden");$("editor").classList.remove("hidden");
- $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="header-actions editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
+ $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" id="addTextSection">+ Rubrique texte</button><button type="button" id="addTableSection">+ Rubrique tableau</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
