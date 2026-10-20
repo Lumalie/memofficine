@@ -192,6 +192,14 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-tree-disclosure>summary{cursor:pointer;display:list-item;color:#657d6e;font-size:.79rem;font-weight:600;padding:5px 2px;list-style-position:inside}
 .explore-tree-disclosure>summary:hover{color:#2d644a}
 .explore-tree-disclosure:not([open]) .explore-tree-children{display:none}
+
+/* V5.37 : la flèche à gauche du groupe est le seul déclencheur du dépliage */
+.explore-tree-toggle{appearance:none!important;display:inline-flex;align-items:center;justify-content:center;flex:none;width:26px;height:28px;min-width:26px;padding:0!important;border:0!important;border-radius:6px;background:transparent!important;color:#497b61!important;font-size:1.3rem;line-height:1;cursor:pointer;box-shadow:none!important}
+.explore-tree-toggle:hover{background:#e5efe8!important}
+.explore-tree-toggle:focus-visible{outline:2px solid #497b61;outline-offset:2px}
+.explore-tree-leaf-space{display:inline-block;flex:none;width:26px}
+.explore-tree-children[hidden]{display:none!important}
+.explore-tree-children{margin-top:9px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -504,19 +512,27 @@ function renderExplorer(){
   const isMatch=filtered.some(x=>x.id===m.id);
   return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
    <div class="explore-tree-line">
+    ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     <span class="explore-tree-icon" aria-hidden="true">${isGroup(m)?"▣":"●"}</span>
     <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}">${esc(displayMedName(m))}</button>
     ${!isGroup(m)?explorerFormLabel(m):""}
     <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
    </div>
    ${isMatch?`<div class="explore-tree-tags">${m.category?`<button type="button" class="badge-button badge-class" data-filter-class="${esc(m.category)}">${esc(m.category)}</button>`:""}${indicationTags(m).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${forms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
-   ${kids.length?`<details class="explore-tree-disclosure" data-tree-id="${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"open":""}><summary>${kids.length} élément${kids.length>1?"s":""} · Afficher / masquer</summary><div class="explore-tree-children">${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div></details>`:""}
+   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
  $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche pour ces filtres.</div>';
- $("exploreCards").querySelectorAll("details[data-tree-id]").forEach(d=>d.addEventListener("toggle",()=>{
-  if(d.open)exploreExpandedGroups.add(d.dataset.treeId);
-  else exploreExpandedGroups.delete(d.dataset.treeId);
+ $("exploreCards").querySelectorAll("[data-tree-toggle]").forEach(button=>button.addEventListener("click",()=>{
+  const id=button.dataset.treeToggle;
+  const children=document.getElementById("tree-children-"+id);
+  if(!children)return;
+  const opening=children.hidden;
+  children.hidden=!opening;
+  button.setAttribute("aria-expanded",String(opening));
+  button.setAttribute("aria-label",(opening?"Replier ":"Déplier ")+button.parentElement.querySelector(".explore-tree-name")?.textContent);
+  button.querySelector("span").textContent=opening?"▾":"▸";
+  if(opening)exploreExpandedGroups.add(id);else exploreExpandedGroups.delete(id);
  }));
  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
