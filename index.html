@@ -1063,6 +1063,7 @@ function wireTextFormatting(){
    if(mode==='bullets')replacement=selected.split('\n').map(x=>'- '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
    if(mode==='numbers')replacement=selected.split('\n').map((x,i)=>(i+1)+'. '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
    if(mode.startsWith('color:'))replacement=`[[${mode.slice(6)}|${selected}]]`;
+   editHistoryBefore(area);
    area.setRangeText(replacement,start,end,'select');
    area.dispatchEvent(new Event('input',{bubbles:true}));
    bubble.hidden=true;area.focus();
@@ -1318,7 +1319,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
@@ -1412,6 +1413,71 @@ async function saveEditor(id){
   if(currentButton){currentButton.disabled=false;currentButton.textContent="Enregistrer"}
  }
 }
+// V5.63 : historique indépendant par champ, y compris les modifications par boutons.
+const editUndoHistory=new WeakMap();
+function editSnapshot(el){return {value:el.value,start:el.selectionStart,end:el.selectionEnd}}
+function editHistoryFor(el){
+ let h=editUndoHistory.get(el);
+ if(!h){h={undo:[],redo:[],current:editSnapshot(el),lastType:0};editUndoHistory.set(el,h)}
+ return h;
+}
+function editHistoryBefore(el){
+ const h=editHistoryFor(el);
+ if(el.value!==h.current.value)h.current=editSnapshot(el);
+ if(!h.undo.length||h.undo[h.undo.length-1].value!==h.current.value)h.undo.push({...h.current});
+ if(h.undo.length>120)h.undo.shift();
+ h.redo=[];h.lastType=0;
+}
+function editHistoryInput(el,evt){
+ const h=editHistoryFor(el),next=editSnapshot(el);
+ if(h.replaying)return;
+ if(next.value===h.current.value){h.current=next;return}
+ const now=Date.now();
+ const typing=evt?.inputType==="insertText"||evt?.inputType==="deleteContentBackward"||evt?.inputType==="deleteContentForward";
+ if(!typing||now-h.lastType>750||!h.undo.length){
+  if(!h.undo.length||h.undo[h.undo.length-1].value!==h.current.value)h.undo.push({...h.current});
+  if(h.undo.length>120)h.undo.shift();
+ }
+ h.redo=[];h.current=next;h.lastType=typing?now:0;
+}
+function editHistoryMove(el,redo=false){
+ const h=editHistoryFor(el),from=redo?h.redo:h.undo,to=redo?h.undo:h.redo;
+ if(!from.length)return;
+ const next=from.pop();
+ to.push(editSnapshot(el));
+ h.replaying=true;
+ el.value=next.value;
+ el.focus({preventScroll:true});
+ el.setSelectionRange(next.start,next.end);
+ h.current=editSnapshot(el);h.lastType=0;
+ el.dispatchEvent(new Event("input",{bubbles:true}));
+ h.current=editSnapshot(el);h.replaying=false;
+ if(typeof rememberEditorFocus==="function")rememberEditorFocus();
+}
+document.addEventListener("focusin",e=>{
+ const el=e.target;
+ if(el instanceof HTMLTextAreaElement&&$("editor").contains(el))editHistoryFor(el);
+});
+document.addEventListener("beforeinput",e=>{
+ const el=e.target;
+ if(!(el instanceof HTMLTextAreaElement)||!$("editor").contains(el))return;
+ const h=editHistoryFor(el);
+ if(el.value!==h.current.value)h.current=editSnapshot(el);
+},true);
+document.addEventListener("input",e=>{
+ const el=e.target;
+ if(el instanceof HTMLTextAreaElement&&$("editor").contains(el))editHistoryInput(el,e);
+},true);
+document.addEventListener("keydown",e=>{
+ if(!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey&&e.key.toLowerCase()!=="z")return;
+ const key=e.key.toLowerCase();
+ if(key!=="z"&&key!=="y")return;
+ const el=e.target;
+ if(!(el instanceof HTMLTextAreaElement)||!$("editor").contains(el)||$("editor").classList.contains("hidden"))return;
+ e.preventDefault();e.stopPropagation();
+ if(!e.repeat)editHistoryMove(el,key==="y"||(key==="z"&&e.shiftKey));
+},true);
+
 // V5.62 : un seul moteur pour les boutons et raccourcis, avec bascule réversible.
 function toggleInlineMarks(area,mode,start=area.selectionStart,end=area.selectionEnd){
  const marks={bold:'**',italic:'*',underline:'__'};
@@ -1421,13 +1487,16 @@ function toggleInlineMarks(area,mode,start=area.selectionStart,end=area.selectio
  // La sélection contient déjà les marques : retirer celles-ci.
  if(selected.length>=2*n&&selected.startsWith(mark)&&selected.endsWith(mark)){
   const inner=selected.slice(n,-n);
+  editHistoryBefore(area);
   area.setRangeText(inner,start,end,'end');area.setSelectionRange(start,start+inner.length);
  }else if(before===mark&&after===mark){
   // Cas habituel : le mot reste sélectionné entre ses marques après Ctrl+B.
+  editHistoryBefore(area);
   area.setRangeText(selected,start-n,end+n,'end');
   area.setSelectionRange(start-n,start-n+selected.length);
  }else{
   // Ne pas empiler de marqueurs quand on active le même style deux fois.
+  editHistoryBefore(area);
   area.setRangeText(mark+selected+mark,start,end,'end');
   area.setSelectionRange(start+n,start+n+selected.length);
  }
@@ -1455,6 +1524,7 @@ function applyEditorKeyboardFormat(area,mode){
   offset=1;
  }else return;
  area.focus({preventScroll:true});
+ editHistoryBefore(area);
  area.setRangeText(replacement,start,end,"end");
  if(mode==="bold"||mode==="italic"||mode==="underline"){
   const pos=start+offset;
