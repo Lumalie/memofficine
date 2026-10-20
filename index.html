@@ -41,6 +41,15 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px}.notice{background:var(
 .text-format-bubble select{width:auto;max-width:125px;padding:5px;font-size:.82rem}
 .rich-preview{margin-top:8px;padding:10px 12px;border:1px dashed #c5dccb;border-radius:9px;background:#fff;font-size:.91rem}
 .rich-preview p{margin:4px 0}.rich-preview ul,.rich-preview ol{margin:5px 0;padding-left:24px}
+
+/* Edition visuelle des tableaux : stockage compatible avec les anciennes fiches */
+.table-grid-wrap{overflow-x:auto;margin-top:9px}
+.table-grid-editor{border-collapse:separate;border-spacing:4px;width:100%;min-width:310px}
+.table-grid-editor td{padding:0;min-width:105px}
+.table-grid-editor input{width:100%;min-width:95px;padding:9px 8px;border-radius:7px}
+.table-grid-editor tr:first-child input{background:#eaf2ec;font-weight:700}
+.table-grid-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.table-grid-actions button{font-size:.82rem;padding:6px 9px}
 </style>
 </head>
 <body>
@@ -432,13 +441,49 @@ const toggleType = () => {
  wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
  wireTextFormatting();
+ wireTableGrids(m);
  $("addTextSection").onclick=()=>addSection(m.id,"text");$("addTableSection").onclick=()=>addSection(m.id,"table");
  $("editor").oninput=saveLocalDraft;
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
 function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",showLab:card.querySelector("[data-show-lab]")?.checked!==false};card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris #abb8c3</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`<textarea data-field="content">${esc(s.content||"")}</textarea>`}</div></div>`}
+function tableRows(content){
+ const rows=String(content||"").split("\\n").filter(line=>line.trim()).map(line=>line.split("|").map(cell=>cell.trim()));
+ if(!rows.length)return [["",""],["",""]];
+ const count=Math.max(1,...rows.map(row=>row.length));
+ return rows.map(row=>Array.from({length:count},(_,i)=>row[i]||""));
+}
+function tableGridEditor(content){
+ const rows=tableRows(content);
+ return `<div class="table-grid-wrap"><table class="table-grid-editor"><tbody>${rows.map((row,r)=>`<tr>${row.map((cell,c)=>`<td><input data-table-cell data-r="${r}" data-c="${c}" aria-label="Ligne ${r+1}, colonne ${c+1}" value="${esc(cell)}"></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="table-grid-actions"><button type="button" data-grid-action="add-row">+ Ligne</button><button type="button" data-grid-action="remove-row">− Ligne</button><button type="button" data-grid-action="add-col">+ Colonne</button><button type="button" data-grid-action="remove-col">− Colonne</button></div><p class="hint">La première ligne correspond aux en-têtes. Les modifications sont sauvegardées dans le brouillon.</p>`;
+}
+function readTableGrid(card){
+ const trs=[...card.querySelectorAll(".table-grid-editor tr")];
+ return trs.map(tr=>[...tr.querySelectorAll("[data-table-cell]")].map(input=>input.value.replace(/[|\\r\\n]/g," ").trim()).join(" | ")).join("\\n");
+}
+function wireTableGrids(m){
+ $("sectionEditors").querySelectorAll("[data-grid-action]").forEach(button=>button.onclick=()=>{
+  const card=button.closest(".section-editor"),i=Number(card.dataset.section);
+  captureEditorFields(m);
+  let rows=tableRows(m.sections[i].content);
+  const action=button.dataset.gridAction;
+  if(action==="add-row")rows.push(Array(rows[0].length).fill(""));
+  if(action==="remove-row"&&rows.length>1)rows.pop();
+  if(action==="add-col")rows.forEach(row=>row.push(""));
+  if(action==="remove-col"&&rows[0].length>1)rows.forEach(row=>row.pop());
+  m.sections[i].content=rows.map(row=>row.join(" | ")).join("\\n");
+  renderEditor(m.id);saveLocalDraft();
+ });
+ $("sectionEditors").querySelectorAll('[data-field="type"]').forEach(select=>select.onchange=()=>{
+  const card=select.closest(".section-editor"),i=Number(card.dataset.section);
+  // Capture all other fields before replacing the editor control.
+  captureEditorFields(m);
+  m.sections[i].type=select.value;
+  renderEditor(m.id);saveLocalDraft();
+ });
+}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button data-act="down" data-index="${i===meds.find(m=>m.id===selectedId)?.sections?.length-1?'disabled':''}>↓</button><button data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
@@ -456,6 +501,7 @@ function captureEditorFields(m){
      const el=card.querySelector(`[data-field="${field}"]`);
      if(el)m.sections[i][field]=el.value;
    }
+   if(m.sections[i].type==="table"&&card.querySelector(".table-grid-editor"))m.sections[i].content=readTableGrid(card);
  });
 }
 function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);const ss=m.sections;
