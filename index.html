@@ -1016,7 +1016,6 @@ const toggleType = () => {
   const isGroupType = $("f-entry-type").value === "groupe";
   const isDci = $("f-entry-type").value === "dci" || isGroupType;
   $("presentation-editor-wrap").classList.toggle("hidden",isGroupType);
-  $("group-template-tools").classList.toggle("hidden",!isGroupType);
   $("parent-group-wrap").classList.remove("hidden");
   $("f-dosage-wrap").classList.toggle("hidden",isGroupType || $("f-entry-type").value === "specialite");
 
