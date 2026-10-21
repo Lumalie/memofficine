@@ -474,6 +474,21 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-group-ancestor{appearance:none!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;color:#4e7a64!important;font-size:inherit!important;cursor:pointer}
 .explore-group-chevron{padding:0 5px;color:#96a9a0}
 .explore-group-path-label{margin-right:8px;font-size:.72rem;color:#85968c}
+
+/* V5.89 — arborescence dépliable directement dans les résultats des groupes */
+.explore-search-root-children{margin:5px 0 4px 17px!important;padding-left:12px!important;border-left:2px solid #dce8e1}
+.explore-search-child-nested{margin:3px 0 3px 14px;padding-left:10px;border-left:2px solid #dce8e1}
+.explore-search-child-nested[hidden]{display:none!important}
+.explore-search-child{margin:2px 0}
+.explore-search-child-line{display:flex;align-items:center;gap:7px;min-height:30px;padding:3px 5px;border-radius:7px}
+.explore-search-child-group>.explore-search-child-line{background:#f4f7ef}
+.explore-search-child-med>.explore-search-child-line{background:transparent}
+.explore-search-child-toggle,.explore-search-child-spacer{flex:0 0 22px;width:22px;min-width:22px}
+.explore-search-child-toggle{border:0!important;background:transparent!important;padding:2px!important;color:#a66c22!important;cursor:pointer}
+.explore-search-child-link{flex:1;min-width:0;text-align:left!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:3px 0!important;font-size:.88rem!important;color:#a66c22!important;font-weight:650;overflow-wrap:anywhere}
+.explore-search-child-med .explore-search-child-link{color:#285780!important;font-weight:550}
+.explore-search-child-link:hover{text-decoration:underline}
+.explore-search-child-type{margin-left:auto;color:#85928c;font-size:.72rem;white-space:nowrap}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -850,6 +865,32 @@ function renderExplorer(){
   const hits=searchMatches.filter(hit=>allowed.has(hit.med.id));
   const visibleHits=hits.slice(0,explorerVisibleLimit);
   const byIdForPath=new Map(entries.map(m=>[m.id,m]));
+  // Arborescence complète des descendants, même si seul le groupe parent correspond à la recherche.
+  const childrenByParent=new Map();
+  for(const entry of entries){
+   const parent=parentGroupId(entry);
+   if(!childrenByParent.has(parent))childrenByParent.set(parent,[]);
+   childrenByParent.get(parent).push(entry);
+  }
+  const sortChildren=(a,b)=>isGroup(a)!==isGroup(b)?(isGroup(a)?-1:1):displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
+  const renderSearchChildren=(parentId,visited=new Set())=>{
+   if(visited.has(parentId))return "";
+   const seen=new Set(visited);seen.add(parentId);
+   const children=(childrenByParent.get(parentId)||[]).slice().sort(sortChildren);
+   return children.map(child=>{
+    if(seen.has(child.id))return "";
+    const nested=isGroup(child)?renderSearchChildren(child.id,seen):"";
+    const hasChildren=!!(childrenByParent.get(child.id)||[]).length&&isGroup(child);
+    return `<div class="explore-search-child ${isGroup(child)?"explore-search-child-group":"explore-search-child-med"}">
+     <div class="explore-search-child-line">
+      ${hasChildren?`<button type="button" class="explore-search-child-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier ${esc(child.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
+      <button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">${esc(displayMedName(child))}</button>
+      <span class="explore-search-child-type">${isGroup(child)?"Groupe":child.entry_type==="dci"?"DCI":"Médicament"}</span>
+     </div>
+     ${hasChildren?`<div class="explore-search-child-nested" hidden>${nested}</div>`:""}
+    </div>`;
+   }).join("");
+  };
   const pathFor=m=>{
    const names=[],seen=new Set([m.id]);let parentId=parentGroupId(m);
    while(parentId&&!seen.has(parentId)){
@@ -889,12 +930,12 @@ function renderExplorer(){
     }).join('<span class="explore-group-chevron" aria-hidden="true">›</span>');
     return `<article class="explore-group-result ${subgroup?"explore-group-result-sub":""}">
       <div class="explore-group-result-line">
-       <button type="button" class="explore-group-result-toggle" data-group-path-toggle aria-expanded="false" aria-label="Afficher le chemin du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>
+       <button type="button" class="explore-group-result-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier les fiches du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>
        <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
        <span class="explore-group-result-type">Groupe</span>
       </div>
       ${tags?`<div class="explore-group-result-tags">${tags}</div>`:""}
-      ${parents.length?`<div class="explore-group-result-path" hidden><span class="explore-group-path-label">Arborescence :</span>${ancestorNodes}<span class="explore-group-chevron" aria-hidden="true">›</span><strong>${esc(m.name)}</strong></div>`:""}
+      <div class="explore-search-child-nested explore-search-root-children" hidden>${renderSearchChildren(m.id)}</div>
      </article>`;
    }
    return `<article class="explore-hit explore-hit-${kind} ${isPresentation?"explore-hit-presentation":""}">
@@ -909,12 +950,15 @@ function renderExplorer(){
     ${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}
    </article>`;
   }).join("")}</div>${hits.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 résultats supplémentaires <span>(${hits.length-visibleHits.length} restants)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
-  $("exploreCards").querySelectorAll("[data-group-path-toggle]").forEach(b=>b.onclick=()=>{
-   const path=b.closest(".explore-group-result").querySelector(".explore-group-result-path");
-   if(!path)return;
-   path.hidden=!path.hidden;
-   b.setAttribute("aria-expanded",String(!path.hidden));
-   b.querySelector("span").textContent=path.hidden?"▸":"▾";
+  $("exploreCards").querySelectorAll("[data-search-tree-toggle]").forEach(button=>button.onclick=()=>{
+   const row=button.closest(".explore-group-result-line, .explore-search-child-line");
+   const children=row?.nextElementSibling;
+   if(!children||!children.classList.contains("explore-search-child-nested"))return;
+   children.hidden=!children.hidden;
+   const expanded=!children.hidden;
+   button.setAttribute("aria-expanded",String(expanded));
+   button.querySelector("span").textContent=expanded?"▾":"▸";
+   button.setAttribute("aria-label",(expanded?"Replier ":"Déplier ")+(row.querySelector("[data-open-med]")?.textContent||"le groupe"));
   });
   $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
   $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
