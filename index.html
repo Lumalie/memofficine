@@ -930,7 +930,7 @@ function renderExplorer(){
     }).join('<span class="explore-group-chevron" aria-hidden="true">›</span>');
     return `<article class="explore-group-result ${subgroup?"explore-group-result-sub":""}">
       <div class="explore-group-result-line">
-       <button type="button" class="explore-group-result-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier les fiches du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>
+       ${((childrenByParent.get(m.id)||[]).length)?`<button type="button" class="explore-group-result-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier les fiches du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
        <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
        <span class="explore-group-result-type">Groupe</span>
       </div>
@@ -952,7 +952,12 @@ function renderExplorer(){
   }).join("")}</div>${hits.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 résultats supplémentaires <span>(${hits.length-visibleHits.length} restants)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
   $("exploreCards").querySelectorAll("[data-search-tree-toggle]").forEach(button=>button.onclick=()=>{
    const row=button.closest(".explore-group-result-line, .explore-search-child-line");
-   const children=row?.nextElementSibling;
+   // Dans un groupe résultat, les badges se trouvent entre le titre et les enfants.
+   // nextElementSibling pointait donc sur les badges, empêchant tout dépliage.
+   const rootGroup=row?.closest(".explore-group-result");
+   const children=row?.classList.contains("explore-group-result-line")
+    ?rootGroup?.querySelector(":scope > .explore-search-root-children")
+    :row?.nextElementSibling;
    if(!children||!children.classList.contains("explore-search-child-nested"))return;
    children.hidden=!children.hidden;
    const expanded=!children.hidden;
