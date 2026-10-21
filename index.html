@@ -410,6 +410,13 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-tree-presentation{background:transparent!important;border:0!important;box-shadow:none!important;padding:3px 5px!important;color:#315f85!important;text-align:left!important;font-size:.88rem!important;cursor:pointer}
 .explore-tree-presentation:hover{text-decoration:underline}
 .explore-pres-princeps-inline{margin-left:8px;padding:1px 6px;border-radius:5px;background:#e8f2e8;color:#30674c;font-size:.72rem;font-weight:700}
+
+/* V5.82 — différencier fiches médicaments et présentations */
+.explore-hit-med-parent{border-left-color:#83b59c!important;background:linear-gradient(90deg,rgba(224,239,230,.55),transparent 55%)}
+.explore-hit-med-parent .explore-hit-name{color:#32694f!important}
+.explore-hit-med-parent .explore-hit-symbol{color:#448366!important}
+.explore-hit-presentation{border-left-color:#b5d3ef!important}
+.explore-hit-med-parent .explore-hit-meta{font-weight:600}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -781,7 +788,7 @@ function renderExplorer(){
    const m=hit.med,sec=hit.section;
    const parents=pathFor(m),path=[...parents,m.name,...(sec?[sec.title]:[])];
    const group=isGroup(m),subgroup=group&&parents.length>0;
-   const kind=group?(subgroup?"subgroup":"group"):"med";
+   const kind=group?(subgroup?"subgroup":"group"):(hit.presentation===null?"med-parent":"med");
    const p=hit.presentation!==null?m.presentations?.[hit.presentation]:null;
    const queryTokens=norm(query).split(/\s+/).filter(Boolean);
    const isPresentation=!!p;
@@ -973,16 +980,27 @@ function getSearchMatches(queryOverride=null){
    const st=norm(sec.id+" "+sec.title+" "+sec.content);
    return tokens.some(t=>fieldMatch(t,sec)&&(!base.includes(t)||st.includes(t)&&tokens.some(other=>other!==t&&base.includes(other))));
   });
-  // Une recherche portant sur une donnée de présentation (CIP, CIS, labo,
-  // forme, dosage, ou valeur précise) doit produire un résultat PAR présentation.
-  const specificPres=tokens.some(t=>t==="cip"||t==="cis"||t==="laboratoire"||t==="labo"||presentations.some(x=>presText(x).includes(t)&&!base.includes(t)&&!secText.includes(t)));
-  let matchingPresentations=presentations.filter(x=>tokens.every(t=>base.includes(t)||secText.includes(t)||presText(x).includes(t)||sections.some(sec=>fieldMatch(t,sec))));
-  if(specificPres){
-   matchingPresentations=matchingPresentations.filter(x=>tokens.every(t=>t!=="cip"&&t!=="cis"||t==="cip"&&!!x.p.cip||t==="cis"&&!!x.p.cis));
-   if(!matchingPresentations.length)return;
-  }
-  const indexes=specificPres?matchingPresentations.map(x=>x.i)
-   :(m.entry_type==="specialite"&&presentations.length?presentations.map(x=>x.i):[null]);
+  // Chaque présentation doit satisfaire elle-même les termes spécifiques :
+  // ne pas associer artificiellement un dosage d'une présentation au CIP d'une autre.
+  const presentationMatches=x=>tokens.every(t=>
+   base.includes(t)||secText.includes(t)||presText(x).includes(t)||
+   sections.some(sec=>fieldMatch(t,sec))
+  )&&tokens.every(t=>
+   t!=="cip"&&t!=="cis"||
+   (t==="cip"&&!!x.p.cip)||(t==="cis"&&!!x.p.cis)
+  );
+  const matchingPresentations=presentations.filter(presentationMatches);
+  const specificPres=tokens.some(t=>t==="cip"||t==="cis"||t==="laboratoire"||t==="labo"||
+   presentations.some(x=>presText(x).includes(t)&&!base.includes(t)&&!secText.includes(t)));
+  // En recherche libre, montrer à la fois la fiche mère (DCI/médicament)
+  // et toutes les présentations pertinentes, y compris celles des fiches DCI.
+  // Les fiches sans présentation restent visibles si leur propre texte correspond.
+  const baseMatches=tokens.every(t=>base.includes(t)||secText.includes(t)||sections.some(sec=>fieldMatch(t,sec)));
+  const indexes=[
+   ...(baseMatches&&!specificPres?[null]:[]),
+   ...matchingPresentations.map(x=>x.i)
+  ];
+  if(!indexes.length)return;
   for(const presentation of indexes){
    if(matchingSections.length)for(const section of matchingSections)found.push({med:m,section,presentation});
    else found.push({med:m,section:null,presentation});
@@ -1032,7 +1050,7 @@ function renderResults(){
  dropdown.classList.toggle('hidden',!query);
  highlightedSearchIndex=-1;
  $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
- $('results').innerHTML=found.length?found.slice(0,35).map(item=>{
+ $('results').innerHTML=found.length?found.map(item=>{
    const m=item.med,sec=item.section;
    return `<div class="result" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(searchResultLabel(item))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — accéder à cette rubrique</span>`:''}</div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
