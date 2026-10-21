@@ -730,6 +730,20 @@ function openMedication(id,presentationIndex=null,sectionId=null){
  url.searchParams.delete("edition");
  history.pushState({fiche:id},"",url);rememberNavigation();
 }
+// Ctrl+clic (ou Cmd+clic sur Mac) : ouvrir une fiche dans un nouvel onglet.
+// Le lien inclut la présentation et la rubrique pour retrouver le même contexte.
+function openExplorerResult(event,button,presentationIndex=null,sectionId=null){
+ const id=button.dataset.openMed;
+ if(event.ctrlKey||event.metaKey){
+  const url=new URL(location.href);
+  url.hash="";url.searchParams.set("fiche",id);url.searchParams.delete("edition");
+  if(presentationIndex!==null)url.searchParams.set("presentation",String(presentationIndex));else url.searchParams.delete("presentation");
+  if(sectionId)url.searchParams.set("rubrique",sectionId);else url.searchParams.delete("rubrique");
+  window.open(url.href,"_blank","noopener");
+  return;
+ }
+ openMedication(id,presentationIndex,sectionId);
+}
 function medicationForms(m){
  const presentationForms=(m.presentations||[]).map(p=>String(p.form||"").trim()).filter(Boolean);
  const dciForm=m.entry_type==="dci"&&!isGroup(m)?String(m.sections?.[0]?.dciForm||m.form||"").trim():"";
@@ -803,7 +817,8 @@ function renderExplorer(){
    const presLab=""; // Le laboratoire du générique est intégré au titre.
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
    const cipButton=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
-   const preview=sec?searchSectionPreview(sec):"";
+   const showSectionContent=!!sec&&m.entry_type==="dci"&&hit.presentation===null;
+   const preview=showSectionContent?searchSectionPreview(sec):"";
    return `<article class="explore-hit explore-hit-${kind} ${isPresentation?"explore-hit-presentation":""}">
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
@@ -828,7 +843,7 @@ function renderExplorer(){
     toast("CIP copié : "+value);
    }catch(err){toast("Copie impossible : sélectionne le CIP manuellement.");}
   });
-  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null));
+  $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>{b.onclick=e=>openExplorerResult(e,b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null);b.onauxclick=e=>{if(e.button===1)openExplorerResult({...e,ctrlKey:true},b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null)}});
   return;
  }
  const byId=new Map(entries.map(m=>[m.id,m]));
@@ -887,7 +902,7 @@ function renderExplorer(){
   button.querySelector("span").textContent=opening?"▾":"▸";
   if(opening)exploreExpandedGroups.add(id);else exploreExpandedGroups.delete(id);
  }));
- $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null));
+ $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>{b.onclick=e=>openExplorerResult(e,b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null);b.onauxclick=e=>{if(e.button===1)openExplorerResult({...e,ctrlKey:true},b,b.hasAttribute("data-open-pres")?Number(b.dataset.openPres):null)}});
  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
  $("exploreCards").querySelectorAll("[data-filter-form]").forEach(b=>b.onclick=()=>{formSel.value=b.dataset.filterForm;renderExplorer()});
