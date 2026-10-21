@@ -439,6 +439,21 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #exploreCards .explore-hit:has(.explore-preview-details[open]){grid-column:1/-1}
 #exploreCards .explore-hit:has(.explore-preview-details[open]) .explore-hit-content{max-width:100%;overflow-wrap:anywhere}
 @media(max-width:760px){#exploreCards .explore-hits{grid-template-columns:minmax(0,1fr);gap:5px}}
+
+/* V5.86 — suggestions de recherche harmonisées avec Explorer */
+.search-suggestions .result{position:relative;margin:5px 8px;padding:9px 12px 9px 14px;border:0;border-left:2px solid #b3d1e9;background:transparent;line-height:1.35}
+.search-suggestions .result-fiche{border-left-color:#85b49b;background:linear-gradient(90deg,rgba(222,238,227,.58),transparent 75%)}
+.search-suggestions .result-group{border-left-color:#d9b16c;background:linear-gradient(90deg,rgba(248,237,214,.5),transparent 75%)}
+.search-suggestions .result strong{display:flex;align-items:baseline;gap:7px;font-size:.94rem;line-height:1.4;color:#285780}
+.search-suggestions .result-fiche strong{color:#32694f}
+.search-suggestions .result-group strong{color:#9b6b27}
+.search-suggestions .result-dot{font-size:.72rem;flex:none;color:#263f38}
+.search-suggestions .result-arrow{margin-left:auto;font-size:.9rem;font-weight:400;color:#789a8e}
+.search-suggestions .result .sub,.search-suggestions .result-path{margin:3px 0 0 21px;color:#667b73;font-size:.8rem}
+.search-suggestions .result-presentation-info{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:5px 0 0 21px}
+.search-suggestions .result .direct-hit{margin:6px 0 0 21px}
+.search-suggestions .result:hover,.search-suggestions .result[aria-selected="true"]{background:#edf5f0}
+.search-suggestions .result-presentation-info .explore-cip-copy{padding:3px 8px!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1091,13 +1106,55 @@ function renderResults(){
  highlightedSearchIndex=-1;
  $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
  $('results').innerHTML=found.length?found.map(item=>{
-   const m=item.med,sec=item.section;
-   return `<div class="result" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(searchResultLabel(item))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — accéder à cette rubrique</span>`:''}</div>`;
+  const m=item.med,sec=item.section;
+  const p=item.presentation!==null?m.presentations?.[item.presentation]:null;
+  const isPresentation=!!p;
+  const group=isGroup(m);
+  const kind=isPresentation?"presentation":group?"group":"fiche";
+  const name=searchResultLabel(item);
+  const lab=p?.presentationKind==="generic"&&p.lab&&!norm(name).includes(norm(p.lab))?p.lab:"";
+  const presName=String(p?.name||m.name||"").trim();
+  const presWithLab=lab?presName+" "+lab:presName;
+  const dose=String(p?.dosage||m.dosage||"").trim();
+  const form=String(p?.form||m.form||"").trim();
+  const presentationTitle=[presWithLab,...(dose&&!norm(presWithLab).includes(norm(dose))?[dose]:[]),...(form&&!norm(presWithLab).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
+  const badge=p?.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
+  const cip=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
+  const sectionDetail=sec&&m.entry_type==="dci"&&!isPresentation?`<span class="direct-hit">↳ ${esc(sec.title)} — accéder à cette rubrique</span>`:"";
+  return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
+   <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
+   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:`<div class="sub">${group?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI": "Fiche médicament"} · ${esc(m.category||"Sans famille")}</div>${m.entry_type==="dci"?`<div class="result-path">${esc(m.category||"")} ${m.parent_dci?"› "+esc(m.parent_dci):""}</div>`:""}`}
+   ${sectionDetail}
+  </div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $('results').querySelectorAll('.result').forEach(el=>{
-   const choose=()=>openMedication(el.dataset.id,el.dataset.presentation===''?null:Number(el.dataset.presentation),el.dataset.section||null);
+   const choose=e=>{
+    if(e?.target?.closest?.('[data-copy-cip]'))return;
+    const id=el.dataset.id,section=el.dataset.section||null,pres=el.dataset.presentation===''?null:Number(el.dataset.presentation);
+    if(e?.ctrlKey||e?.metaKey||e?.button===1){
+     const url=new URL(location.href);url.searchParams.set("fiche",id);
+     if(section)url.searchParams.set("section",section);else url.searchParams.delete("section");
+     if(pres!==null)url.searchParams.set("presentation",String(pres));else url.searchParams.delete("presentation");
+     window.open(url.toString(),"_blank","noopener");return;
+    }
+    openMedication(id,pres,section);
+   };
    el.onclick=choose;
-   el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}};
+   el.onauxclick=e=>{if(e.button===1){e.preventDefault();choose(e)}};
+   el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(e)}};
+ });
+ $('results').querySelectorAll('[data-copy-cip]').forEach(button=>button.onclick=async e=>{
+  e.stopPropagation();
+  const value=button.dataset.copyCip;
+  try{
+   if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);
+   else{
+    const input=document.createElement("textarea");input.value=value;input.style.position="fixed";input.style.opacity="0";
+    document.body.appendChild(input);input.select();
+    if(!document.execCommand("copy"))throw Error("Copie indisponible");input.remove();
+   }
+   toast("CIP copié : "+value);
+  }catch(err){toast("Copie impossible : sélectionne le CIP manuellement.");}
  });
  $('searchLayout').classList.toggle('hidden',!openedSearchFiche&&!editorId);
  updateSearchPlacement();
