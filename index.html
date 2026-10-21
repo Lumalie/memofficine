@@ -344,6 +344,29 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-tree .explore-tree-leaf-space{width:24px;flex-basis:24px}
 .explore-tree .explore-tree-subgroup>.explore-tree-line>.explore-tree-toggle{color:#aa762e!important}
 @media(max-width:650px){.explore-tree .explore-tree-line{padding:5px 6px;gap:5px}.explore-tree .explore-tree-children{margin-left:9px!important;padding-left:8px!important}.explore-tree .explore-tree-type{margin-left:auto}.explore-tree .explore-tree-tags{margin-left:30px}}
+
+/* V5.76 — Résultats Explorer harmonisés avec l'arborescence aérée */
+.explore-hits{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;width:100%}
+.explore-hit{display:flex;flex-direction:column;align-items:stretch;gap:4px;width:100%;padding:9px 12px;border:0;border-left:2px solid #dce8e1;border-radius:0 8px 8px 0;background:transparent;color:var(--ink);text-align:left;cursor:pointer;box-shadow:none;min-width:0}
+.explore-hit:hover,.explore-hit:focus-visible{background:#f3f7f7;border-color:#7d9e91;outline-offset:1px}
+.explore-hit.explore-hit-group{background:#eaf3ed;border-left-color:#8cb99c;margin-top:5px}
+.explore-hit.explore-hit-subgroup{background:#fff5e6;border-left-color:#e5b66c;margin-top:5px}
+.explore-hit.explore-hit-med{border-left-color:#b9d2e8}
+.explore-hit.explore-hit-group:hover{background:#e0eee5}
+.explore-hit.explore-hit-subgroup:hover{background:#ffeed3}
+.explore-hit.explore-hit-med:hover{background:#f2f7fb}
+.explore-hit-heading{display:flex;align-items:center;gap:8px;min-width:0}
+.explore-hit-symbol{font-size:.87rem;flex:none}
+.explore-hit-name{font-size:.98rem;line-height:1.4;overflow-wrap:anywhere}
+.explore-hit-group .explore-hit-name{color:#2f684b}
+.explore-hit-subgroup .explore-hit-name{color:#a66c22}
+.explore-hit-med .explore-hit-name{color:#285780}
+.explore-hit-meta{font-size:.78rem;color:var(--muted);padding-left:23px}
+.explore-hit-path{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:.76rem;color:#647a70;padding-left:23px}
+.explore-hit-path span:last-child{font-weight:650;color:inherit}
+.explore-hit-direct{display:inline-block;align-self:flex-start;margin:1px 0 0 23px;padding:3px 7px;border-radius:5px;background:#e9f1eb;color:#285e48;font-size:.78rem;font-weight:650}
+.explore-hit-match{padding-left:23px;color:#5e6f79;font-size:.77rem;overflow-wrap:anywhere}
+@media(max-width:600px){.explore-hit{padding:8px 7px}.explore-hit-meta,.explore-hit-path,.explore-hit-match{padding-left:20px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -714,10 +737,17 @@ function renderExplorer(){
   $("exploreCards").innerHTML=hits.length?`<div class="explore-hits">${hits.slice(0,80).map(hit=>{
    const m=hit.med,sec=hit.section;
    const path=[...pathFor(m),m.name,...(sec?[sec.title]:[])];
-   return `<button type="button" class="explore-hit" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">
-    <strong class="explore-hit-name">${esc(searchResultLabel(hit))}</strong>
-    <span class="explore-hit-meta">${isGroup(m)?"🌿 Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span>
+   const group=isGroup(m),subgroup=group&&pathFor(m).length>0;
+   const kind=group?(subgroup?"subgroup":"group"):"med";
+   const p=hit.presentation!==null?m.presentations?.[hit.presentation]:null;
+   const matchedFields=[];
+   if(p?.cip&&query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes("cip"))matchedFields.push("CIP : "+p.cip);
+   if(p?.cis&&query.toLowerCase().includes("cis"))matchedFields.push("CIS : "+p.cis);
+   return `<button type="button" class="explore-hit explore-hit-${kind}" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">
+    <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(searchResultLabel(hit))}</strong></span>
+    <span class="explore-hit-meta">${group?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span>
     <span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>
+    ${matchedFields.length?`<span class="explore-hit-match">${esc(matchedFields.join(" · "))}</span>`:""}
     ${sec?`<span class="explore-hit-direct">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}
    </button>`;
   }).join("")}</div>`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
@@ -852,9 +882,12 @@ function getSearchMatches(queryOverride=null){
  const found=[];
  publicMeds().forEach(m=>{
   const pres=specialtyItems(m);
-  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
-  const matchedPres=pres.filter(x=>tokens.some(t=>norm([x.name,x.p.dosage,x.p.lab,x.p.cip,x.p.cis].join(" ")).includes(t)));
-  const identity=norm([base,...pres.flatMap(x=>[x.name,x.p.dosage,x.p.lab,x.p.form,x.p.cip,x.p.cis])].join(" "));
+  const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
+  // Indexer aussi les intitulés des champs réellement renseignés : « amoxicilline cip »
+  // doit retrouver une présentation possédant un CIP, même si le numéro n'est pas tapé.
+  const presentationSearchText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,x.p.cip?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
+  const matchedPres=pres.filter(x=>tokens.some(t=>presentationSearchText(x).includes(t)));
+  const identity=norm([base,...pres.map(presentationSearchText)].join(" "));
   const sections=(m.sections||[]).filter(x=>x.enabled!==false);
   const all=norm([identity,...sections.map(x=>x.title+" "+x.content)].join(" "));
   if(!q){found.push({med:m,section:null,presentation:null});return}
@@ -863,7 +896,8 @@ function getSearchMatches(queryOverride=null){
    const text=norm(sec.title+" "+sec.content);
    return tokens.some(t=>!identity.includes(t)&& (text.includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key))));
   });
-  const chosenPres=matchedPres.length?matchedPres[0].i:null;
+  const bestPres=matchedPres.find(x=>tokens.every(t=>base.includes(t)||presentationSearchText(x).includes(t)))||matchedPres.find(x=>tokens.some(t=>t==="cip"&&!!x.p.cip||t==="cis"&&!!x.p.cis))||matchedPres[0];
+  const chosenPres=bestPres?bestPres.i:null;
   if(sectionMatches.length)sectionMatches.forEach(section=>found.push({med:m,section,presentation:chosenPres}));
   else found.push({med:m,section:null,presentation:chosenPres});
  });
