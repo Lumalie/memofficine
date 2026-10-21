@@ -388,6 +388,24 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-hit-jump{appearance:none!important;margin:4px 12px 0 34px!important;padding:3px 0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#326b85!important;font-size:.78rem!important;font-weight:650!important;text-align:left!important;cursor:pointer}
 .explore-hit-jump:hover{text-decoration:underline}
 @media(max-width:600px){.explore-hit-content{margin-left:22px;margin-right:6px}.explore-hit-fields{padding-left:22px}.explore-hit-jump{margin-left:22px!important}}
+
+/* V5.79 — résultats de présentations compacts et CIP copiable */
+.explore-hit-presentation{gap:0;padding:0 0 5px}
+.explore-hit-main{display:flex;align-items:center;flex-wrap:wrap;column-gap:8px;row-gap:0;width:100%}
+.explore-hit-presentation .explore-hit-open{width:auto!important;flex:1 1 240px;padding:7px 10px!important;min-width:0}
+.explore-hit-presentation .explore-hit-heading{gap:7px}
+.explore-hit-presentation .explore-hit-name{font-size:.96rem}
+.explore-pres-info{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:0 10px 6px 28px;font-size:.81rem}
+.explore-pres-lab{color:#677a7a}
+.explore-pres-princeps{background:#e8f2e8;border:1px solid #b9d5c2;border-radius:5px;padding:2px 7px;color:#30674c;font-size:.74rem;font-weight:750}
+.explore-cip-copy{appearance:none!important;border:1px solid #c6dce9!important;border-radius:7px!important;background:#eef6fc!important;color:#285b80!important;padding:4px 9px!important;font-size:.8rem!important;font-weight:700!important;cursor:pointer!important;box-shadow:none!important;white-space:normal;overflow-wrap:anywhere}
+.explore-cip-copy:hover,.explore-cip-copy:focus-visible{background:#dbeefa!important;border-color:#7faac7!important}
+.explore-cip-copy span:first-child{font-size:.7rem;letter-spacing:.04em;opacity:.75}
+.presentation-kind-row{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:9px 16px;padding:10px 12px;background:#f6f8f6;border-radius:8px}
+.presentation-kind-row>span:first-child{font-weight:700}
+.presentation-kind-row label{display:inline-flex;align-items:center;gap:5px}
+.presentation-kind-row .hint{margin:0}
+@media(max-width:600px){.explore-pres-info{padding-left:22px}.explore-hit-presentation .explore-hit-open{flex-basis:100%}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -762,27 +780,43 @@ function renderExplorer(){
    const kind=group?(subgroup?"subgroup":"group"):"med";
    const p=hit.presentation!==null?m.presentations?.[hit.presentation]:null;
    const queryTokens=norm(query).split(/\s+/).filter(Boolean);
-   const fields=[];
-   if(p){
-    if(p.name)fields.push("Présentation : "+p.name);
-    if(p.dosage)fields.push("Dosage : "+p.dosage);
-    if(p.lab)fields.push("Laboratoire : "+p.lab);
-    if(p.cip)fields.push("CIP : "+p.cip);
-    if(p.cis)fields.push("CIS : "+p.cis);
-    if(p.form)fields.push("Forme : "+p.form);
-   }
+   const isPresentation=!!p;
+   const presName=String(p?.name||m.name||"").trim();
+   const presDose=String(p?.dosage||m.dosage||"").trim();
+   const presForm=String(p?.form||m.form||"").trim();
+   const presKind=p?.presentationKind||"";
+   const generic=presKind==="generic";
+   const princeps=presKind==="princeps";
+   const presNameWithLab=generic&&p.lab&&!norm(presName).includes(norm(p.lab))?`${presName} ${p.lab}`:presName;
+   const presTitle=[presNameWithLab,...(presDose&&!norm(presName).includes(norm(presDose))?[presDose]:[]),...(presForm&&!norm(presName).includes(norm(presForm))?[presForm]:[])].filter(Boolean).join(" · ");
+   const presLab=""; // Le laboratoire du générique est intégré au titre.
+   const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
+   const cipButton=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
    const preview=sec?searchSectionPreview(sec):"";
-   return `<article class="explore-hit explore-hit-${kind}">
-    <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
-     <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
-     <span class="explore-hit-meta">${group?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span>
-     <span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>
-    </button>
-    ${fields.length?`<div class="explore-hit-fields">${fields.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+   return `<article class="explore-hit explore-hit-${kind} ${isPresentation?"explore-hit-presentation":""}">
+    <div class="explore-hit-main">
+     <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
+      <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(isPresentation?presTitle:searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
+      ${isPresentation?"":`<span class="explore-hit-meta">${group?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span><span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>`}
+     </button>
+     ${isPresentation?`<div class="explore-pres-info">${presBadge}${presLab}${cipButton}</div>`:""}
+    </div>
     ${preview}
     ${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}
    </article>`;
   }).join("")}</div>`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
+  $("exploreCards").querySelectorAll("[data-copy-cip]").forEach(button=>button.onclick=async e=>{
+   e.stopPropagation();
+   const value=button.dataset.copyCip;
+   try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);
+    else{
+     const input=document.createElement("textarea");input.value=value;input.style.position="fixed";input.style.opacity="0";document.body.appendChild(input);input.select();
+     if(!document.execCommand("copy"))throw Error("Copie indisponible");input.remove();
+    }
+    toast("CIP copié : "+value);
+   }catch(err){toast("Copie impossible : sélectionne le CIP manuellement.");}
+  });
   $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null));
   return;
  }
@@ -1159,6 +1193,7 @@ function presentationEditor(p,i){
  const check=(key,label)=>`<label class="presentation-toggle"><input type="checkbox" data-show-field="${key}" ${p[key]===true?"checked":""}><span>${label}</span></label>`;
  const field=(key,label,showKey)=>`<div class="full presentation-edit-row">${check(showKey,label)}<input aria-label="${label}" data-pfield="${key}" ${key==="lab"?'data-memo-kind="lab" list="memo-labs"':""} value="${esc(p[key]||"")}" placeholder="${label}"></div>`;
  return `<div class="presentation-card" data-presentation="${i}"><div class="section-editor-head"><strong>Présentation ${i+1}</strong><button type="button" data-remove-presentation="${i}" class="danger">Retirer</button></div>
+ <div class="presentation-kind-row"><span>Statut de la présentation :</span><label><input type="checkbox" data-pkind="princeps" ${p.presentationKind==="princeps"?"checked":""}> Princeps</label><label><input type="checkbox" data-pkind="generic" ${p.presentationKind==="generic"?"checked":""}> Générique</label><span class="hint">Laisser les deux décochées si non vérifié.</span></div>
  <p class="hint">Coche les critères à afficher sur la fiche. Aucun n'est visible par défaut ; les informations masquées restent enregistrées.</p>
  <div class="presentation-fields">
  ${field("name","Nom","showName")}
@@ -1401,7 +1436,7 @@ const toggleType = () => {
  wireIndividualBadges("f-extra-classes","explorer-class-choices","explorerHiddenClasses");
  wireIndividualBadges("f-indications","explorer-indication-choices","explorerHiddenIndications");
  $("backBtn").onclick=()=>{clearLocalDraft();detailLocation(id);renderDetail()};
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
@@ -1414,7 +1449,7 @@ const toggleType = () => {
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
 function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
