@@ -456,6 +456,24 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .search-suggestions .result-presentation-info .explore-cip-copy{padding:3px 8px!important}
 .search-suggestions .result-dci-badges{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0 21px;align-items:center}
 .search-suggestions .result-dci-badges .badge-button{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:.76rem;font-weight:600;line-height:1.35;cursor:inherit}
+
+/* V5.88 — groupes de recherche comme le sommaire d'Explorer */
+.explore-group-result{min-width:0;padding:0 0 4px;background:transparent;border:0;align-self:start}
+.explore-group-result-line{display:flex;align-items:center;gap:7px;min-height:39px;padding:5px 9px;border-radius:9px;background:#eaf3ed}
+.explore-group-result-sub .explore-group-result-line{background:#fff5e6}
+.explore-group-result-toggle{appearance:none!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#608873!important;min-width:25px;width:25px;padding:2px!important;font-size:1.15rem!important;cursor:pointer}
+.explore-group-result-sub .explore-group-result-toggle{color:#a66c22!important}
+.explore-group-result-name{appearance:none!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#2f684b!important;font-size:.96rem!important;font-weight:700!important;text-align:left!important;padding:0!important;flex:1;cursor:pointer}
+.explore-group-result-sub .explore-group-result-name{color:#a66c22!important}
+.explore-group-result-name:hover,.explore-group-ancestor:hover{text-decoration:underline}
+.explore-group-result-type{color:#82928a;font-size:.72rem}
+.explore-group-result-tags{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 0 35px}
+.explore-group-result-tags .badge-button{font-size:.72rem;padding:3px 7px}
+.explore-group-result-path{margin:7px 0 4px 35px;padding:6px 9px;border-left:2px solid #dce8e1;color:#677e73;font-size:.79rem;line-height:1.7}
+.explore-group-result-path[hidden]{display:none!important}
+.explore-group-ancestor{appearance:none!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;color:#4e7a64!important;font-size:inherit!important;cursor:pointer}
+.explore-group-chevron{padding:0 5px;color:#96a9a0}
+.explore-group-path-label{margin-right:8px;font-size:.72rem;color:#85968c}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -781,6 +799,9 @@ function openExplorerResult(event,button,presentationIndex=null,sectionId=null){
   window.open(url.href,"_blank","noopener");
   return;
  }
+ if(currentView==="explore"){
+  $("exploreSearch").value="";explorerVisibleLimit=20;
+ }
  openMedication(id,presentationIndex,sectionId);
 }
 function medicationForms(m){
@@ -860,6 +881,22 @@ function renderExplorer(){
    const cipButton=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
    const showSectionContent=!!sec&&m.entry_type==="dci"&&hit.presentation===null;
    const preview=showSectionContent?`<details class="explore-preview-details" ${hitIndex<3?"open":""}><summary> ${esc(sec.title)} — ${hitIndex<3?"masquer":"voir"} le contenu</summary>${searchSectionPreview(sec)}</details>`:"";
+   if(group){
+    const tags=`${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}`;
+    const ancestorNodes=parents.map((name,i)=>{
+     const ancestor=entries.find(x=>isGroup(x)&&x.name===name&&pathFor(x).length===i);
+     return ancestor?`<button type="button" class="explore-group-ancestor" data-open-med="${esc(ancestor.id)}">${esc(name)}</button>`:`<span>${esc(name)}</span>`;
+    }).join('<span class="explore-group-chevron" aria-hidden="true">›</span>');
+    return `<article class="explore-group-result ${subgroup?"explore-group-result-sub":""}">
+      <div class="explore-group-result-line">
+       <button type="button" class="explore-group-result-toggle" data-group-path-toggle aria-expanded="false" aria-label="Afficher le chemin du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>
+       <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
+       <span class="explore-group-result-type">Groupe</span>
+      </div>
+      ${tags?`<div class="explore-group-result-tags">${tags}</div>`:""}
+      ${parents.length?`<div class="explore-group-result-path" hidden><span class="explore-group-path-label">Arborescence :</span>${ancestorNodes}<span class="explore-group-chevron" aria-hidden="true">›</span><strong>${esc(m.name)}</strong></div>`:""}
+     </article>`;
+   }
    return `<article class="explore-hit explore-hit-${kind} ${isPresentation?"explore-hit-presentation":""}">
     <div class="explore-hit-main">
      <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(isPresentation?presTitle:m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
@@ -872,6 +909,15 @@ function renderExplorer(){
     ${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}
    </article>`;
   }).join("")}</div>${hits.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 résultats supplémentaires <span>(${hits.length-visibleHits.length} restants)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
+  $("exploreCards").querySelectorAll("[data-group-path-toggle]").forEach(b=>b.onclick=()=>{
+   const path=b.closest(".explore-group-result").querySelector(".explore-group-result-path");
+   if(!path)return;
+   path.hidden=!path.hidden;
+   b.setAttribute("aria-expanded",String(!path.hidden));
+   b.querySelector("span").textContent=path.hidden?"▸":"▾";
+  });
+  $("exploreCards").querySelectorAll("[data-filter-class]").forEach(b=>b.onclick=()=>{classSel.value=b.dataset.filterClass;renderExplorer()});
+  $("exploreCards").querySelectorAll("[data-filter-ind]").forEach(b=>b.onclick=()=>{indSel.value=b.dataset.filterInd;renderExplorer()});
   const showMore=$("exploreShowMore");if(showMore)showMore.onclick=()=>{explorerVisibleLimit+=20;renderExplorer()};
   $("exploreCards").querySelectorAll("[data-copy-cip]").forEach(button=>button.onclick=async e=>{
    e.stopPropagation();
