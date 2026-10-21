@@ -913,7 +913,7 @@ function renderExplorer(){
      <div class="explore-search-child-line">
       ${hasChildren?`<button type="button" class="explore-search-child-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier ${esc(child.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
       <button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">${esc(displayMedName(child))}</button>
-      <span class="explore-search-child-type">${isGroup(child)?"Groupe":child.entry_type==="dci"?"DCI":"Médicament"}</span>
+      
      </div>
      ${hasChildren?`<div class="explore-search-child-nested" hidden>${nested}</div>`:""}
     </div>`;
@@ -961,7 +961,7 @@ function renderExplorer(){
       <div class="explore-group-result-line">
        ${((childrenByParent.get(m.id)||[]).length)?`<button type="button" class="explore-group-result-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier les fiches du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
        <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
-       <span class="explore-group-result-type">Groupe</span>
+       
       </div>
       ${tags?`<div class="explore-group-result-tags">${tags}</div>`:""}
       <div class="explore-search-child-nested explore-search-root-children" hidden>${renderSearchChildren(m.id)}</div>
@@ -1070,7 +1070,7 @@ function renderExplorer(){
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
     <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}" ${specialtyPresentations.length===1?`data-open-pres="${specialtyPresentations[0].i}"`:""}>${esc(specialtyPresentations.length===1?presentationTitle(specialtyPresentations[0].p):displayMedName(m))}</button>
-    <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
+    
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
    ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${((m.entry_type==="dci"?explorerBadgeVisible(m,"forms"):true)?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
