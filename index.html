@@ -367,6 +367,27 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-hit-direct{display:inline-block;align-self:flex-start;margin:1px 0 0 23px;padding:3px 7px;border-radius:5px;background:#e9f1eb;color:#285e48;font-size:.78rem;font-weight:650}
 .explore-hit-match{padding-left:23px;color:#5e6f79;font-size:.77rem;overflow-wrap:anywhere}
 @media(max-width:600px){.explore-hit{padding:8px 7px}.explore-hit-meta,.explore-hit-path,.explore-hit-match{padding-left:20px}}
+
+/* V5.78 : résultats de recherche exhaustifs, contenu immédiatement consultable */
+.explore-hits{gap:9px}
+.explore-hit{padding:0 0 9px 0;overflow:hidden}
+.explore-hit-open{appearance:none!important;display:block!important;width:100%;padding:10px 13px!important;border:0!important;background:transparent!important;color:inherit!important;text-align:left!important;cursor:pointer;box-shadow:none!important;border-radius:0!important}
+.explore-hit-open:hover,.explore-hit-open:focus-visible{background:#f2f7f5!important}
+.explore-hit-group .explore-hit-open{background:#eaf3ed!important}
+.explore-hit-subgroup .explore-hit-open{background:#fff5e6!important}
+.explore-hit-arrow{margin-left:auto;font-size:1rem;color:#739286}
+.explore-hit-fields{display:flex;flex-wrap:wrap;gap:5px 12px;padding:3px 13px 6px 35px;font-size:.8rem;color:#526c79}
+.explore-hit-fields span{overflow-wrap:anywhere}
+.explore-hit-fields span+span:before{content:"·";margin-right:10px;color:#a4b4b5}
+.explore-hit-content{margin:5px 12px 4px 34px;padding:7px 11px;background:#f7faf9;border-left:2px solid #c8dcd3;border-radius:0 7px 7px 0;font-size:.91rem;overflow-wrap:anywhere;min-width:0}
+.explore-hit-content .section{padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.explore-hit-content .section h3{margin:0 0 6px!important;font-size:.89rem;color:#365d50}
+.explore-hit-content p{margin:5px 0}
+.explore-hit-content .med-table{width:100%;font-size:.85rem}
+.explore-hit-content table{display:block;overflow-x:auto;max-width:100%}
+.explore-hit-jump{appearance:none!important;margin:4px 12px 0 34px!important;padding:3px 0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#326b85!important;font-size:.78rem!important;font-weight:650!important;text-align:left!important;cursor:pointer}
+.explore-hit-jump:hover{text-decoration:underline}
+@media(max-width:600px){.explore-hit-content{margin-left:22px;margin-right:6px}.explore-hit-fields{padding-left:22px}.explore-hit-jump{margin-left:22px!important}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -733,23 +754,34 @@ function renderExplorer(){
    }
    return names;
   };
-  $("exploreSearchCount").textContent=`${hits.length} résultat${hits.length===1?"":"s"} dans ${filtered.length} fiche${filtered.length===1?"":"s"}`;
-  $("exploreCards").innerHTML=hits.length?`<div class="explore-hits">${hits.slice(0,80).map(hit=>{
+  $("exploreSearchCount").textContent=`${hits.length} correspondance${hits.length===1?"":"s"} dans ${filtered.length} fiche${filtered.length===1?"":"s"}`;
+  $("exploreCards").innerHTML=hits.length?`<div class="explore-hits">${hits.map(hit=>{
    const m=hit.med,sec=hit.section;
-   const path=[...pathFor(m),m.name,...(sec?[sec.title]:[])];
-   const group=isGroup(m),subgroup=group&&pathFor(m).length>0;
+   const parents=pathFor(m),path=[...parents,m.name,...(sec?[sec.title]:[])];
+   const group=isGroup(m),subgroup=group&&parents.length>0;
    const kind=group?(subgroup?"subgroup":"group"):"med";
    const p=hit.presentation!==null?m.presentations?.[hit.presentation]:null;
-   const matchedFields=[];
-   if(p?.cip&&query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes("cip"))matchedFields.push("CIP : "+p.cip);
-   if(p?.cis&&query.toLowerCase().includes("cis"))matchedFields.push("CIS : "+p.cis);
-   return `<button type="button" class="explore-hit explore-hit-${kind}" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">
-    <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(searchResultLabel(hit))}</strong></span>
-    <span class="explore-hit-meta">${group?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span>
-    <span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>
-    ${matchedFields.length?`<span class="explore-hit-match">${esc(matchedFields.join(" · "))}</span>`:""}
-    ${sec?`<span class="explore-hit-direct">↳ ${esc(sec.title)} — ouvrir directement</span>`:""}
-   </button>`;
+   const queryTokens=norm(query).split(/\s+/).filter(Boolean);
+   const fields=[];
+   if(p){
+    if(p.name)fields.push("Présentation : "+p.name);
+    if(p.dosage)fields.push("Dosage : "+p.dosage);
+    if(p.lab)fields.push("Laboratoire : "+p.lab);
+    if(p.cip)fields.push("CIP : "+p.cip);
+    if(p.cis)fields.push("CIS : "+p.cis);
+    if(p.form)fields.push("Forme : "+p.form);
+   }
+   const preview=sec?searchSectionPreview(sec):"";
+   return `<article class="explore-hit explore-hit-${kind}">
+    <button type="button" class="explore-hit-open" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec?.id||"")}" data-hit-pres="${hit.presentation===null?"":hit.presentation}" aria-label="Ouvrir ${esc(m.name)}${sec?" à la rubrique "+esc(sec.title):""}">
+     <span class="explore-hit-heading"><span class="explore-hit-symbol" aria-hidden="true">${group?"▸":"●"}</span><strong class="explore-hit-name">${esc(searchResultLabel(hit))}</strong><span class="explore-hit-arrow" aria-hidden="true">↗</span></span>
+     <span class="explore-hit-meta">${group?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":esc(m.dci||"Médicament")} · ${esc(m.category||"Sans famille")}</span>
+     <span class="explore-hit-path">${path.map((part,i)=>`<span>${esc(part)}</span>${i<path.length-1?'<span aria-hidden="true">›</span>':''}`).join("")}</span>
+    </button>
+    ${fields.length?`<div class="explore-hit-fields">${fields.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+    ${preview}
+    ${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}
+   </article>`;
   }).join("")}</div>`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
   $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>b.onclick=()=>openMedication(b.dataset.openMed,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null));
   return;
@@ -879,40 +911,45 @@ function getSearchMatches(queryOverride=null){
  const q=norm(queryOverride===null?$("search").value.trim():queryOverride);
  const tokens=q.split(/\s+/).filter(Boolean);
  const synonyms={oubli:["oubli","oublie","oubliee"],prise:["prise","repas","jeun","manger"],interactions:["interaction","association"],conservation:["conservation","conserver","frigo"],posologie:["posologie","dose"],ecrasement:["ecraser","broyer","piler","ecrasement"]};
+ const fieldMatch=(t,sec)=>norm(sec.id+" "+sec.title+" "+sec.content).includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key));
  const found=[];
  publicMeds().forEach(m=>{
-  const pres=specialtyItems(m);
   const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
-  // Indexer aussi les intitulés des champs réellement renseignés : « amoxicilline cip »
-  // doit retrouver une présentation possédant un CIP, même si le numéro n'est pas tapé.
-  const presentationSearchText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,x.p.cip?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
-  const matchedPres=pres.filter(x=>tokens.some(t=>presentationSearchText(x).includes(t)));
-  const identity=norm([base,...pres.map(presentationSearchText)].join(" "));
+  const presentations=specialtyItems(m);
+  const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,x.p.cip?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
   const sections=(m.sections||[]).filter(x=>x.enabled!==false);
-  const all=norm([identity,...sections.map(x=>x.title+" "+x.content)].join(" "));
-  if(!q){found.push({med:m,section:null,presentation:null});return}
-  if(!tokens.every(t=>all.includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&sections.some(sec=>norm(sec.id+" "+sec.title).includes(key)))))return;
-  const sectionMatches=sections.filter(sec=>{
-   const text=norm(sec.title+" "+sec.content);
-   return tokens.some(t=>!identity.includes(t)&& (text.includes(t)||Object.entries(synonyms).some(([key,terms])=>terms.includes(t)&&norm(sec.id+" "+sec.title).includes(key))));
+  const secText=norm(sections.map(x=>x.id+" "+x.title+" "+x.content).join(" "));
+  const combined=norm([base,...presentations.map(presText),secText].join(" "));
+  if(!tokens.length){found.push({med:m,section:null,presentation:null});return}
+  if(!tokens.every(t=>combined.includes(t)||sections.some(sec=>fieldMatch(t,sec))))return;
+  const matchingSections=sections.filter(sec=>{
+   const st=norm(sec.id+" "+sec.title+" "+sec.content);
+   return tokens.some(t=>fieldMatch(t,sec)&&(!base.includes(t)||st.includes(t)&&tokens.some(other=>other!==t&&base.includes(other))));
   });
-  const bestPres=matchedPres.find(x=>tokens.every(t=>base.includes(t)||presentationSearchText(x).includes(t)))||matchedPres.find(x=>tokens.some(t=>t==="cip"&&!!x.p.cip||t==="cis"&&!!x.p.cis))||matchedPres[0];
-  const chosenPres=bestPres?bestPres.i:null;
-  if(sectionMatches.length)sectionMatches.forEach(section=>found.push({med:m,section,presentation:chosenPres}));
-  else found.push({med:m,section:null,presentation:chosenPres});
+  // Une recherche portant sur une donnée de présentation (CIP, CIS, labo,
+  // forme, dosage, ou valeur précise) doit produire un résultat PAR présentation.
+  const specificPres=tokens.some(t=>t==="cip"||t==="cis"||t==="laboratoire"||t==="labo"||presentations.some(x=>presText(x).includes(t)&&!base.includes(t)&&!secText.includes(t)));
+  let matchingPresentations=presentations.filter(x=>tokens.every(t=>base.includes(t)||secText.includes(t)||presText(x).includes(t)||sections.some(sec=>fieldMatch(t,sec))));
+  if(specificPres){
+   matchingPresentations=matchingPresentations.filter(x=>tokens.every(t=>t!=="cip"&&t!=="cis"||t==="cip"&&!!x.p.cip||t==="cis"&&!!x.p.cis));
+   if(!matchingPresentations.length)return;
+  }
+  const indexes=specificPres?matchingPresentations.map(x=>x.i):[null];
+  for(const presentation of indexes){
+   if(matchingSections.length)for(const section of matchingSections)found.push({med:m,section,presentation});
+   else found.push({med:m,section:null,presentation});
+  }
  });
- // Les fiches groupes sont de vrais résultats de recherche, en priorité à pertinence égale.
- // Une recherche sur le nom d'un groupe le fait apparaître avant les fiches individuelles.
  return found.sort((a,b)=>{
-  const score=item=>{
-   const name=norm(item.med.name);
-   const exact=name===q?100:0;
-   const starts=name.startsWith(q)?40:0;
-   const nameMatch=name.includes(q)?20:0;
-   return exact+starts+nameMatch+(isGroup(item.med)?5:0);
-  };
-  return score(b)-score(a);
+  const score=item=>{const name=norm(item.med.name);return (name===q?100:0)+(name.startsWith(q)?40:0)+tokens.filter(t=>name.includes(t)).length*15+(isGroup(item.med)?5:0)};
+  return score(b)-score(a)||String(a.med.name).localeCompare(String(b.med.name),"fr")||(a.presentation??-1)-(b.presentation??-1);
  });
+}
+function searchSectionPreview(sec){
+ if(!sec||!String(sec.content||"").trim())return "";
+ // Utiliser le moteur de rendu existant pour préserver listes, tableaux,
+ // mise en forme et retours à la ligne de la fiche source.
+ return `<div class="explore-hit-content">${renderSection(sec).replace(/\sid="section-[^"]*"/g,"")}</div>`;
 }
 let openedSearchFiche=false;
 function updateSearchPlacement(){
@@ -949,7 +986,7 @@ function renderResults(){
  $('count').textContent=found.length+' résultat'+(found.length===1?'':'s');
  $('results').innerHTML=found.length?found.slice(0,35).map(item=>{
    const m=item.med,sec=item.section;
-   return `<div class="result" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(searchResultLabel(item))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — ouvrir directement</span>`:''}</div>`;
+   return `<div class="result" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}"><strong>${esc(searchResultLabel(item))}</strong><div class="sub">${isGroup(m)?'🌿 Fiche groupe':m.entry_type==='dci'?'Fiche DCI':esc(m.dci||'Substance(s) active(s) à renseigner')} · ${esc(m.category||'Sans famille')}</div>${sec?`<span class="direct-hit">↳ ${esc(sec.title)} — accéder à cette rubrique</span>`:''}</div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
  $('results').querySelectorAll('.result').forEach(el=>{
    const choose=()=>openMedication(el.dataset.id,el.dataset.presentation===''?null:Number(el.dataset.presentation),el.dataset.section||null);
@@ -1014,18 +1051,22 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  };
  $("editBtn").onclick=()=>{if(!admin){toast("Connecte-toi en administratrice pour modifier cette fiche.");showLogin();return;}renderEditor(m.id);};
  $("detail").querySelectorAll("[data-presentation-select]").forEach(sel=>sel.onchange=()=>{const target=$("presentation-info");if(!target)return;const index=sel.value===""?null:Number(sel.value);target.innerHTML=index!==null&&m.presentations?.[index]?presentationInfo(m.presentations[index]):""});
- if(targetPresentationIndex!==null){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
+ if(targetPresentationIndex!==null&&!targetSectionId){const details=$("presentations-details");if(details){details.open=true;const choice=$("presentation-choice");if(choice&&m.presentations?.[targetPresentationIndex]){choice.value=String(targetPresentationIndex);$("presentation-info").innerHTML=presentationInfo(m.presentations[targetPresentationIndex])}requestAnimationFrame(()=>details.scrollIntoView({behavior:"smooth",block:"start"}))}}
  if(targetSectionId){
-   // Attendre la restauration de la position de la vue avant le saut ciblé.
-   // Sinon restoreViewScroll() peut ramener la page à son ancienne position.
-   requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    if(selectedId!==m.id||currentView!=="home")return;
-    const target=document.getElementById("section-"+CSS.escape(targetSectionId));
+   // La restauration de défilement de la vue se fait sur plusieurs frames.
+   // Le saut ciblé intervient ensuite, et est réajusté après le rendu des polices/images.
+   const ficheId=m.id,sectionId=targetSectionId;
+   const jumpToSection=(attempt=0)=>{
+    if(selectedId!==ficheId||currentView!=="home")return;
+    const target=document.getElementById("section-"+CSS.escape(sectionId));
     if(!target)return;
     target.classList.add("direct-target");
-    target.scrollIntoView({behavior:"instant",block:"start"});
-    viewScrollPositions.home=window.scrollY;
-   })));
+    const top=Math.max(0,window.scrollY+target.getBoundingClientRect().top-18);
+    window.scrollTo({top,behavior:attempt===0?"smooth":"instant"});
+    viewScrollPositions.home=top;
+    if(attempt===0)setTimeout(()=>jumpToSection(1),450);
+   };
+   requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>jumpToSection())));
  }
 }
 // Copie enrichie d'un passage sélectionné dans une fiche, sans bouton supplémentaire.
