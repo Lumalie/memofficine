@@ -630,6 +630,10 @@ async function loadCloudMeds(){
  if(wasEditing)saveLocalDraft();
  meds=(data||[]).map(rowToMed);
  renderSources();
+ // Explorer peut déjà être affiché lors d'un rafraîchissement sur #explorer.
+ // Sa première génération a lieu avant la réponse asynchrone de Supabase :
+ // la reconstruire dès que les fiches sont chargées, sans intervention utilisateur.
+ if(currentView==="explore")renderExplorer();
  const requestedId=new URLSearchParams(window.location.search).get("fiche");
  selectedId=meds.find(m=>m.id===requestedId&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
  if(requestedId)openedSearchFiche=true;
@@ -2173,6 +2177,8 @@ if(!location.search&&!location.hash){
   }
  }catch(e){}
 }
-openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");initCloud();
+openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");
+if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
+initCloud();
 </script>
 </body></html>
