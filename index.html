@@ -320,6 +320,30 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .fiche-breadcrumb .breadcrumb-current{font-weight:750}
 .fiche-breadcrumb .breadcrumb-current-med{color:#285780}
 @media(max-width:600px){.fiche-breadcrumb{gap:5px 7px;margin-bottom:10px;padding-bottom:6px}}
+
+/* V5.75 — Explorer aéré : hiérarchie à traits, titres pastel, fiches sans cadres */
+.explore-tree{display:grid;gap:10px;width:100%}
+.explore-tree .explore-tree-node{min-width:0;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:0!important}
+.explore-tree .explore-tree-line{min-height:34px;gap:7px;flex-wrap:wrap;border-radius:8px;padding:5px 8px;transition:background-color .15s ease}
+.explore-tree .explore-tree-root-group>.explore-tree-line{background:#eaf3ed}
+.explore-tree .explore-tree-subgroup>.explore-tree-line{background:#fff5e6}
+.explore-tree .explore-tree-med>.explore-tree-line{background:transparent}
+.explore-tree .explore-tree-med>.explore-tree-line:hover{background:#f2f7fb}
+.explore-tree .explore-tree-root-group>.explore-tree-line:hover{background:#e0eee5}
+.explore-tree .explore-tree-subgroup>.explore-tree-line:hover{background:#ffeed3}
+.explore-tree .explore-tree-root-group>.explore-tree-line .explore-tree-name{color:#2f684b!important}
+.explore-tree .explore-tree-subgroup>.explore-tree-line .explore-tree-name{color:#a66c22!important}
+.explore-tree .explore-tree-med>.explore-tree-line .explore-tree-name{color:#285780!important;font-weight:600}
+.explore-tree .explore-tree-name{font-size:.96rem;line-height:1.4;overflow-wrap:anywhere}
+.explore-tree .explore-tree-type{font-size:.69rem;opacity:.75}
+.explore-tree .explore-tree-med>.explore-tree-line>.explore-tree-icon{color:#5386b8;font-size:.75rem}
+.explore-tree .explore-tree-children{border-left:2px solid #dce8e1!important;margin:4px 0 2px 15px!important;padding-left:clamp(8px,1.5vw,15px)!important;display:grid;gap:4px}
+.explore-tree .explore-tree-tags{margin:3px 0 6px 36px;gap:4px}
+.explore-tree .explore-tree-tags .badge-button{font-size:.72rem;padding:3px 7px}
+.explore-tree .explore-tree-toggle{width:24px;min-width:24px;height:25px;color:#608873!important}
+.explore-tree .explore-tree-leaf-space{width:24px;flex-basis:24px}
+.explore-tree .explore-tree-subgroup>.explore-tree-line>.explore-tree-toggle{color:#aa762e!important}
+@media(max-width:650px){.explore-tree .explore-tree-line{padding:5px 6px;gap:5px}.explore-tree .explore-tree-children{margin-left:9px!important;padding-left:8px!important}.explore-tree .explore-tree-type{margin-left:auto}.explore-tree .explore-tree-tags{margin-left:30px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -724,7 +748,7 @@ function renderExplorer(){
   const kids=isGroup(m)?childrenOf(m.id):[];
   const forms=medicationForms(m);
   const isMatch=filtered.some(x=>x.id===m.id);
-  return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
+  return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
    <div class="explore-tree-line">
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
