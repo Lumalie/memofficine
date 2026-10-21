@@ -406,6 +406,10 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .presentation-kind-row label{display:inline-flex;align-items:center;gap:5px}
 .presentation-kind-row .hint{margin:0}
 @media(max-width:600px){.explore-pres-info{padding-left:22px}.explore-hit-presentation .explore-hit-open{flex-basis:100%}}
+.explore-tree-presentations{display:flex;flex-direction:column;align-items:flex-start;gap:3px;margin:3px 0 5px 22px}
+.explore-tree-presentation{background:transparent!important;border:0!important;box-shadow:none!important;padding:3px 5px!important;color:#315f85!important;text-align:left!important;font-size:.88rem!important;cursor:pointer}
+.explore-tree-presentation:hover{text-decoration:underline}
+.explore-pres-princeps-inline{margin-left:8px;padding:1px 6px;border-radius:5px;background:#e8f2e8;color:#30674c;font-size:.72rem;font-weight:700}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -844,13 +848,22 @@ function renderExplorer(){
   const kids=isGroup(m)?childrenOf(m.id):[];
   const forms=medicationForms(m);
   const isMatch=filtered.some(x=>x.id===m.id);
+  const specialtyPresentations=m.entry_type==="specialite"?specialtyItems(m):[];
+  const presentationTitle=p=>{
+   const name=String(p.name||m.name||"").trim();
+   const lab=p.presentationKind==="generic"&&p.lab&&!norm(name).includes(norm(p.lab))?" "+p.lab:"";
+   const dose=String(p.dosage||m.dosage||"").trim();
+   const form=String(p.form||m.form||"").trim();
+   return [name+lab,...(dose&&!norm(name).includes(norm(dose))?[dose]:[]),...(form&&!norm(name).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
+  };
   return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
    <div class="explore-tree-line">
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
-    <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}">${esc(displayMedName(m))}</button>
+    <button type="button" class="explore-tree-name" data-open-med="${esc(m.id)}" ${specialtyPresentations.length===1?`data-open-pres="${specialtyPresentations[0].i}"`:""}>${esc(specialtyPresentations.length===1?presentationTitle(specialtyPresentations[0].p):displayMedName(m))}</button>
     <span class="explore-tree-type">${isGroup(m)?"Groupe":m.entry_type==="dci"?"DCI":"Médicament"}</span>
    </div>
+   ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
    ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${((m.entry_type==="dci"?explorerBadgeVisible(m,"forms"):true)?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
    ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
@@ -968,7 +981,8 @@ function getSearchMatches(queryOverride=null){
    matchingPresentations=matchingPresentations.filter(x=>tokens.every(t=>t!=="cip"&&t!=="cis"||t==="cip"&&!!x.p.cip||t==="cis"&&!!x.p.cis));
    if(!matchingPresentations.length)return;
   }
-  const indexes=specificPres?matchingPresentations.map(x=>x.i):[null];
+  const indexes=specificPres?matchingPresentations.map(x=>x.i)
+   :(m.entry_type==="specialite"&&presentations.length?presentations.map(x=>x.i):[null]);
   for(const presentation of indexes){
    if(matchingSections.length)for(const section of matchingSections)found.push({med:m,section,presentation});
    else found.push({med:m,section:null,presentation});
