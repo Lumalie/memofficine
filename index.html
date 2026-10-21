@@ -1153,12 +1153,25 @@ function getSearchMatches(queryOverride=null){
    ...matchingPresentations.map(x=>x.i)
   ];
   if(!indexes.length)return;
+  // Une fiche groupe correspond à une seule entrée dans la recherche,
+  // même si plusieurs rubriques ou champs correspondent aux mots saisis.
+  // Les présentations de médicaments restent, elles, des résultats distincts.
+  if(isGroup(m)){
+   found.push({med:m,section:null,presentation:null});
+   return;
+  }
   for(const presentation of indexes){
    if(matchingSections.length)for(const section of matchingSections)found.push({med:m,section,presentation});
    else found.push({med:m,section:null,presentation});
   }
  });
- return found.sort((a,b)=>{
+ const uniqueGroups=new Set();
+ return found.filter(item=>{
+  if(!isGroup(item.med))return true;
+  const id=String(item.med.id);
+  if(uniqueGroups.has(id))return false;
+  uniqueGroups.add(id);return true;
+ }).sort((a,b)=>{
   const score=item=>{const name=norm(item.med.name);return (name===q?100:0)+(name.startsWith(q)?40:0)+tokens.filter(t=>name.includes(t)).length*15+(isGroup(item.med)?5:0)};
   return score(b)-score(a)||String(a.med.name).localeCompare(String(b.med.name),"fr")||(a.presentation??-1)-(b.presentation??-1);
  });
