@@ -595,6 +595,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .priority-alert .priority-bullet-symbol{color:#b34855}
 .priority-advice .priority-bullet-symbol{color:#a65c85}
 @media(max-width:700px){.priority-card.priority-alert,.priority-card.priority-advice{padding:10px 12px!important}}
+
+/* V6.06 — palette d'arborescence commune, extensible à huit profondeurs */
+.fiche-breadcrumb .breadcrumb-group-level,.fiche-breadcrumb .breadcrumb-current-group-level{color:var(--group-fg)!important}
+.fiche-breadcrumb .breadcrumb-group-level:hover{background:var(--group-bg)!important;border-radius:4px}
+.group-associations .associated-group{background:var(--group-bg)!important;border-color:var(--group-border)!important;color:var(--group-fg)!important}
+.explore-tree .explore-tree-group>.explore-tree-line{background:var(--group-bg)!important}
+.explore-tree .explore-tree-group>.explore-tree-line .explore-tree-name,.explore-tree .explore-tree-group>.explore-tree-line>.explore-tree-toggle{color:var(--group-fg)!important}
+.explore-group-result .explore-group-result-line{background:var(--group-bg)!important}
+.explore-group-result .explore-group-result-name,.explore-group-result .explore-group-result-toggle{color:var(--group-fg)!important}
+.explore-group-result{border-left-color:var(--group-border)!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -881,19 +891,42 @@ function childGroups(group,visible=publicMeds()){
  return visible.filter(m=>isGroup(m)&&parentGroupId(m)===group.id)
  .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
 }
+// Palette cyclique par profondeur : mêmes couleurs dans Explorer, le fil
+// d’Ariane et les sous-groupes associés, quelle que soit la profondeur.
+const GROUP_LEVEL_COLORS=[
+ {bg:"#eaf3ed",fg:"#2f684b",border:"#a8ccb3"}, // vert sauge
+ {bg:"#fff5e6",fg:"#a66c22",border:"#e5b66c"}, // jaune orangé
+ {bg:"#edf0fc",fg:"#585e9d",border:"#bdc4ed"}, // lavande
+ {bg:"#f8e9f1",fg:"#873f66",border:"#dfb5cc"}, // rose poudré
+ {bg:"#e7f3f4",fg:"#326f77",border:"#a7d1d5"}, // bleu lagon
+ {bg:"#f3eddf",fg:"#806138",border:"#d9c49a"}, // sable
+ {bg:"#f0eaf8",fg:"#765494",border:"#cbb6de"}, // lilas
+ {bg:"#eef2df",fg:"#657b32",border:"#c8d49c"}  // olive doux
+];
+function groupDepth(group,visible=publicMeds()){
+ const byId=new Map(visible.filter(isGroup).map(g=>[String(g.id),g]));
+ const seen=new Set([String(group.id)]);let id=String(parentGroupId(group)||"");let depth=0;
+ while(id&&!seen.has(id)&&byId.has(id)){
+  seen.add(id);depth++;id=String(parentGroupId(byId.get(id))||"");
+ }
+ return depth;
+}
+function groupLevelStyle(depth){
+ const c=GROUP_LEVEL_COLORS[Math.max(0,depth)%GROUP_LEVEL_COLORS.length];
+ return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;
+}
 function ficheBreadcrumb(m){
  const visible=publicMeds(),byId=new Map(visible.map(x=>[String(x.id),x]));
  const chain=[],seen=new Set([String(m.id)]);
  let id=String(parentGroupId(m)||"");
  while(id&&!seen.has(id)){
-  seen.add(id);
-  const group=byId.get(id);
+  seen.add(id);const group=byId.get(id);
   if(!group||!isGroup(group))break;
-  chain.unshift(group);
-  id=String(parentGroupId(group)||"");
+  chain.unshift(group);id=String(parentGroupId(group)||"");
  }
- return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link ${i===0?"breadcrumb-root":"breadcrumb-subgroup"}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)?(chain.length?"breadcrumb-current-subgroup":"breadcrumb-current-group"):"breadcrumb-current-med"}" aria-current="page">${esc(displayMedName(m))}</span></nav>`;
+ return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link breadcrumb-group-level" style="${groupLevelStyle(i)}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" ${isGroup(m)?`style="${groupLevelStyle(chain.length)}"`:""} aria-current="page">${esc(displayMedName(m))}</span></nav>`;
 }
+
 function indicationTags(m){
  const raw=(m.sections||[]).find(s=>s.id==="indications")?.indicationTags||[];
  return Array.isArray(raw)?raw.filter(Boolean):[];
@@ -1102,7 +1135,7 @@ function renderExplorer(){
      const ancestor=entries.find(x=>isGroup(x)&&x.name===name&&pathFor(x).length===i);
      return ancestor?`<button type="button" class="explore-group-ancestor" data-open-med="${esc(ancestor.id)}">${esc(name)}</button>`:`<span>${esc(name)}</span>`;
     }).join('<span class="explore-group-chevron" aria-hidden="true">›</span>');
-    return `<article class="explore-group-result ${subgroup?"explore-group-result-sub":""}">
+    return `<article class="explore-group-result ${subgroup?"explore-group-result-sub":""}" style="${groupLevelStyle(groupDepth(m))}">
       <div class="explore-group-result-line">
        ${((childrenByParent.get(m.id)||[]).length)?`<button type="button" class="explore-group-result-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier les fiches du groupe ${esc(m.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
        <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
@@ -1215,7 +1248,7 @@ function renderExplorer(){
    const form=String(p.form||m.form||"").trim();
    return [name+lab,...(dose&&!norm(name).includes(norm(dose))?[dose]:[]),...(form&&!norm(name).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
   };
-  return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)}">
+  return `<div class="explore-tree-node ${isGroup(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)};${isGroup(m)?groupLevelStyle(depth):""}">
    <div class="explore-tree-line">
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
@@ -1516,7 +1549,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
  ${m.entry_type==="dci"&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
- ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>${subgroups.length?`<div class="associated-section"><h4>Sous-groupes</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" type="button" data-group-open="${esc(g.id)}"><span aria-hidden="true">▣</span> ${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}${children.length?`<div class="associated-section"><h4>Fiches médicaments associées</h4><div class="associated-items">${children.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}"><span aria-hidden="true">💊</span> ${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}</div></div>`:""}
+ ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>${subgroups.length?`<div class="associated-section"><h4>Sous-groupes</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" style="${groupLevelStyle(groupDepth(g))}" type="button" data-group-open="${esc(g.id)}"><span aria-hidden="true">▣</span> ${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}${children.length?`<div class="associated-section"><h4>Fiches médicaments associées</h4><div class="associated-items">${children.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}"><span aria-hidden="true">💊</span> ${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}</div></div>`:""}
 
  ${isGroup(m)?"":renderPresentations(m)}
  ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
@@ -1685,10 +1718,10 @@ async function uploadPresentationPhotos(m){
 }
 
 // Format léger et sécurisé : seules les marques créées par la barre d'outils sont interprétées.
-const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#abb8c3'};
+const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#87949c',pink:'#a34e7e'};
 function richInline(raw){
  let html=esc(raw);
- html=html.replace(/\[\[(default|green|red|orange|blue|gray)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
+ html=html.replace(/\[\[(default|green|red|orange|blue|gray|pink)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
  // Liens Markdown : seules les adresses HTTP(S) sont autorisées.
  html=html.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>\)]+)\)/gi,(_match,label,url)=>{
   const safe=validSourceLink(url.replace(/&amp;/g,"&"));
@@ -1738,7 +1771,16 @@ function wireTextFormatting(){
   };
   bubble.querySelectorAll('[data-format]').forEach(btn=>btn.addEventListener('click',()=>apply(btn.dataset.format)));
   const picker=bubble.querySelector('[data-text-color]');
-  picker.addEventListener('change',()=>{if(picker.value)apply('color:'+picker.value);picker.value=''});
+  let savedSelection=null;
+  area.addEventListener('select',()=>{if(area.selectionStart!==area.selectionEnd)savedSelection=[area.selectionStart,area.selectionEnd]});
+  picker.addEventListener('mousedown',()=>{savedSelection=[area.selectionStart,area.selectionEnd]});
+  picker.addEventListener('change',()=>{
+   if(picker.value){
+    if(savedSelection&&savedSelection[0]!==savedSelection[1])area.setSelectionRange(...savedSelection);
+    apply('color:'+picker.value);
+   }
+   picker.value='';savedSelection=null;
+  });
   refresh();
  });
 }
@@ -1991,7 +2033,7 @@ function tableCellToolbar(){
  <button type="button" data-cell-format="italic" title="Italique"><i>I</i></button>
  <button type="button" data-cell-format="underline" title="Souligné"><u>S</u></button>
  <button type="button" data-cell-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button>
- <select data-cell-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select>
+ <select data-cell-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select>
  </div><div class="table-cell-preview" hidden></div>`;
 }
 function tableGridEditor(content){
@@ -2076,7 +2118,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
