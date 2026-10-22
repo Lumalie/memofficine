@@ -540,6 +540,18 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-specialty-direct>.explore-hit-jump{margin:3px 6px 7px}
 .search-suggestions .result .explore-hit-content{margin:7px 0 3px 20px;max-height:220px;overflow:auto;border-left:2px solid #d3e3ed;padding:5px 9px;font-size:.83rem;line-height:1.5}
 .search-suggestions .result .explore-hit-content *{max-width:100%}
+
+/* V5.98 — accès direct à la rubrique sans liens redondants */
+.explore-preview-direct{margin:6px 5px 7px 22px;min-width:0}
+.explore-preview-title{display:inline-flex;align-items:center;gap:9px;background:transparent!important;border:0!important;box-shadow:none!important;padding:4px 2px!important;color:#32694f!important;font-size:.88rem!important;font-weight:750!important;text-align:left;cursor:pointer}
+.explore-preview-title:hover,.explore-preview-title:focus-visible{text-decoration:underline;color:#24543b!important}
+.explore-preview-title span{font-size:.78rem;font-weight:400;color:#789a8e}
+.explore-preview-direct .explore-hit-content{margin:3px 0 0;padding:7px 10px;border-left:2px solid #d4e4da;overflow-wrap:anywhere}
+#exploreCards .explore-hit:has(.explore-preview-direct){grid-column:1/-1}
+.result-section-direct{margin:7px 0 3px 21px;padding:5px 8px;border-left:2px solid #d4e4da;cursor:pointer}
+.result-section-title{display:block;font-size:.83rem;font-weight:750;color:#32694f;margin-bottom:4px}
+.result-section-direct:hover .result-section-title{text-decoration:underline}
+.result-section-direct .explore-hit-content{margin:0!important;padding:0!important;border:0!important;max-height:220px;overflow:auto}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1036,7 +1048,7 @@ function renderExplorer(){
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
    const cipButton=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
    const showSectionContent=!!sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!group;
-   const preview=showSectionContent?`<details class="explore-preview-details" ${hitIndex<3?"open":""}><summary> ${esc(sec.title)} — ${hitIndex<3?"masquer":"voir"} le contenu</summary>${searchSectionPreview(sec)}</details>`:"";
+   const preview=showSectionContent?`<div class="explore-preview-direct"><button type="button" class="explore-preview-title" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" title="Ouvrir la rubrique ${esc(sec.title)} dans sa fiche">${esc(sec.title)} <span aria-hidden="true">↗</span></button>${searchSectionPreview(sec)}</div>`:"";
    if(group){
     const tags=`${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}`;
     const ancestorNodes=parents.map((name,i)=>{
@@ -1068,7 +1080,7 @@ function renderExplorer(){
    }).join("");
    if(m.entry_type==="specialite"&&specialtyItems(m).length){
     const available=hitGroup.presentations.length?hitGroup.presentations.map(h=>h.presentation):specialtyItems(m).map(x=>x.i);
-    return `<article class="explore-hit explore-hit-med explore-specialty-direct">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}</article>`;
+    return `<article class="explore-hit explore-hit-med explore-specialty-direct">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
    }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
    return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped">
@@ -1081,7 +1093,6 @@ function renderExplorer(){
     </div>
     ${preview}
     ${presentationToggle}
-    ${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}
    </article>`;
   }).join("")}</div></section>`).join("")}</div>${hitGroups.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 fiches supplémentaires <span>(${hitGroups.length-visibleHits.length} restantes)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
   $("exploreCards").querySelectorAll("[data-presentation-toggle]").forEach(button=>button.onclick=()=>{
@@ -1372,7 +1383,7 @@ function renderResults(){
   const badge=p?.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
   const cip=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
   const dciBadges=m.entry_type==="dci"&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
-  const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<span class="direct-hit">↳ ${esc(sec.title)} — accéder à cette rubrique</span>${searchSectionPreview(sec)}`:"";
+  const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">${esc(sec.title)} <span aria-hidden="true">↗</span></span>${searchSectionPreview(sec)}</div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
    ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:m.entry_type==="dci"?dciBadges:`<div class="sub">${group?"Fiche groupe":"Fiche médicament"} · ${esc(m.category||"Sans famille")}</div>`}
