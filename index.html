@@ -584,6 +584,17 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .priority-alert .priority-points li,.priority-advice .priority-points li{background:transparent!important;border-radius:0!important;padding-top:7px!important;padding-bottom:7px!important}
 .priority-alert .priority-points,.priority-advice .priority-points{gap:3px!important}
 .priority-advice .priority-section h3{display:none!important}
+
+/* V6.05 : rouge/rose compacts, sans puces ajoutées automatiquement */
+.priority-card.priority-alert,.priority-card.priority-advice{padding:11px 15px!important}
+.priority-alert .priority-section,.priority-advice .priority-section{padding:0!important;margin:0!important}
+.priority-alert .priority-free-text,.priority-advice .priority-free-text{margin:0;display:grid;gap:5px;line-height:1.5}
+.priority-alert .priority-free-text p,.priority-advice .priority-free-text p{margin:0!important;padding:0!important}
+.priority-explicit-bullet{display:flex;align-items:baseline;gap:8px}
+.priority-bullet-symbol{flex:none;font-weight:700}
+.priority-alert .priority-bullet-symbol{color:#b34855}
+.priority-advice .priority-bullet-symbol{color:#a65c85}
+@media(max-width:700px){.priority-card.priority-alert,.priority-card.priority-advice{padding:10px 12px!important}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1734,7 +1745,15 @@ function wireTextFormatting(){
 function renderPrioritySection(s,targetSectionId=null){
  const lines=String(s.content||"").split("\n").map(x=>x.trim()).filter(Boolean);
  const items=lines.map(line=>line.replace(/^\s*(?:[•●◦▪\-*]|\d+[.)])\s*/,"")).filter(Boolean);
- const list=items.length?`<ul class="priority-points">${items.map(item=>`<li>${richInline(item)}</li>`).join("")}</ul>`:'<p class="muted">Aucun contenu renseigné.</p>';
+ const plainCard=s.id==="alerte-delivrance"||s.id==="conseils-comptoir";
+ // Les puces des encarts rouge et rose sont affichées uniquement si elles
+ // ont été saisies explicitement dans le texte ("-", "•", "1.", etc.).
+ const list=plainCard
+  ? (lines.length?`<div class="priority-free-text">${lines.map(line=>{
+      const match=line.match(/^([•●◦▪\-*]|\d+[.)])\s+(.+)$/);
+      return match?`<div class="priority-explicit-bullet"><span class="priority-bullet-symbol" aria-hidden="true">${esc(match[1])}</span><span>${richInline(match[2])}</span></div>`:`<p>${richInline(line)}</p>`;
+     }).join("")}</div>`:'<p class="muted">Aucun contenu renseigné.</p>')
+  : (items.length?`<ul class="priority-points">${items.map(item=>`<li>${richInline(item)}</li>`).join("")}</ul>`:'<p class="muted">Aucun contenu renseigné.</p>');
  const heading=(s.id==="alerte-delivrance"||s.id==="conseils-comptoir")?"":`<h3>${esc(s.title)}</h3>`;
  return `<section class="section priority-section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}">${heading}${list}</section>`;
 }
