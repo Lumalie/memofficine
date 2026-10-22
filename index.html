@@ -505,6 +505,20 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-grouped-presentation-link span:first-child{font-size:.7rem}
 .explore-grouped-presentation .explore-pres-info{padding:4px 0 0 15px;margin:0}
 #exploreCards .explore-hit-grouped:has(.explore-preview-details[open]){grid-column:1/-1}
+
+/* V5.95 — spécialités directes et présentations enrichies dans les arbres de recherche */
+#exploreCards .explore-specialty-direct{border-left:2px solid #b5d3ef!important;padding:4px 8px!important;background:transparent!important}
+#exploreCards .search-pres-direct{padding:5px 4px 7px;min-width:0}
+#exploreCards .search-pres-direct+.search-pres-direct{border-top:1px solid #e2eae8}
+#exploreCards .search-pres-title{background:none!important;border:0!important;box-shadow:none!important;padding:2px 0!important;text-align:left!important;color:#285780!important;font-size:.96rem!important;font-weight:700!important;line-height:1.45;cursor:pointer;white-space:normal}
+#exploreCards .search-pres-title:hover{text-decoration:underline}
+#exploreCards .search-pres-title span:first-child{font-size:.7rem;color:#32694f;margin-right:4px}
+#exploreCards .search-pres-title span:last-child{font-weight:400;color:#799c92;margin-left:5px}
+#exploreCards .search-pres-details{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:4px 0 0 17px}
+#exploreCards .search-pres-badges{display:flex;align-items:center;gap:5px;flex-wrap:wrap;width:100%;margin-top:2px}
+#exploreCards .search-pres-badges .badge-button{cursor:default;font-size:.72rem;padding:3px 7px}
+#exploreCards .explore-search-child-specialty{padding:2px 0 5px 6px;border-left:2px solid #b5d3ef}
+#exploreCards .explore-search-child-med>.search-pres-badges{margin-left:25px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -862,6 +876,18 @@ function explorerClassVisible(m,name){
  const hidden=(m.sections||[])[0]?.explorerHiddenClasses;
  return !(Array.isArray(hidden)&&hidden.includes(name));
 }
+// Presentation et badges communs aux résultats et aux enfants d'arborescence.
+function searchPresentationLine(m,p,i,child=false){
+ const name=String(p.name||m.name||'').trim();
+ const lab=p.presentationKind==='generic'&&p.lab&&!norm(name).includes(norm(p.lab))?' '+p.lab:'';
+ const dose=String(p.dosage||m.dosage||'').trim(),form=String(p.form||m.form||'').trim();
+ const full=name+lab;
+ const title=[full,...(dose&&!norm(full).includes(norm(dose))?[dose]:[]),...(form&&!norm(full).includes(norm(form))?[form]:[])].filter(Boolean).join(' · ');
+ const princeps=p.presentationKind==='princeps'?'<span class="explore-pres-princeps">Princeps</span>':'';
+ const cip=p.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:'';
+ const badges=explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join('')+indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join('');
+ return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
+}
 let explorerVisibleLimit=20;
 function renderExplorer(){
  const entries=publicMeds();
@@ -913,6 +939,14 @@ function renderExplorer(){
     if(seen.has(child.id))return "";
     const nested=isGroup(child)?renderSearchChildren(child.id,seen):"";
     const hasChildren=!!(childrenByParent.get(child.id)||[]).length&&isGroup(child);
+    if(!isGroup(child)){
+     const presentations=specialtyItems(child);
+     if(child.entry_type==="specialite"&&presentations.length){
+      return `<div class="explore-search-child explore-search-child-med explore-search-child-specialty">${presentations.map(({p,i})=>searchPresentationLine(child,p,i,true)).join("")}</div>`;
+     }
+     const badges=explorerClasses(child).filter(t=>explorerClassVisible(child,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")+indicationTags(child).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("");
+     return `<div class="explore-search-child explore-search-child-med"><div class="explore-search-child-line"><span class="explore-search-child-spacer" aria-hidden="true"></span><button type="button" class="explore-search-child-link" data-open-med="${esc(child.id)}">● ${esc(displayMedName(child))} ↗</button></div>${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div>`;
+    }
     return `<div class="explore-search-child ${isGroup(child)?"explore-search-child-group":"explore-search-child-med"}">
      <div class="explore-search-child-line">
       ${hasChildren?`<button type="button" class="explore-search-child-toggle" data-search-tree-toggle aria-expanded="false" aria-label="Déplier ${esc(child.name)}"><span aria-hidden="true">▸</span></button>`:'<span class="explore-search-child-spacer" aria-hidden="true"></span>'}
@@ -983,6 +1017,10 @@ function renderExplorer(){
     const cip=presentation.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(presentation.cip)}" title="Copier le CIP"><span>CIP</span> ${esc(presentation.cip)} <span aria-hidden="true">⧉</span></button>`:"";
     return `<div class="explore-grouped-presentation"><button type="button" class="explore-grouped-presentation-link" data-open-med="${esc(m.id)}" data-hit-pres="${pHit.presentation}" data-hit-section="${esc(pHit.section?.id||"")}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="explore-pres-info">${princeps}${cip}</div></div>`;
    }).join("");
+   if(m.entry_type==="specialite"&&specialtyItems(m).length){
+    const available=hitGroup.presentations.length?hitGroup.presentations.map(h=>h.presentation):specialtyItems(m).map(x=>x.i);
+    return `<article class="explore-hit explore-hit-med explore-specialty-direct">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
+   }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
    return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped">
     <div class="explore-hit-main">
