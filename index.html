@@ -1739,6 +1739,25 @@ function addMedication(){
  const m={id:crypto.randomUUID(),name:"Nouvelle fiche",dosage:"",dci:"",entry_type:"specialite",parent_dci:"",presentations:[],category:"Autres",form:"",aliases:"",status:"À vérifier",updated:"",source:"",published:false,sections:clone(DEFAULT_SECTIONS)};
  meds.unshift(m);selectedId=m.id;openedSearchFiche=true;renderFilters();renderResults();renderEditor(m.id);saveLocalDraft();scrollToNewEditor();
 }
+// Modèle commun à tous les groupes et sous-groupes : rubriques du groupe Antibiotiques.
+function applyGroupTemplate(m){
+ if(!isGroup(m))return false;
+ const before=m.sections||[];
+ const oldMeta=hierarchyMeta(m);
+ const oldParent=oldMeta.memofficineParentGroup||"";
+ const used=new Set();
+ const normalized=GROUP_SECTIONS.map(template=>{
+  const match=before.find((sec,i)=>!used.has(i)&&sec.id===template.id);
+  if(match)used.add(before.indexOf(match));
+  return match?{...clone(template),...match,title:template.title,type:template.type}:clone(template);
+ });
+ // Conserver les rubriques spécifiques déjà rédigées plutôt que les effacer.
+ const extra=before.filter((sec,i)=>!used.has(i)&&
+  !(!String(sec.content||"").trim()&&sec.enabled===false));
+ m.sections=[...normalized,...extra];
+ setHierarchy(m,"groupe",oldParent);
+ return true;
+}
 function addGroup(){
  if(!admin)return;
  addMedication();
@@ -1748,7 +1767,13 @@ function addGroup(){
 }
 function renderEditor(id){
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
- const m=meds.find(x=>x.id===id);if(!m)return;editorId=id;editorLocation(id);
+ const m=meds.find(x=>x.id===id);if(!m)return;
+ if(isGroup(m)){
+  const core=m.sections||[];
+  const matches=GROUP_SECTIONS.every((t,i)=>core[i]?.id===t.id&&core[i]?.title===t.title&&core[i]?.type===t.type);
+  if(!matches)applyGroupTemplate(m);
+ }
+ editorId=id;editorLocation(id);
  $("detail").classList.add("hidden");$("editor").classList.remove("hidden");
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
@@ -1799,7 +1824,19 @@ const toggleType = () => {
       }
     });
 };
- $("f-entry-type").onchange=toggleType;toggleType();
+ $("f-entry-type").onchange=()=>{
+  if($("f-entry-type").value==="groupe"&&!isGroup(m)){
+   const priorSections=m.sections||[];
+   const priorParent=parentGroupId(m);
+   m.sections=clone(GROUP_SECTIONS);
+   // Conserver les anciennes rubriques renseignées en complément.
+   const ids=new Set(GROUP_SECTIONS.map(x=>x.id));
+   m.sections.push(...priorSections.filter(x=>!ids.has(x.id)&&String(x.content||"").trim()));
+   setHierarchy(m,"groupe",priorParent);
+   $("sectionEditors").innerHTML=m.sections.map((sec,i)=>sectionEditor(sec,i)).join("");
+  }
+  toggleType();
+ };toggleType();
  const doseUnit=$("f-dosage-unit");
  if(doseUnit&&!m.dosage){const initialForm=(m.presentations||[])[0]?.form||m.form||"";doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(initialForm)?"mL":"mg"}
  $("presentationEditors").addEventListener("change",e=>{if(e.target.matches("[data-pfield=form]")&&!$("f-dosage").value.trim())doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(e.target.value)?"mL":"mg"});
