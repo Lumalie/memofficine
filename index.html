@@ -552,6 +552,13 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .result-section-title{display:block;font-size:.83rem;font-weight:750;color:#32694f;margin-bottom:4px}
 .result-section-direct:hover .result-section-title{text-decoration:underline}
 .result-section-direct .explore-hit-content{margin:0!important;padding:0!important;border:0!important;max-height:220px;overflow:auto}
+
+/* V5.99 — un seul titre et toute la rubrique cliquable */
+.explore-preview-link{cursor:pointer;border-radius:7px;padding:3px 6px 7px!important;transition:background .15s ease}
+.explore-preview-link:hover,.explore-preview-link:focus-visible{background:#edf5ef;outline:2px solid #bad8c7;outline-offset:1px}
+.explore-preview-link .explore-preview-title{pointer-events:none}
+.explore-preview-link .explore-hit-content{pointer-events:none}
+.result-section-direct .explore-hit-content .section>h3{display:none}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1048,7 +1055,7 @@ function renderExplorer(){
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
    const cipButton=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
    const showSectionContent=!!sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!group;
-   const preview=showSectionContent?`<div class="explore-preview-direct"><button type="button" class="explore-preview-title" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" title="Ouvrir la rubrique ${esc(sec.title)} dans sa fiche">${esc(sec.title)} <span aria-hidden="true">↗</span></button>${searchSectionPreview(sec)}</div>`:"";
+   const preview=showSectionContent?`<div class="explore-preview-direct explore-preview-link" role="link" tabindex="0" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">${esc(sec.title)} <span aria-hidden="true">↗</span></span>${searchSectionPreview(sec)}</div>`:"";
    if(group){
     const tags=`${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}`;
     const ancestorNodes=parents.map((name,i)=>{
@@ -1133,6 +1140,7 @@ function renderExplorer(){
    }catch(err){toast("Copie impossible : sélectionne le CIP manuellement.");}
   });
   $("exploreCards").querySelectorAll("[data-open-med]").forEach(b=>{b.onclick=e=>openExplorerResult(e,b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null);b.onauxclick=e=>{if(e.button===1)openExplorerResult({...e,ctrlKey:true},b,b.dataset.hitPres===""?null:Number(b.dataset.hitPres),b.dataset.hitSection||null)}});
+  $("exploreCards").querySelectorAll(".explore-preview-link").forEach(b=>b.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openExplorerResult(e,b,null,b.dataset.hitSection||null)}});
   return;
  }
  const byId=new Map(entries.map(m=>[m.id,m]));
@@ -1332,7 +1340,9 @@ function searchSectionPreview(sec){
  if(!sec||!String(sec.content||"").trim())return "";
  // Utiliser le moteur de rendu existant pour préserver listes, tableaux,
  // mise en forme et retours à la ligne de la fiche source.
- return `<div class="explore-hit-content">${renderSection(sec).replace(/\sid="section-[^"]*"/g,"")}</div>`;
+ // L'en-tête est affiché par le résultat lui-même : ne pas répéter le <h3> de la fiche.
+ const body=renderSection(sec).replace(/\sid="section-[^"]*"/g,"").replace(/(<section\b[^>]*>)\s*<h3>[^<]*<\/h3>/i,"$1");
+ return `<div class="explore-hit-content">${body}</div>`;
 }
 let openedSearchFiche=false;
 function updateSearchPlacement(){
