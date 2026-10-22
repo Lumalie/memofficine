@@ -534,6 +534,12 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-group-ancestor:hover{color:#285c43!important}
 @media(max-width:1100px){.explore-section-specialties .explore-hits,.explore-section-medications .explore-hits{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.explore-sections .explore-hits{grid-template-columns:minmax(0,1fr)!important}}
+
+/* V5.97 : rubriques des spécialités consultables dans les deux recherches */
+.explore-specialty-direct>.explore-preview-details{margin:8px 6px 4px;grid-column:1/-1}
+.explore-specialty-direct>.explore-hit-jump{margin:3px 6px 7px}
+.search-suggestions .result .explore-hit-content{margin:7px 0 3px 20px;max-height:220px;overflow:auto;border-left:2px solid #d3e3ed;padding:5px 9px;font-size:.83rem;line-height:1.5}
+.search-suggestions .result .explore-hit-content *{max-width:100%}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1011,7 +1017,7 @@ function renderExplorer(){
   $("exploreSearchCount").textContent=`${hitGroups.length} fiche${hitGroups.length===1?"":"s"} trouvée${hitGroups.length===1?"":"s"} · ${visibleHits.length} affichée${visibleHits.length===1?"":"s"} · ${hits.length} correspondance${hits.length===1?"":"s"} au total`;
   $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${groupedVisible.map(({category,items})=>`<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${hitGroups.filter(g=>categoryOf(g)===category).length>items.length?" / "+hitGroups.filter(g=>categoryOf(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup,hitIndex)=>{
    const hit=hitGroup.parent||hitGroup.hits[0];
-   const m=hit.med,sec=hitGroup.parent?.section||null;
+   const m=hit.med,sec=hitGroup.parent?.section||hitGroup.hits.find(h=>h.section)?.section||null;
    const parents=pathFor(m),path=[...parents,m.name,...(sec?[sec.title]:[])];
    const group=isGroup(m),subgroup=group&&parents.length>0;
    const kind=group?(subgroup?"subgroup":"group"):"med-parent";
@@ -1029,7 +1035,7 @@ function renderExplorer(){
    const presLab=""; // Le laboratoire du générique est intégré au titre.
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
    const cipButton=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
-   const showSectionContent=!!sec&&m.entry_type==="dci"&&hit.presentation===null;
+   const showSectionContent=!!sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!group;
    const preview=showSectionContent?`<details class="explore-preview-details" ${hitIndex<3?"open":""}><summary> ${esc(sec.title)} — ${hitIndex<3?"masquer":"voir"} le contenu</summary>${searchSectionPreview(sec)}</details>`:"";
    if(group){
     const tags=`${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}`;
@@ -1062,7 +1068,7 @@ function renderExplorer(){
    }).join("");
    if(m.entry_type==="specialite"&&specialtyItems(m).length){
     const available=hitGroup.presentations.length?hitGroup.presentations.map(h=>h.presentation):specialtyItems(m).map(x=>x.i);
-    return `<article class="explore-hit explore-hit-med explore-specialty-direct">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}</article>`;
+    return `<article class="explore-hit explore-hit-med explore-specialty-direct">${available.map(i=>m.presentations?.[i]?searchPresentationLine(m,m.presentations[i],i):'').join('')}${preview}${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}</article>`;
    }
    const presentationToggle=presentationRows?`<button type="button" class="explore-grouped-toggle" data-presentation-toggle aria-expanded="false"><span aria-hidden="true">▸</span> ${hitGroup.presentations.length} présentation${hitGroup.presentations.length>1?"s":""}</button><div class="explore-grouped-children" hidden>${presentationRows}</div>`:"";
    return `<article class="explore-hit explore-hit-${kind} explore-hit-grouped">
@@ -1366,7 +1372,7 @@ function renderResults(){
   const badge=p?.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
   const cip=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
   const dciBadges=m.entry_type==="dci"&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
-  const sectionDetail=sec&&m.entry_type==="dci"&&!isPresentation?`<span class="direct-hit">↳ ${esc(sec.title)} — accéder à cette rubrique</span>`:"";
+  const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<span class="direct-hit">↳ ${esc(sec.title)} — accéder à cette rubrique</span>${searchSectionPreview(sec)}`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
    ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:m.entry_type==="dci"?dciBadges:`<div class="sub">${group?"Fiche groupe":"Fiche médicament"} · ${esc(m.category||"Sans famille")}</div>`}
