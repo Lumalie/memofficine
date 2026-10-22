@@ -1255,8 +1255,12 @@ function renderExplorer(){
  const visible=entries.filter(m=>included.has(m.id));
  const visibleById=new Map(visible.map(m=>[m.id,m]));
  const sortNames=(a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base"});
- const childrenOf=id=>visible.filter(m=>parentGroupId(m)===id).sort((a,b)=>isGroup(a)===isGroup(b)?sortNames(a,b):isGroup(a)?-1:1);
- const rootEntries=visible.filter(m=>!visibleById.has(parentGroupId(m))||parentGroupId(m)===m.id).sort((a,b)=>isGroup(a)===isGroup(b)?sortNames(a,b):isGroup(a)?-1:1);
+ // Ordre Explorer : groupes, fiches molécules, fiches dosage + forme, autres fiches.
+ // Les liens molécule/dosage sont conservés : seul l'ordre d'affichage change.
+ const explorerRank=m=>isGroup(m)?0:isMolecule(m)?1:(m.entry_type==="dci"&&!!moleculeParentId(m))?2:m.entry_type==="dci"?3:4;
+ const sortExplorer=(a,b)=>explorerRank(a)-explorerRank(b)||sortNames(a,b);
+ const childrenOf=id=>visible.filter(m=>parentGroupId(m)===id).sort(sortExplorer);
+ const rootEntries=visible.filter(m=>!visibleById.has(parentGroupId(m))||parentGroupId(m)===m.id).sort(sortExplorer);
  const renderNode=(m,depth=0,ancestors=new Set())=>{
   if(ancestors.has(m.id))return "";
   const next=new Set(ancestors);next.add(m.id);
