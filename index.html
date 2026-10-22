@@ -613,6 +613,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .group-associations .associated-section+.associated-section{border-top:1px solid #e5ece7;padding-top:15px;margin-top:11px}
 .text-format-bubble select,.table-cell-toolbar select{max-width:145px}
 .priority-free-text [style*="text-align"]{width:100%}
+.molecule-nav{border:1px solid #c8dfd0;background:#f0f7f2;border-radius:12px;padding:16px;margin:18px 0}.molecule-nav h3{margin:0 0 12px}.molecule-nav button{cursor:pointer}.shared-origin{font-size:.83rem;color:#537e66;margin:0 0 8px}.molecule-editor-fields{border:1px solid #c8dfd0;background:#f5faf6;border-radius:10px;padding:12px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -861,6 +862,20 @@ function showView(view){
  if(view==="home"&&editorId)restoreEditorFocus();
 }
 function hierarchyMeta(m){return (m.sections||[]).find(s=>s.memofficineKind||s.memofficineParentGroup)||(m.sections||[]).find(s=>s.id==="indications")||(m.sections||[])[0]||{}}
+function isMolecule(m){return !isGroup(m)&&!!m.sections?.[0]?.moleculeRoot}
+function moleculeParentId(m){return m.sections?.[0]?.moleculeParentId||""}
+function moleculeChildren(m){return publicMeds().filter(x=>!isGroup(x)&&moleculeParentId(x)===String(m.id)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'))}
+function resolveSharedSection(m,s,visited=new Set()){
+ const key=String(m.id)+":"+String(s.id);
+ if(visited.has(key))return {...s,content:"⚠️ Lien circulaire détecté.",type:"text",sharedError:true};
+ if(!s.sharedFromMedId||!s.sharedFromSectionId)return s;
+ visited.add(key);
+ const source=publicMeds().find(x=>String(x.id)===String(s.sharedFromMedId));
+ const sourceSection=source?.sections?.find(x=>String(x.id)===String(s.sharedFromSectionId)&&x.enabled!==false);
+ if(!sourceSection)return {...s,content:"⚠️ Rubrique source introuvable ou non publiée.",type:"text",sharedError:true};
+ const resolved=resolveSharedSection(source,sourceSection,visited);
+ return {...resolved,id:s.id,title:s.title||resolved.title,enabled:s.enabled,sharedSourceName:displayMedName(source),sharedError:resolved.sharedError};
+}
 function isGroup(m){return hierarchyMeta(m).memofficineKind==="groupe"}
 function parentGroupId(m){return hierarchyMeta(m).memofficineParentGroup||""}
 function dosageParts(raw){const v=String(raw||"").trim();const m=v.match(/^([\d.,]+)\s*(mg\/mL|µg\/mL|g\/L|mg|g|µg|mL|UI|%)$/i);return m?{value:m[1],unit:m[2]}:{value:v,unit:v?"autre":"mg"}}
@@ -1541,6 +1556,9 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const prioritySection=sections.find(s=>s.id==="coup-oeil");
  const adviceSection=sections.find(s=>s.id==="conseils-comptoir");
  const remainingSections=sections.filter(s=>s!==prioritySection&&s!==alertSection&&s!==adviceSection);
+ const displaySections=remainingSections.map(s=>resolveSharedSection(m,s));
+ const moleculeParent=publicMeds().find(x=>String(x.id)===String(moleculeParentId(m))&&isMolecule(x));
+ const moleculeDosages=isMolecule(m)?moleculeChildren(m):[];
  const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
  const relatedVisible=publicMeds();
  const descendants=isGroup(m)?groupDescendantIds(m.id,relatedVisible):new Set();
@@ -1557,7 +1575,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":m.entry_type==="dci"?"Fiche DCI":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche DCI · dosage / forme":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -1568,8 +1586,10 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${specialtyRelated.length?`<div class="associated-section"><h4>Fiches médicaments et spécialités (${specialtyRelated.length})</h4><div class="associated-items">${specialtyRelated.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
  </div></div>`:""}
 
- ${isGroup(m)?"":renderPresentations(m)}
- ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
+ ${moleculeParent?`<div class="molecule-nav"><strong>Molécule commune :</strong> <button type="button" data-group-open="${esc(moleculeParent.id)}">↖ ${esc(displayMedName(moleculeParent))}</button><p class="muted">Les informations communes sont disponibles dans la fiche molécule.</p></div>`:""}
+ ${isMolecule(m)?`<div class="molecule-nav"><h3>Dosages et formes pharmaceutiques</h3>${moleculeDosages.length?`<div class="associated-items">${moleculeDosages.map(x=>`<button type="button" class="associated-item associated-med" data-group-open="${esc(x.id)}">${esc(displayMedName(x))}${x.form||x.sections?.[0]?.dciForm?` · ${esc(x.form||x.sections?.[0]?.dciForm)}`:""} ↗</button>`).join("")}</div>`:'<p class="muted">Aucune fiche dosage / forme liée pour le moment.</p>'}</div>`:""}
+ ${isGroup(m)||isMolecule(m)?"":renderPresentations(m)}
+ ${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
  ${m.updated?`<div class="detail-last-updated">Date de dernière mise à jour : ${esc(formatDateFR(m.updated))}</div>`:""}`;
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreClass").value=btn.dataset.ficheCategory;renderExplorer()});
@@ -1833,7 +1853,7 @@ function renderSection(s,targetSectionId=null){
  const imageSrc=s.imageData||s.imageUrl||"";
  const imageHtml=imageSrc?`<figure class="section-image"><img src="${esc(imageSrc)}" alt="${esc(s.imageCaption||s.title||"Image de la forme pharmaceutique")}" loading="lazy">${s.imageCaption?`<figcaption>${esc(s.imageCaption)}</figcaption>`:""}</figure>`:"";
  const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
- return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${imageHtml}${content}</section>`;
+ return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${s.sharedSourceName?`<p class="shared-origin">🔗 Rubrique partagée depuis ${esc(s.sharedSourceName)}</p>`:""}${imageHtml}${content}</section>`;
 }
 function setAdmin(value){admin=value;$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
 function showLogin(){
@@ -1926,6 +1946,7 @@ function renderEditor(id){
  $("editor").innerHTML=`<div class="detailtop"><div><h2>${!m.published && m.name==="Nouvelle fiche"?"Nouvelle fiche":"Modifier la fiche"}</h2><div class="muted">Clique sur Enregistrer pour synchroniser les changements avec Supabase.</div></div><div class="editor-top-actions"><button type="button" id="backBtn">Retour à la fiche</button><button type="button" class="primary" id="saveMed">Enregistrer</button><button type="button" id="duplicateMed">Dupliquer</button><button type="button" class="danger" id="deleteMed">Supprimer la fiche</button></div></div>
  <div class="admin-grid" style="margin-top:18px">
   <div class="full"><label for="f-entry-type">Type de fiche</label><select id="f-entry-type"><option value="specialite" ${m.entry_type!=="dci"&&!isGroup(m)?"selected":""}>Spécialité pharmaceutique</option><option value="dci" ${m.entry_type==="dci"&&!isGroup(m)?"selected":""}>DCI / substance active</option><option value="groupe" ${isGroup(m)?"selected":""}>Fiche groupe</option></select><div class="muted" style="margin-top:5px">Une fiche DCI présente des informations générales ; les particularités de chaque spécialité doivent être vérifiées séparément.</div></div>
+  <div class="full molecule-editor-fields" id="molecule-settings"><label><input type="checkbox" id="f-molecule-root" ${isMolecule(m)?"checked":""}> Cette fiche est une fiche molécule (informations communes)</label><label for="f-molecule-parent" style="margin-top:10px">Fiche molécule liée (pour une fiche dosage + forme)</label><select id="f-molecule-parent"><option value="">Aucune molécule liée</option>${meds.filter(x=>x.id!==m.id&&isMolecule(x)).sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(x=>`<option value="${esc(x.id)}" ${moleculeParentId(m)===String(x.id)?"selected":""}>${esc(displayMedName(x))}</option>`).join("")}</select><p class="muted">Une fiche molécule contient les données communes ; ses fiches liées conservent les dosages, formes et présentations spécifiques.</p></div>
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><p class="muted">Sépare les noms de spécialités par des virgules. Plusieurs noms peuvent être renseignés pour une même DCI. Vérifier le statut de princeps de chaque spécialité.</p></div>
@@ -1948,7 +1969,9 @@ function renderEditor(id){
 const toggleType = () => {
   const isGroupType = $("f-entry-type").value === "groupe";
   const isDci = $("f-entry-type").value === "dci" || isGroupType;
-  $("presentation-editor-wrap").classList.toggle("hidden",isGroupType);
+  $("presentation-editor-wrap").classList.toggle("hidden",isGroupType||!!$("f-molecule-root")?.checked);
+  $("molecule-settings").classList.toggle("hidden",isGroupType);
+  $("f-molecule-parent").disabled=!!$("f-molecule-root")?.checked;
   $("parent-group-wrap").classList.remove("hidden");
   $("princeps-editor-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci");
   $("f-dci-form-wrap").classList.toggle("hidden",$("f-entry-type").value!=="dci");
@@ -1983,7 +2006,8 @@ const toggleType = () => {
    setHierarchy(m,"groupe",priorParent);
    $("sectionEditors").innerHTML=m.sections.map((sec,i)=>sectionEditor(sec,i)).join("");
   }
-  toggleType();
+  $("f-molecule-root")?.addEventListener("change",toggleType);
+ toggleType();
  };toggleType();
  const doseUnit=$("f-dosage-unit");
  if(doseUnit&&!m.dosage){const initialForm=(m.presentations||[])[0]?.form||m.form||"";doseUnit.value=/sirop|solution|goutte|liquide|suspension/i.test(initialForm)?"mL":"mg"}
@@ -2148,7 +2172,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label><label style="margin-top:8px">🔗 Rubrique partagée (facultatif)</label><select data-field="shared-source"><option value="">Contenu propre à cette fiche</option>${meds.filter(x=>x.id!==editorId&&!isSourcesRecord(x)).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr')).flatMap(x=>(x.sections||[]).filter(y=>y.enabled!==false).map(y=>`<option value="${esc(x.id)}::${esc(y.id)}" ${String(s.sharedFromMedId||"")===String(x.id)&&String(s.sharedFromSectionId||"")===String(y.id)?"selected":""}>${esc(displayMedName(x))} → ${esc(y.title)}</option>`)).join("")}</select><p class="muted">Si une source est choisie, son contenu remplacera celui de cette rubrique à l'affichage. Les modifications de la source seront répercutées ici.</p>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
@@ -2163,6 +2187,10 @@ function captureEditorFields(m){
  if(kind==='dci'&&m.sections?.length){m.sections[0].ingredientDosages={showInTitle:ingredientData.showInTitle,entries:[]};}
 
  if(!m.sections?.length)m.sections=[{id:"notes",title:"Notes",type:"text",content:"",enabled:false}];
+ if(kind!=="groupe"){
+  m.sections[0].moleculeRoot=!!$("f-molecule-root")?.checked;
+  m.sections[0].moleculeParentId=m.sections[0].moleculeRoot?"":(get("f-molecule-parent")||"");
+ }else{delete m.sections[0].moleculeRoot;delete m.sections[0].moleculeParentId;}
  if(kind==="dci"){
   m.sections[0].dciForm=(get("f-dci-form")||"").trim();
   m.form=m.sections[0].dciForm;
@@ -2190,6 +2218,9 @@ function captureEditorFields(m){
      if(el)m.sections[i][field]=el.value;
    }
    if(m.sections[i].type==="table"&&card.querySelector(".table-grid-editor"))m.sections[i].content=readTableGrid(card);
+   const link=card.querySelector('[data-field="shared-source"]');
+   if(link){const [mid,sid]=(link.value||"").split("::");if(mid&&sid){m.sections[i].sharedFromMedId=mid;m.sections[i].sharedFromSectionId=sid;}else{delete m.sections[i].sharedFromMedId;delete m.sections[i].sharedFromSectionId;}}
+
  });
 }
 function sectionAction(action,index,id){const m=meds.find(x=>x.id===id);if(!m)return;captureEditorFields(m);const ss=m.sections;
