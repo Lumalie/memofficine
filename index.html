@@ -574,6 +574,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .priority-advice .priority-section h3{color:#873f66}
 .priority-advice .priority-points li::before{background:#bf779d;box-shadow:0 0 0 4px #f5dbe9}
 @media(max-width:700px){.priority-card{padding:15px}.priority-card .priority-points li{padding-left:38px}}
+
+/* V6.03 — alerte sans titre, conseils plus discrets */
+.priority-alert{padding-top:16px;padding-bottom:16px}
+.priority-alert .priority-points{margin:0!important}
+.priority-advice .priority-section h3{font-family:inherit!important;font-size:1.02rem!important;font-weight:650!important;letter-spacing:0!important;text-transform:none!important;margin:0 0 10px!important;color:#873f66!important}
+
+/* V6.04 : fonds unis, sans cartouches blancs internes */
+.priority-alert .priority-points li,.priority-advice .priority-points li{background:transparent!important;border-radius:0!important;padding-top:7px!important;padding-bottom:7px!important}
+.priority-alert .priority-points,.priority-advice .priority-points{gap:3px!important}
+.priority-advice .priority-section h3{display:none!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1725,7 +1735,8 @@ function renderPrioritySection(s,targetSectionId=null){
  const lines=String(s.content||"").split("\n").map(x=>x.trim()).filter(Boolean);
  const items=lines.map(line=>line.replace(/^\s*(?:[•●◦▪\-*]|\d+[.)])\s*/,"")).filter(Boolean);
  const list=items.length?`<ul class="priority-points">${items.map(item=>`<li>${richInline(item)}</li>`).join("")}</ul>`:'<p class="muted">Aucun contenu renseigné.</p>';
- return `<section class="section priority-section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${list}</section>`;
+ const heading=(s.id==="alerte-delivrance"||s.id==="conseils-comptoir")?"":`<h3>${esc(s.title)}</h3>`;
+ return `<section class="section priority-section ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}">${heading}${list}</section>`;
 }
 function renderSection(s,targetSectionId=null){
  let content="";
@@ -2027,13 +2038,20 @@ function wireTableGrids(m){
  });
  $("sectionEditors").querySelectorAll('[data-field="type"]').forEach(select=>select.onchange=()=>{
   const card=select.closest(".section-editor"),i=Number(card.dataset.section);
-  // Capture all other fields before replacing the editor control.
+  // Conserver le type d'origine AVANT la capture : celle-ci lit le sélecteur
+  // et écrasait l'ancien type, empêchant toute conversion effective.
+  const oldType=m.sections[i].type,newType=select.value;
   captureEditorFields(m);
-  const section=m.sections[i],oldType=section.type,newType=select.value;
-  if(oldType==="table"&&newType==="text"){
-   const rows=tableRows(section.content||"");
-   // Preserve all information in a readable, editable text layout.
-   section.content=rows.map(row=>row.map(cell=>String(cell||"").replace(/\[\[newline\]\]/g,"\n")).join(" — ")).join("\n");
+  const section=m.sections[i];
+  if(oldType!==newType){
+   if(oldType==="table"&&newType==="text"){
+    const rows=tableRows(section.content||"");
+    section.content=rows.map(row=>row.map(cell=>String(cell||"").replace(/\[\[newline\]\]/g,"\n")).join(" — ")).join("\n");
+   }else if(oldType==="text"&&newType==="table"){
+    const lines=String(section.content||"").split("\n").map(x=>x.trim()).filter(Boolean);
+    // Chaque ligne devient une ligne de tableau, sans perte du texte saisi.
+    section.content=lines.length?lines.map(x=>x+" | ").join("\n"):"Colonne 1 | Colonne 2\n | ";
+   }
   }
   section.type=newType;
   renderEditor(m.id);saveLocalDraft();
