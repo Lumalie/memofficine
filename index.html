@@ -519,6 +519,21 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #exploreCards .search-pres-badges .badge-button{cursor:default;font-size:.72rem;padding:3px 7px}
 #exploreCards .explore-search-child-specialty{padding:2px 0 5px 6px;border-left:2px solid #b5d3ef}
 #exploreCards .explore-search-child-med>.search-pres-badges{margin-left:25px}
+
+/* V5.96 — résultats classés, hiérarchisés et adaptatifs */
+.explore-sections{display:flex;flex-direction:column;gap:23px}
+.explore-result-section{min-width:0}
+.explore-result-section-title{font-size:1.03rem!important;font-weight:750!important;margin:0 0 12px!important;padding:0 0 7px!important;border-bottom:1px solid #d8e5dc;color:#365d4a;display:flex;align-items:center;gap:9px}
+.explore-result-section-title span{font-size:.78rem;font-weight:500;color:#81938a}
+.explore-section-specialties .explore-result-section-title,.explore-section-medications .explore-result-section-title{color:#35638b;border-bottom-color:#d7e5f0}
+.explore-section-groups .explore-hits,.explore-section-dci .explore-hits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;align-items:start}
+.explore-section-specialties .explore-hits,.explore-section-medications .explore-hits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px;align-items:start}
+.explore-sections .explore-hits>article{min-width:0;margin:0}
+.explore-group-ancestors{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:3px 0 4px 22px;font-size:.76rem;color:#82958b}
+.explore-group-ancestor{background:transparent!important;border:0!important;padding:0!important;color:#648472!important;font-size:inherit!important;text-decoration:underline;cursor:pointer}
+.explore-group-ancestor:hover{color:#285c43!important}
+@media(max-width:1100px){.explore-section-specialties .explore-hits,.explore-section-medications .explore-hits{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.explore-sections .explore-hits{grid-template-columns:minmax(0,1fr)!important}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -921,7 +936,34 @@ function renderExplorer(){
    if(hit.presentation===null){if(!group.parent)group.parent=hit}
    else if(!group.presentations.some(p=>p.presentation===hit.presentation))group.presentations.push(hit);
   }
-  const visibleHits=hitGroups.slice(0,explorerVisibleLimit);
+  // Trier les résultats par type de fiche et adapter la priorité à l'intention.
+  const q=norm(query).trim();
+  const categoryOf=g=>isGroup(g.med)?"groups":g.med.entry_type==="dci"?"dci":g.med.entry_type==="specialite"?"specialties":"medications";
+  const nameOf=g=>norm(g.med.name||"");
+  const scoreOf=g=>{
+   const n=nameOf(g);
+   const exact=n===q?100:n.startsWith(q)?70:n.includes(q)?45:0;
+   const presentation=g.presentations.some(h=>norm(h.med.presentations?.[h.presentation]?.name||"").includes(q))?30:0;
+   return exact+presentation;
+  };
+  const sortedGroups=[...hitGroups].sort((a,b)=>scoreOf(b)-scoreOf(a)||nameOf(a).localeCompare(nameOf(b),"fr"));
+  const categoryPriority=["groups","dci","specialties","medications"];
+  // Une recherche correspondant précisément à une spécialité favorise sa fiche DCI
+  // associée si elle existe, puis les spécialités et leurs présentations.
+  const specialtyNameMatch=sortedGroups.some(g=>categoryOf(g)==="specialties"&&scoreOf(g)>=45);
+  const groupNameMatch=sortedGroups.some(g=>categoryOf(g)==="groups"&&scoreOf(g)>=45);
+  if(specialtyNameMatch&&!groupNameMatch)categoryPriority.splice(0,categoryPriority.length,"dci","specialties","medications","groups");
+  const visibleHits=[];
+  let remaining=explorerVisibleLimit;
+  for(const category of categoryPriority){
+   for(const g of sortedGroups.filter(x=>categoryOf(x)===category)){
+    if(remaining<=0)break;
+    visibleHits.push(g);remaining--;
+   }
+  }
+  const groupedVisible=categoryPriority.map(category=>({category,items:visibleHits.filter(g=>categoryOf(g)===category)})).filter(x=>x.items.length);
+  const categoryLabels={groups:"Fiches groupes",dci:"Fiches DCI",specialties:"Spécialités",medications:"Fiches médicaments"};
+
   const byIdForPath=new Map(entries.map(m=>[m.id,m]));
   // Arborescence complète des descendants, même si seul le groupe parent correspond à la recherche.
   const childrenByParent=new Map();
@@ -967,7 +1009,7 @@ function renderExplorer(){
    return names;
   };
   $("exploreSearchCount").textContent=`${hitGroups.length} fiche${hitGroups.length===1?"":"s"} trouvée${hitGroups.length===1?"":"s"} · ${visibleHits.length} affichée${visibleHits.length===1?"":"s"} · ${hits.length} correspondance${hits.length===1?"":"s"} au total`;
-  $("exploreCards").innerHTML=hits.length?`<div class="explore-hits">${visibleHits.map((hitGroup,hitIndex)=>{
+  $("exploreCards").innerHTML=hits.length?`<div class="explore-sections">${groupedVisible.map(({category,items})=>`<section class="explore-result-section explore-section-${category}"><h3 class="explore-result-section-title">${categoryLabels[category]} <span>${items.length}${hitGroups.filter(g=>categoryOf(g)===category).length>items.length?" / "+hitGroups.filter(g=>categoryOf(g)===category).length:""}</span></h3><div class="explore-hits">${items.map((hitGroup,hitIndex)=>{
    const hit=hitGroup.parent||hitGroup.hits[0];
    const m=hit.med,sec=hitGroup.parent?.section||null;
    const parents=pathFor(m),path=[...parents,m.name,...(sec?[sec.title]:[])];
@@ -1001,6 +1043,7 @@ function renderExplorer(){
        <button type="button" class="explore-group-result-name" data-open-med="${esc(m.id)}">${esc(m.name)}</button>
        
       </div>
+      ${ancestorNodes?`<div class="explore-group-ancestors"><span aria-hidden="true">↖</span> ${ancestorNodes}</div>`:""}
       ${tags?`<div class="explore-group-result-tags">${tags}</div>`:""}
       <div class="explore-search-child-nested explore-search-root-children" hidden>${renderSearchChildren(m.id)}</div>
      </article>`;
@@ -1034,7 +1077,7 @@ function renderExplorer(){
     ${presentationToggle}
     ${sec?`<button type="button" class="explore-hit-jump" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" data-hit-pres="${hit.presentation===null?"":hit.presentation}">↗ Ouvrir la rubrique « ${esc(sec.title)} » dans la fiche</button>`:""}
    </article>`;
-  }).join("")}</div>${hitGroups.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 fiches supplémentaires <span>(${hitGroups.length-visibleHits.length} restantes)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
+  }).join("")}</div></section>`).join("")}</div>${hitGroups.length>visibleHits.length?`<div class="explore-more-wrap"><button type="button" id="exploreShowMore" class="explore-show-more">Afficher 20 fiches supplémentaires <span>(${hitGroups.length-visibleHits.length} restantes)</span></button></div>`:""}`:'<div class="empty">Aucun résultat. Essaie un autre terme ou modifie les filtres.</div>';
   $("exploreCards").querySelectorAll("[data-presentation-toggle]").forEach(button=>button.onclick=()=>{
    const children=button.nextElementSibling;
    if(!children)return;
