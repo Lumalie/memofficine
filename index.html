@@ -652,7 +652,7 @@ let meds=[], selectedId=null, activeCategory="Toutes", admin=false, currentUser=
 const $=id=>document.getElementById(id);
 // Brouillon temporaire propre à cet onglet et à ce compte administrateur.
 const draftKey=()=>currentUser?.id?"memofficine-editor-v3:"+currentUser.id:null;
-let editorId=null;
+let editorId=null,editorOriginalSnapshot=null;
 function saveLocalDraft(){
  if(!admin||!editorId||$("editor").classList.contains("hidden"))return;
  const m=meds.find(x=>x.id===editorId);if(!m)return;
@@ -1743,18 +1743,27 @@ function addMedication(){
 function applyGroupTemplate(m){
  if(!isGroup(m))return false;
  const before=m.sections||[];
- const oldMeta=hierarchyMeta(m);
- const oldParent=oldMeta.memofficineParentGroup||"";
+ const oldParent=parentGroupId(m);
  const used=new Set();
  const normalized=GROUP_SECTIONS.map(template=>{
-  const match=before.find((sec,i)=>!used.has(i)&&sec.id===template.id);
-  if(match)used.add(before.indexOf(match));
-  return match?{...clone(template),...match,title:template.title,type:template.type}:clone(template);
+  const i=before.findIndex((sec,index)=>!used.has(index)&&sec.id===template.id);
+  if(i>=0){
+   used.add(i);
+   const original=before[i];
+   return {...clone(template),...original,title:template.title,type:template.type};
+  }
+  return clone(template);
  });
- // Conserver les rubriques spécifiques déjà rédigées plutôt que les effacer.
- const extra=before.filter((sec,i)=>!used.has(i)&&
-  !(!String(sec.content||"").trim()&&sec.enabled===false));
- m.sections=[...normalized,...extra];
+ // Écarter les rubriques provenant du modèle « spécialité » lorsqu'elles
+ // contiennent encore exactement le texte prérempli. Conserver toute rubrique
+ // réellement personnalisée pour éviter une perte de données.
+ const extras=before.filter((sec,i)=>{
+  if(used.has(i))return false;
+  const defaultSection=DEFAULT_SECTIONS.find(t=>t.id===sec.id);
+  if(defaultSection&&String(sec.content||"").trim()===String(defaultSection.content||"").trim())return false;
+  return !!String(sec.content||"").trim();
+ });
+ m.sections=[...normalized,...extras];
  setHierarchy(m,"groupe",oldParent);
  return true;
 }
@@ -1768,6 +1777,7 @@ function addGroup(){
 function renderEditor(id){
  openedSearchFiche=true;showView("home");$("searchLayout").classList.remove("hidden");
  const m=meds.find(x=>x.id===id);if(!m)return;
+ if(editorId!==id||!editorOriginalSnapshot)editorOriginalSnapshot=clone(m);
  if(isGroup(m)){
   const core=m.sections||[];
   const matches=GROUP_SECTIONS.every((t,i)=>core[i]?.id===t.id&&core[i]?.title===t.title&&core[i]?.type===t.type);
@@ -1874,7 +1884,16 @@ const toggleType = () => {
  }
  wireIndividualBadges("f-extra-classes","explorer-class-choices","explorerHiddenClasses");
  wireIndividualBadges("f-indications","explorer-indication-choices","explorerHiddenIndications");
- $("backBtn").onclick=()=>{clearLocalDraft();detailLocation(id);renderDetail()};
+ $("backBtn").onclick=()=>{
+  // Annuler réellement les modifications locales, y compris la conversion
+  // automatique des anciennes rubriques en modèle de groupe.
+  if(editorOriginalSnapshot?.id===id){
+   const index=meds.findIndex(x=>x.id===id);
+   if(index>=0)meds[index]=clone(editorOriginalSnapshot);
+  }
+  editorOriginalSnapshot=null;
+  clearLocalDraft();detailLocation(id);renderDetail();
+ };
  const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
@@ -2230,6 +2249,23 @@ document.addEventListener("keydown",event=>{
  event.preventDefault();
  renderEditor(med.id);
 });
+// Ctrl+A / Cmd+A : revenir à la fiche sans enregistrer depuis l'éditeur.
+// Hors édition, revenir à la page précédente de l'application. Dans les champs
+// de saisie hors éditeur, conserver le raccourci natif « tout sélectionner ».
+document.addEventListener("keydown",event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="a"||event.repeat)return;
+ const editing=!!editorId&&!$("editor").classList.contains("hidden");
+ if(editing){
+  event.preventDefault();event.stopPropagation();
+  $("backBtn")?.click();
+  return;
+ }
+ const target=event.target;
+ if(target?.matches?.('input,textarea,select,[contenteditable="true"]'))return;
+ event.preventDefault();
+ if(currentView==="home"&&!$("detail").classList.contains("hidden"))navigateToView("explore");
+ else if(currentView!=="home")navigateToView("home");
+},true);
 // Ctrl+S / Cmd+S : enregistre uniquement lorsque l'éditeur d'une fiche est ouvert.
 document.addEventListener("keydown",event=>{
  if(!(event.ctrlKey||event.metaKey)||event.altKey||event.shiftKey||event.key.toLowerCase()!=="s")return;
