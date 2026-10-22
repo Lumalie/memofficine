@@ -605,6 +605,14 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-group-result .explore-group-result-line{background:var(--group-bg)!important}
 .explore-group-result .explore-group-result-name,.explore-group-result .explore-group-result-toggle{color:var(--group-fg)!important}
 .explore-group-result{border-left-color:var(--group-border)!important}
+
+/* V6.07 — couleurs des puces de liste, rubriques associées et formatage */
+.priority-alert .priority-explicit-bullet .priority-bullet-symbol{color:#b94553!important;font-size:1.12em}
+.priority-advice .priority-explicit-bullet .priority-bullet-symbol{color:#b46b96!important;font-size:1.12em}
+.group-associations .associated-section{padding:5px 0 10px}
+.group-associations .associated-section+.associated-section{border-top:1px solid #e5ece7;padding-top:15px;margin-top:11px}
+.text-format-bubble select,.table-cell-toolbar select{max-width:145px}
+.priority-free-text [style*="text-align"]{width:100%}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -873,11 +881,11 @@ function setHierarchy(m,kind,parent){
  }
 }
 function groupDescendantIds(id,all=meds){
- const seen=new Set([id]),stack=[id];
+ const seen=new Set([String(id)]),stack=[String(id)];
  while(stack.length){
   const current=stack.pop();
-  for(const child of all.filter(x=>isGroup(x)&&parentGroupId(x)===current)){
-   if(!seen.has(child.id)){seen.add(child.id);stack.push(child.id)}
+  for(const child of all.filter(x=>isGroup(x)&&String(parentGroupId(x))===current)){
+   if(!seen.has(String(child.id))){seen.add(String(child.id));stack.push(String(child.id))}
   }
  }
  return seen;
@@ -1534,8 +1542,13 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const adviceSection=sections.find(s=>s.id==="conseils-comptoir");
  const remainingSections=sections.filter(s=>s!==prioritySection&&s!==alertSection&&s!==adviceSection);
  const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
- const children=isGroup(m)?groupChildren(m):[];
- const subgroups=isGroup(m)?childGroups(m):[];
+ const relatedVisible=publicMeds();
+ const descendants=isGroup(m)?groupDescendantIds(m.id,relatedVisible):new Set();
+ const allRelated=isGroup(m)?relatedVisible.filter(x=>x.id!==m.id&&descendants.has(String(parentGroupId(x)))):[];
+ const subgroups=allRelated.filter(isGroup).sort((a,b)=>groupDepth(a)-groupDepth(b)||a.name.localeCompare(b.name,'fr'));
+ const dciRelated=allRelated.filter(x=>!isGroup(x)&&x.entry_type==='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
+ const specialtyRelated=allRelated.filter(x=>!isGroup(x)&&x.entry_type!=='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
+ const children=[...dciRelated,...specialtyRelated];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
  const presentationForms=medicationForms(m);
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
@@ -1549,7 +1562,11 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
  ${m.entry_type==="dci"&&!isGroup(m)&&(m.sections?.[0]?.princepsNames||[]).length?`<div class="callout"><strong>Princeps :</strong> ${m.sections[0].princepsNames.map(n=>`<span class="princeps-name">${esc(n)}</span>`).join(", ")}</div>`:""}
- ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>${subgroups.length?`<div class="associated-section"><h4>Sous-groupes</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" style="${groupLevelStyle(groupDepth(g))}" type="button" data-group-open="${esc(g.id)}"><span aria-hidden="true">▣</span> ${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}${children.length?`<div class="associated-section"><h4>Fiches médicaments associées</h4><div class="associated-items">${children.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}"><span aria-hidden="true">💊</span> ${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}</div></div>`:""}
+ ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>
+ ${subgroups.length?`<div class="associated-section"><h4>Sous-groupes (${subgroups.length})</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" style="${groupLevelStyle(groupDepth(g))}" type="button" data-group-open="${esc(g.id)}">${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
+ ${dciRelated.length?`<div class="associated-section"><h4>Fiches DCI (${dciRelated.length})</h4><div class="associated-items">${dciRelated.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
+ ${specialtyRelated.length?`<div class="associated-section"><h4>Fiches médicaments et spécialités (${specialtyRelated.length})</h4><div class="associated-items">${specialtyRelated.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
+ </div></div>`:""}
 
  ${isGroup(m)?"":renderPresentations(m)}
  ${remainingSections.map(s=>renderSection(s,targetSectionId)).join("")}
@@ -1727,6 +1744,8 @@ function richInline(raw){
   const safe=validSourceLink(url.replace(/&amp;/g,"&"));
   return safe?`<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${label}</a>`:_match;
  });
+ html=html.replace(/\[\[align:(left|center|right|justify)\|([^\]\n]+)\]\]/g,(_m,a,t)=>`<span style="display:block;text-align:${a}">${t}</span>`);
+ html=html.replace(/\[\[size:(12|14|16|18|20|24|28)\|([^\]\n]+)\]\]/g,(_m,z,t)=>`<span style="font-size:${z}px">${t}</span>`);
  html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
  html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
  html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
@@ -1764,6 +1783,7 @@ function wireTextFormatting(){
    if(mode==='bullets')replacement=selected.split('\n').map(x=>'- '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
    if(mode==='numbers')replacement=selected.split('\n').map((x,i)=>(i+1)+'. '+x.replace(/^\s*(?:[-•]|\d+\.)\s+/, '')).join('\n');
    if(mode.startsWith('color:'))replacement=`[[${mode.slice(6)}|${selected}]]`;
+   if(mode.startsWith('align:')||mode.startsWith('size:'))replacement=`[[${mode}|${selected}]]`;
    editHistoryBefore(area);
    area.setRangeText(replacement,start,end,'select');
    area.dispatchEvent(new Event('input',{bubbles:true}));
@@ -1781,6 +1801,11 @@ function wireTextFormatting(){
    }
    picker.value='';savedSelection=null;
   });
+  for(const [attr,prefix] of [['data-format-align','align:'],['data-format-size','size:']]){
+   const select=bubble.querySelector(`[${attr}]`);let selection=null;
+   select.addEventListener('mousedown',()=>{selection=[area.selectionStart,area.selectionEnd]});
+   select.addEventListener('change',()=>{if(select.value){if(selection)area.setSelectionRange(...selection);apply(prefix+select.value)}select.value='';selection=null});
+  }
   refresh();
  });
 }
@@ -1793,7 +1818,7 @@ function renderPrioritySection(s,targetSectionId=null){
  const list=plainCard
   ? (lines.length?`<div class="priority-free-text">${lines.map(line=>{
       const match=line.match(/^([•●◦▪\-*]|\d+[.)])\s+(.+)$/);
-      return match?`<div class="priority-explicit-bullet"><span class="priority-bullet-symbol" aria-hidden="true">${esc(match[1])}</span><span>${richInline(match[2])}</span></div>`:`<p>${richInline(line)}</p>`;
+      return match?`<div class="priority-explicit-bullet"><span class="priority-bullet-symbol" aria-hidden="true">${/^\d/.test(match[1])?esc(match[1]):'●'}</span><span>${richInline(match[2])}</span></div>`:`<p>${richInline(line)}</p>`;
      }).join("")}</div>`:'<p class="muted">Aucun contenu renseigné.</p>')
   : (items.length?`<ul class="priority-points">${items.map(item=>`<li>${richInline(item)}</li>`).join("")}</ul>`:'<p class="muted">Aucun contenu renseigné.</p>');
  const heading=(s.id==="alerte-delivrance"||s.id==="conseils-comptoir")?"":`<h3>${esc(s.title)}</h3>`;
@@ -2033,7 +2058,7 @@ function tableCellToolbar(){
  <button type="button" data-cell-format="italic" title="Italique"><i>I</i></button>
  <button type="button" data-cell-format="underline" title="Souligné"><u>S</u></button>
  <button type="button" data-cell-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button>
- <select data-cell-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select>
+ <select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-cell-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select>
  </div><div class="table-cell-preview" hidden></div>`;
 }
 function tableGridEditor(content){
@@ -2074,6 +2099,7 @@ function wireTableCellFormatting(){
    let replacement=selected;
    if(["bold","italic","underline"].includes(mode)){toggleInlineMarks(active,mode,start,end);toolbar.hidden=true;range=null;return}
    if(mode.startsWith("color:"))replacement=`[[${mode.slice(6)}|${selected}]]`;
+   if(mode.startsWith("align:")||mode.startsWith("size:"))replacement=`[[${mode}|${selected}]]`;
    active.setRangeText(replacement,start,end,"end");
    active.dispatchEvent(new Event("input",{bubbles:true}));
    active.focus();
@@ -2082,6 +2108,10 @@ function wireTableCellFormatting(){
   toolbar.querySelectorAll("[data-cell-format]").forEach(button=>button.addEventListener("click",()=>apply(button.dataset.cellFormat)));
   const color=toolbar.querySelector("[data-cell-color]");
   color.addEventListener("change",()=>{if(color.value)apply("color:"+color.value);color.value=""});
+  for(const [attr,prefix] of [['data-format-align','align:'],['data-format-size','size:']]){
+   const select=toolbar.querySelector(`[${attr}]`);
+   select.addEventListener('change',()=>{if(select.value)apply(prefix+select.value);select.value=''});
+  }
  });
 }
 function wireTableGrids(m){
@@ -2118,7 +2148,7 @@ function wireTableGrids(m){
   renderEditor(m.id);saveLocalDraft();
  });
 }
-function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
+function sectionEditor(s,i){return `<div class="section-editor ${s.enabled===false?"is-disabled":""}" data-section="${i}"><div class="section-editor-head"><strong>Rubrique ${i+1}</strong><div class="mini-actions"><button type="button" data-act="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button type="button" data-act="down" data-index="${i}" ${i===(meds.find(m=>m.id===editorId)?.sections?.length||0)-1?'disabled':''}>↓</button><button type="button" data-act="toggle" data-index="${i}">${s.enabled===false?"Afficher":"Masquer"}</button><button type="button" class="danger" data-act="remove" data-index="${i}">Retirer</button></div></div><div style="margin-top:8px"><label>Titre</label><input data-field="title" value="${esc(s.title)}"><label style="margin-top:8px">Type</label><select data-field="type"><option value="text" ${s.type==="text"?'selected':''}>Texte</option><option value="table" ${s.type==="table"?'selected':''}>Tableau simple</option></select><label style="margin-top:8px">Contenu</label>${s.type==="text"?`<div class="text-edit-wrap"><div class="text-format-bubble" hidden><button type="button" data-format="bold" title="Gras"><b>G</b></button><button type="button" data-format="italic" title="Italique"><i>I</i></button><button type="button" data-format="underline" title="Souligné"><u>S</u></button><button type="button" data-format="link" title="Insérer un lien URL (Ctrl+K)">🔗 Lien</button><button type="button" data-format="bullets" title="Liste à puces">• Liste</button><button type="button" data-format="numbers" title="Liste numérotée">1. Liste</button><select data-format-align aria-label="Alignement du texte"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-format-size aria-label="Taille de police"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-text-color aria-label="Couleur du texte"><option value="">Couleur…</option><option value="default">Texte par défaut</option><option value="green">Vert sauge</option><option value="red">Rouge alerte</option><option value="orange">Orange vigilance</option><option value="blue">Bleu information</option><option value="gray">Gris précision</option><option value="pink">Rose conseil</option></select></div><textarea data-field="content">${esc(s.content||"")}</textarea><p class="hint">Raccourcis : Ctrl+B gras · Ctrl+I italique · Ctrl+U souligné · Ctrl+K lien vers une source · Ctrl+Z annuler · Ctrl+Y rétablir (sur Mac : Cmd).</p><div class="rich-preview" aria-label="Aperçu du texte mis en forme"></div></div>`:`${tableGridEditor(s.content||"")}`}</div></div>`}
 function captureEditorFields(m){
  const get=id=>$(id)?.value;
  if(get("f-entry-type")===undefined)return;
