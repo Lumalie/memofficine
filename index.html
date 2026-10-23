@@ -622,6 +622,20 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .molecule-dose-link:hover{background:#dbe8f9!important;border-color:#aac6e9!important}
 .molecule-parent-title-link{display:inline-flex;align-items:center;gap:5px;margin:5px 0 9px;padding:6px 11px;border:1px solid var(--group-border)!important;background:var(--group-bg)!important;color:var(--group-fg)!important;border-radius:9px;cursor:pointer;font:inherit;font-size:.9rem}
 .molecule-parent-title-link:hover{filter:brightness(.97)}
+
+/* V6.13 — présentation harmonisée des molécules dans les fiches groupes */
+.group-associations .associated-molecules{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px}
+.group-associations .associated-molecule{border:1px solid var(--group-border);border-radius:12px;background:var(--group-bg);min-width:190px;max-width:100%;overflow:hidden}
+.group-associations .associated-molecule-head{display:flex;align-items:stretch;gap:2px}
+.group-associations .associated-molecule-open{border:0!important;background:transparent!important;color:var(--group-fg)!important;border-radius:0;flex:1;text-align:left}
+.group-associations .associated-molecule-toggle{border:0;border-left:1px solid var(--group-border);border-radius:0;background:transparent;color:var(--group-fg);cursor:pointer;padding:8px 12px;font-weight:700}
+.group-associations .associated-molecule-toggle:hover{background:#ffffff80}
+.group-associations .associated-molecule-toggle.is-open{background:#ffffff75}
+.group-associations .associated-molecule-count{font-size:.78em;opacity:.8}
+.group-associations .associated-molecule-children{padding:11px;background:#fff;border-top:1px solid var(--group-border)}
+.group-associations .associated-molecule-children[hidden]{display:none!important}
+.group-associations .associated-molecule-children .molecule-dose-grid{margin:0;padding:0;border:0;background:transparent}
+@media(max-width:600px){.group-associations .associated-molecules{display:grid;grid-template-columns:1fr}.group-associations .associated-molecule{min-width:0;width:100%}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1595,9 +1609,15 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const descendants=isGroup(m)?groupDescendantIds(m.id,relatedVisible):new Set();
  const allRelated=isGroup(m)?relatedVisible.filter(x=>x.id!==m.id&&descendants.has(String(parentGroupId(x)))):[];
  const subgroups=allRelated.filter(isGroup).sort((a,b)=>groupDepth(a)-groupDepth(b)||a.name.localeCompare(b.name,'fr'));
- const dciRelated=allRelated.filter(x=>!isGroup(x)&&x.entry_type==='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
- const specialtyRelated=allRelated.filter(x=>!isGroup(x)&&x.entry_type!=='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
- const children=[...dciRelated,...specialtyRelated];
+ // Fiches molécules appartenant au groupe ou à l'un de ses sous-groupes.
+ const moleculeRelated=allRelated.filter(isMolecule).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr',{sensitivity:"base"}));
+ const moleculeIds=new Set(moleculeRelated.map(x=>String(x.id)));
+ // Les fiches dosage/forme liées apparaissent sous leur molécule, jamais en double.
+ const dosageRelated=relatedVisible.filter(x=>!isGroup(x)&&!isMolecule(x)&&x.entry_type==='dci'&&
+   (descendants.has(String(parentGroupId(x)))||moleculeIds.has(String(moleculeParentId(x)))));
+ const standaloneDosages=dosageRelated.filter(x=>!moleculeIds.has(String(moleculeParentId(x)))).sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true}));
+ const specialtyRelated=allRelated.filter(x=>!isGroup(x)&&!isMolecule(x)&&x.entry_type!=='dci').sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),'fr'));
+ const children=[...moleculeRelated,...dosageRelated,...specialtyRelated];
  const hasSourcesSection=sections.some(s=>s.id==="sources"||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(s.title||""));
  const presentationForms=medicationForms(m);
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
@@ -1614,7 +1634,12 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${isMolecule(m)&&moleculeDosages.length?`<div class="molecule-dose-grid">${moleculeDosageColumns(moleculeDosages).map(col=>`<div class="molecule-dose-column">${col.items.map(x=>`<button type="button" class="molecule-dose-link" data-group-open="${esc(x.id)}" title="Ouvrir ${esc(displayMedName(x))}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join("")}</div>`).join("")}</div>`:""}
  ${isGroup(m)&& (subgroups.length||children.length)?`<div class="group-associations"><div class="group-members"><h3>Fiches associées</h3>
  ${subgroups.length?`<div class="associated-section"><h4>Sous-groupes (${subgroups.length})</h4><div class="associated-items">${subgroups.map(g=>`<button class="associated-item associated-group" style="${groupLevelStyle(groupDepth(g))}" type="button" data-group-open="${esc(g.id)}">${esc(g.name)} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
- ${dciRelated.length?`<div class="associated-section"><h4>Fiches DCI (${dciRelated.length})</h4><div class="associated-items">${dciRelated.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
+ ${moleculeRelated.length?`<div class="associated-section"><h4>Fiches molécules (${moleculeRelated.length})</h4><div class="associated-molecules">${moleculeRelated.map(mol=>{
+  const dosages=dosageRelated.filter(x=>String(moleculeParentId(x))===String(mol.id));
+  const level=groupDepth(mol)+1;
+  return `<div class="associated-molecule" style="${groupLevelStyle(level)}"><div class="associated-molecule-head"><button class="associated-item associated-group associated-molecule-open" type="button" data-group-open="${esc(mol.id)}">${esc(displayMedName(mol))} <span aria-hidden="true">↗</span></button>${dosages.length?`<button type="button" class="associated-molecule-toggle" aria-expanded="false" aria-label="Afficher les dosages et formes de ${esc(displayMedName(mol))}" title="Afficher les dosages et formes">▾ <span class="associated-molecule-count">${dosages.length}</span></button>`:""}</div>${dosages.length?`<div class="associated-molecule-children" hidden><div class="molecule-dose-grid">${moleculeDosageColumns(dosages).map(col=>`<div class="molecule-dose-column">${col.items.map(x=>`<button type="button" class="molecule-dose-link" data-group-open="${esc(x.id)}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join("")}</div>`).join("")}</div></div>`:""}</div>`;
+ }).join("")}</div></div>`:""}
+ ${standaloneDosages.length?`<div class="associated-section"><h4>Fiches dosage/forme (${standaloneDosages.length})</h4><div class="associated-items">${standaloneDosages.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
  ${specialtyRelated.length?`<div class="associated-section"><h4>Fiches médicaments et spécialités (${specialtyRelated.length})</h4><div class="associated-items">${specialtyRelated.map(c=>`<button class="associated-item associated-med" type="button" data-group-open="${esc(c.id)}">${esc(displayMedName(c))} <span aria-hidden="true">↗</span></button>`).join("")}</div></div>`:""}
  </div></div>`:""}
 
@@ -1623,6 +1648,13 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  ${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
  ${m.updated?`<div class="detail-last-updated">Date de dernière mise à jour : ${esc(formatDateFR(m.updated))}</div>`:""}`;
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
+ $("detail").querySelectorAll(".associated-molecule-toggle").forEach(button=>button.onclick=()=>{
+  const panel=button.closest(".associated-molecule")?.querySelector(".associated-molecule-children");
+  if(!panel)return;
+  panel.hidden=!panel.hidden;
+  button.setAttribute("aria-expanded",String(!panel.hidden));
+  button.classList.toggle("is-open",!panel.hidden);
+ });
  $("detail").querySelectorAll("[data-fiche-category]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreClass").value=btn.dataset.ficheCategory;renderExplorer()});
  $("detail").querySelectorAll("[data-fiche-indication]").forEach(btn=>btn.onclick=()=>{showView("explore");$("exploreIndication").value=btn.dataset.ficheIndication;renderExplorer()});
  $("detail").querySelectorAll("[data-fiche-form]").forEach(btn=>btn.onclick=()=>{showView("explore");renderExplorer();$("exploreForm").value=btn.dataset.ficheForm;renderExplorer()});
