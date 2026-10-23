@@ -805,6 +805,27 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
  .group-associations .associated-items,.group-associations .associated-molecules{display:flex;flex-wrap:wrap}
  .group-associations .associated-molecule{width:auto;max-width:100%}
 }
+
+/* V6.27 — Code couleur par type, identique dans toutes les vues. */
+:root{--memo-group-bg:#eaf3ed;--memo-group-ink:#2f684b;--memo-group-border:#a8ccb3;--memo-molecule-bg:#f2e5f7;--memo-molecule-ink:#793f8f;--memo-molecule-border:#d2addf;--memo-dose-bg:#faeee7;--memo-dose-ink:#98553f;--memo-dose-border:#dfb5a4;--memo-presentation-bg:#e6f0fb;--memo-presentation-ink:#315b87;--memo-presentation-border:#83add9}
+.fiche-breadcrumb .breadcrumb-current-med{color:var(--memo-dose-ink)!important}
+.molecule-dose-link,.group-associations .associated-molecule-children .molecule-dose-link{background:var(--memo-dose-bg)!important;color:var(--memo-dose-ink)!important;border-color:var(--memo-dose-border)!important}
+.molecule-dose-link:hover{background:#f4e1d6!important;border-color:#d49d86!important}
+.group-associations .associated-med{--group-bg:var(--memo-dose-bg);--group-fg:var(--memo-dose-ink);--group-border:var(--memo-dose-border)}
+#searchWorkspace .search-preview-children .search-preview-child-dose{background:var(--memo-dose-bg);color:var(--memo-dose-ink);border-color:var(--memo-dose-border)}
+#searchWorkspace #searchSuggestions .result-group{--hit-ink:#2f684b;--hit-line:#a8ccb3;--hit-rgb:234,243,237}
+#searchWorkspace #searchSuggestions .result-fiche{--hit-ink:#98553f;--hit-line:#dfb5a4;--hit-rgb:250,238,231}
+#searchWorkspace #searchSuggestions .result-molecule{--hit-ink:#793f8f;--hit-line:#d2addf;--hit-rgb:242,229,247}
+#searchWorkspace #searchSuggestions .result-presentation{--hit-ink:#315b87;--hit-line:#83add9;--hit-rgb:230,240,251}
+.search-suggestions .result-group{border-left-color:var(--memo-group-border);background:linear-gradient(90deg,#eaf3ed,transparent 85%)}
+.search-suggestions .result-group strong{color:var(--memo-group-ink)}
+.search-suggestions .result-fiche{border-left-color:var(--memo-dose-border);background:linear-gradient(90deg,#faeee7,transparent 85%)}
+.search-suggestions .result-fiche strong{color:var(--memo-dose-ink)}
+.explore-tree .explore-tree-group>.explore-tree-line{background:var(--group-bg)!important}
+.explore-group-result .explore-group-result-line{background:var(--group-bg)!important}
+/* La hiérarchie reste visible par indentation, branches et chevrons. */
+.explore-tree-node{position:relative}
+.explore-tree-node .explore-tree-node{margin-left:0}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1131,18 +1152,12 @@ function childGroups(group,visible=publicMeds()){
  return visible.filter(m=>isGroup(m)&&parentGroupId(m)===group.id)
  .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
 }
-// Palette cyclique par profondeur : mêmes couleurs dans Explorer, le fil
-// d’Ariane et les sous-groupes associés, quelle que soit la profondeur.
-const GROUP_LEVEL_COLORS=[
- {bg:"#eaf3ed",fg:"#2f684b",border:"#a8ccb3"}, // vert sauge
- {bg:"#fff5e6",fg:"#a66c22",border:"#e5b66c"}, // jaune orangé
- {bg:"#edf0fc",fg:"#585e9d",border:"#bdc4ed"}, // lavande
- {bg:"#f8e9f1",fg:"#873f66",border:"#dfb5cc"}, // rose poudré
- {bg:"#e7f3f4",fg:"#326f77",border:"#a7d1d5"}, // bleu lagon
- {bg:"#f3eddf",fg:"#806138",border:"#d9c49a"}, // sable
- {bg:"#f0eaf8",fg:"#765494",border:"#cbb6de"}, // lilas
- {bg:"#eef2df",fg:"#657b32",border:"#c8d49c"}  // olive doux
-];
+// Palette unique pour tous les groupes, quelle que soit leur profondeur.
+// V6.27 : une couleur stable par nature de fiche, et non par profondeur.
+const GROUP_LEVEL_COLORS=[{bg:"#eaf3ed",fg:"#2f684b",border:"#a8ccb3"}];
+const DOSAGE_COLOR={bg:"#faeee7",fg:"#98553f",border:"#dfb5a4"};
+const PRESENTATION_COLOR={bg:"#e6f0fb",fg:"#315b87",border:"#83add9"};
+function typeColorStyle(c){return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;}
 function groupDepth(group,visible=publicMeds()){
  const byId=new Map(visible.filter(isGroup).map(g=>[String(g.id),g]));
  const seen=new Set([String(group.id)]);let id=String(parentGroupId(group)||"");let depth=0;
@@ -1155,14 +1170,14 @@ function groupLevelStyle(depth){
  const c=GROUP_LEVEL_COLORS[Math.max(0,depth)%GROUP_LEVEL_COLORS.length];
  return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;
 }
-// Identité visuelle unique : profondeur pour les groupes, mauve pour les molécules.
+// Identité visuelle unique : sauge pour les groupes, mauve pour les molécules.
 const MOLECULE_COLOR={bg:"#f2e5f7",fg:"#793f8f",border:"#d2addf"};
 function entityTreeStyle(item){
  if(isMolecule(item)){
   const c=MOLECULE_COLOR;
   return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;
  }
- return groupLevelStyle(groupDepth(item));
+ return isGroup(item)?groupLevelStyle(0):typeColorStyle(DOSAGE_COLOR);
 }
 // V6.25 : un seul emplacement et une seule présentation pour les retours vers les fiches parentes.
 function ficheParent(m,visible=publicMeds()){
@@ -1186,7 +1201,7 @@ function ficheBreadcrumb(m){
   chain.unshift(node);
   parent=isMolecule(node)||isGroup(node)?parentGroupId(node):"";
  }
- return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link breadcrumb-group-level" style="${entityTreeStyle(g)}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)||isMolecule(m)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" ${isGroup(m)||isMolecule(m)?`style="${entityTreeStyle(m)}"`:""} aria-current="page">${esc(displayMedName(m))}</span></nav>`;
+ return `<nav class="fiche-breadcrumb" aria-label="Chemin de la fiche">${chain.map((g,i)=>`<button type="button" class="breadcrumb-link breadcrumb-group-level" style="${entityTreeStyle(g)}" data-group-open="${esc(g.id)}" title="Ouvrir ${esc(g.name)}">${esc(g.name)}</button><span class="breadcrumb-separator" aria-hidden="true">›</span>`).join("")}<span class="breadcrumb-current ${isGroup(m)||isMolecule(m)?"breadcrumb-current-group-level":"breadcrumb-current-med"}" ${`style="${entityTreeStyle(m)}"`} aria-current="page">${esc(displayMedName(m))}</span></nav>`;
 }
 
 function indicationTags(m){
@@ -1523,7 +1538,7 @@ function renderExplorer(){
    const form=String(p.form||m.form||"").trim();
    return [name+lab,...(dose&&!norm(name).includes(norm(dose))?[dose]:[]),...(form&&!norm(name).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
   };
-  return `<div class="explore-tree-node ${isGroup(m)||isMolecule(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)||isMolecule(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)};${isGroup(m)||isMolecule(m)?entityTreeStyle(m):""}">
+  return `<div class="explore-tree-node ${isGroup(m)||isMolecule(m)?"explore-tree-group":"explore-tree-med"} ${isGroup(m)||isMolecule(m)?(depth===0?"explore-tree-root-group":"explore-tree-subgroup"):""} ${!isMatch?"explore-tree-context":""}" style="--tree-depth:${Math.min(depth,8)};${entityTreeStyle(m)}">
    <div class="explore-tree-line">
     ${kids.length?`<button type="button" class="explore-tree-toggle" data-tree-toggle="${esc(m.id)}" aria-label="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"Replier":"Déplier"} ${esc(displayMedName(m))}" aria-expanded="${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)}" aria-controls="tree-children-${esc(m.id)}"><span aria-hidden="true">${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"▾":"▸"}</span></button>`:`<span class="explore-tree-leaf-space" aria-hidden="true"></span>`}
     ${isGroup(m)||isMolecule(m)?"":`<span class="explore-tree-icon" aria-hidden="true">●</span>`}
