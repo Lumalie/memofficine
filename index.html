@@ -704,6 +704,40 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #searchWorkspace .search-preview-children button:hover{filter:brightness(.96)}
 #searchWorkspace .search-preview-parent-return{margin:12px 0 5px}
 #searchWorkspace .search-preview-parent-return .molecule-parent-title-link{margin:0}
+
+/* V6.21 — résultats uniformisés : dégradé doux et liseré de couleur */
+#searchWorkspace #searchSuggestions .result{
+  --hit-ink:#32694f;--hit-line:#85b49b;--hit-rgb:222,238,227;
+  position:relative;margin:5px 8px;padding:11px 12px 11px 14px;
+  border:0;border-left:3px solid var(--hit-line);
+  border-radius:0 7px 7px 0;
+  background:linear-gradient(90deg,rgba(var(--hit-rgb),.72),rgba(var(--hit-rgb),.22) 58%,transparent 100%);
+  transition:background .15s ease;
+}
+#searchWorkspace #searchSuggestions .result strong{color:var(--hit-ink)}
+#searchWorkspace #searchSuggestions .result .result-dot{color:var(--hit-ink)}
+#searchWorkspace #searchSuggestions .result-group{
+  --hit-ink:#9b6b27;--hit-line:#d9b16c;--hit-rgb:248,237,214;
+}
+#searchWorkspace #searchSuggestions .result-molecule{
+  --hit-ink:#793f8f;--hit-line:#b988ca;--hit-rgb:242,229,247;
+}
+#searchWorkspace #searchSuggestions .result-presentation{
+  --hit-ink:#315b87;--hit-line:#83add9;--hit-rgb:230,240,251;
+}
+#searchWorkspace #searchSuggestions .result-fiche{
+  --hit-ink:#32694f;--hit-line:#85b49b;--hit-rgb:222,238,227;
+}
+#searchWorkspace #searchSuggestions .result:hover,
+#searchWorkspace #searchSuggestions .result.preview-selected{
+  padding-left:14px;border-left-color:var(--hit-ink);
+  background:linear-gradient(90deg,rgba(var(--hit-rgb),.98),rgba(var(--hit-rgb),.36) 70%,transparent 100%);
+}
+#searchWorkspace #searchSuggestions .result-molecule:hover,
+#searchWorkspace #searchSuggestions .result-molecule.preview-selected{
+  background:linear-gradient(90deg,rgba(242,229,247,.98),rgba(242,229,247,.36) 70%,transparent 100%);
+}
+#searchWorkspace #searchSuggestions .result-kind-label{color:var(--hit-ink)}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1554,8 +1588,12 @@ function getSearchMatches(queryOverride=null){
   if(uniqueGroups.has(id))return false;
   uniqueGroups.add(id);return true;
  }).sort((a,b)=>{
-  const score=item=>{const name=norm(item.med.name);return (name===q?100:0)+(name.startsWith(q)?40:0)+tokens.filter(t=>name.includes(t)).length*15+(isGroup(item.med)?5:0)};
-  return score(b)-score(a)||String(a.med.name).localeCompare(String(b.med.name),"fr")||(a.presentation??-1)-(b.presentation??-1);
+  // Regrouper les résultats par type pour garder les couleurs côte à côte.
+  const typeRank=item=>item.presentation!==null?3:isGroup(item.med)?0:isMolecule(item.med)?1:2;
+  const rankDiff=typeRank(a)-typeRank(b);
+  if(rankDiff)return rankDiff;
+  const score=item=>{const name=norm(item.med.name);return (name===q?100:0)+(name.startsWith(q)?40:0)+tokens.filter(t=>name.includes(t)).length*15};
+  return score(b)-score(a)||String(a.med.name).localeCompare(String(b.med.name),"fr",{numeric:true,sensitivity:"base"})||(a.presentation??-1)-(b.presentation??-1);
  });
 }
 function searchSectionPreview(sec){
@@ -1625,10 +1663,9 @@ function previewSearchResult(item){
   .sort((a,b)=>{const rank=x=>isGroup(x)?0:isMolecule(x)?1:2;return rank(a)-rank(b)||displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true,sensitivity:'base'});}):[];
  const previewChildren=isGroup(m)?directGroupChildren:childMeds;
  const previewChildrenHtml=previewChildren.length?`<div class="search-preview-related search-preview-children">${previewChildren.map(x=>`<button type="button" class="search-preview-child ${isGroup(x)?'search-preview-child-group':isMolecule(x)?'search-preview-child-molecule':'search-preview-child-dose'}" ${isGroup(x)||isMolecule(x)?`style="${entityTreeStyle(x)}"`:''} data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join('')}</div>`:'';
- const presentations=(m.presentations||[]);
- const presentationButtons=presentations.length?`<div class="search-preview-related">${presentations.map((p,i)=>`<button type="button" data-preview-presentation="${i}">${esc(presentationLabel(p,m,i))} ↗</button>`).join('')}</div>`:'';
- const foundFooter=sec?`<div class="search-preview-found"><div class="search-preview-found-label">Rubrique trouvée dans cette fiche</div>${presentationButtons}<button type="button" class="search-preview-found-link" data-preview-section="${esc(sec.id)}">↗ Afficher « ${esc(sec.title||'la rubrique')} » dans l’aperçu</button></div>`:'';
- $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${!sec?presentationButtons:''}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}`;
+
+ const foundFooter=sec?`<div class="search-preview-found"><div class="search-preview-found-label">Rubrique trouvée dans cette fiche</div><button type="button" class="search-preview-found-link" data-preview-section="${esc(sec.id)}">↗ Afficher « ${esc(sec.title||'la rubrique')} » dans l’aperçu</button></div>`:'';
+ $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
  $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const target=visible.find(x=>String(x.id)===String(b.dataset.groupOpen));if(target)navigatePreview({med:target,section:null,presentation:null});});
  $('searchPreview').querySelector('[data-preview-open-title]')?.addEventListener('click',()=>openMedication(m.id,pres,sec?.id||null));
@@ -1688,7 +1725,7 @@ function renderResults(){
   const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">${esc(sec.title)} <span aria-hidden="true">↗</span></span>${searchSectionPreview(sec)}</div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
-   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:m.entry_type==="dci"?`<div class="result-kind-label">${isMolecule(m)?"Fiche molécule":"Fiche dosage/forme"}</div>${dciBadges}`:`<div class="sub">${group?"Fiche groupe":"Fiche médicament"} · ${esc(m.category||"Sans famille")}</div>`}
+   ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:m.entry_type==="dci"?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
    ${sectionDetail}
   </div>`;
  }).join(''):'<div class="empty">Aucun résultat. Essaie un autre terme ou change de famille.</div>';
