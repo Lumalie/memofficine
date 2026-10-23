@@ -875,7 +875,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
     </div>
   </div>
   <div id="searchWorkspace" class="hidden" aria-label="Recherche avec aperçu">
-    <section class="search-work-panel"><div class="search-work-heading"><span>Résultats</span><small>Sélectionner pour prévisualiser</small></div><div id="searchResultsSlot"></div></section>
+    <section class="search-work-panel"><div class="search-work-heading"><span>Résultats</span><small>Survoler pour prévisualiser</small></div><div id="searchResultsSlot"></div></section>
     <section class="search-work-panel"><div class="search-work-heading"><span>Aperçu de la fiche</span><small>Cliquer pour ouvrir</small></div><div class="search-work-preview" id="searchPreview"><div class="empty">Sélectionne un résultat.</div></div></section>
   </div>
   <div id="searchLayout" class="layout hidden">
@@ -1213,6 +1213,11 @@ function specialtyItems(m){
  return (m.presentations||[]).map((p,i)=>({p,i,name:(p.name||m.name||"").trim()})).filter(x=>x.name);
 }
 function openMedication(id,presentationIndex=null,sectionId=null){
+ // Conserver le contexte exact de la recherche dans l'entrée d'historique précédente.
+ if(currentView==='home'&&!openedSearchFiche&&!editorId&&$('search').value.trim()){
+  const previous={...history.state,memopharmSearch:{query:$('search').value,category:activeCategory,previewKey:previewSearchKey}};
+  history.replaceState(previous,'',location.href);
+ }
  const m=meds.find(x=>x.id===id);if(!m)return;
  $("search").value="";activeCategory="Toutes";selectedId=id;
  if(sectionId)viewScrollPositions.home=0;
@@ -1609,7 +1614,18 @@ function navigateToView(view){
  showView(view);
  window.scrollTo({top:0,behavior:"instant"});
 }
-function restoreHistoryPage(){
+function restoreHistoryPage(state=history.state){
+ const searchContext=state?.memopharmSearch;
+ if(searchContext&&!new URLSearchParams(location.search).has('fiche')){
+  editorId=null;openedSearchFiche=false;selectedId=null;
+  $('editor').classList.add('hidden');$('detail').classList.remove('hidden');
+  $('search').value=searchContext.query||'';
+  activeCategory=searchContext.category||'Toutes';
+  previewSearchKey=searchContext.previewKey||'';
+  showView('home');renderFilters();renderResults();
+  window.scrollTo({top:0,behavior:'instant'});
+  return;
+ }
  const params=new URLSearchParams(location.search);
  const id=params.get("fiche");
  const med=id?meds.find(m=>m.id===id&&!isSourcesRecord(m)&&(admin||m.published)):null;
@@ -1632,7 +1648,7 @@ function restoreHistoryPage(){
  }
  window.scrollTo({top:0,behavior:"instant"});
 }
-window.addEventListener("popstate",e=>{if(restorePreviewHistory(e.state))return;rememberNavigation();restoreHistoryPage()});
+window.addEventListener("popstate",e=>{if(restorePreviewHistory(e.state))return;rememberNavigation();restoreHistoryPage(e.state)});
 function toast(msg){$("toastRoot").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>{$("toastRoot").innerHTML=""},2600)}
 function categories(){return ["Toutes",...new Set(meds.filter(m=>!isSourcesRecord(m)).map(m=>m.category).filter(Boolean).sort((a,b)=>a.localeCompare(b,"fr")))]}
 function renderFilters(){ $("filters").innerHTML=categories().map(c=>`<button data-cat="${esc(c)}" class="${c===activeCategory?'active':''}">${esc(c)}</button>`).join("");$("filters").querySelectorAll("button").forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderFilters();renderResults()})}
@@ -1855,8 +1871,14 @@ function renderResults(){
      if(pres!==null)url.searchParams.set("presentation",String(pres));else url.searchParams.delete("presentation");
      window.open(url.toString(),"_blank","noopener");return;
     }
-    if(currentView==="home"&&!openedSearchFiche&&!editorId&&$("search").value.trim()){const item=found.find(x=>String(x.med.id)===String(id)&&(x.section?.id||"")===(section||"")&&x.presentation===pres);if(item){navigatePreview(item);return;}}
     openMedication(id,pres,section);
+   };
+   // Le survol met à jour l'aperçu sans créer d'entrée d'historique.
+   el.onmouseenter=()=>{
+    if(currentView!=="home"||openedSearchFiche||editorId||!$('search').value.trim())return;
+    const id=el.dataset.id,section=el.dataset.section||'',pres=el.dataset.presentation===''?null:Number(el.dataset.presentation);
+    const item=found.find(x=>String(x.med.id)===String(id)&&(x.section?.id||'')===section&&x.presentation===pres);
+    if(item)previewSearchResult(item);
    };
    el.onclick=choose;
    el.ondblclick=()=>openMedication(el.dataset.id,el.dataset.presentation===""?null:Number(el.dataset.presentation),el.dataset.section||null);
