@@ -738,6 +738,12 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   background:linear-gradient(90deg,rgba(242,229,247,.98),rgba(242,229,247,.36) 70%,transparent 100%);
 }
 #searchWorkspace #searchSuggestions .result-kind-label{color:var(--hit-ink)}
+
+/* V6.23 — Encarts prioritaires identiques dans la fiche et dans l’aperçu. */
+.search-preview-section:has(.priority-card){padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-align:left}
+.search-preview-section:has(.priority-card)>.search-preview-arrow{display:none!important}
+.search-preview-section .priority-card{width:100%;margin:0;box-sizing:border-box}
+.search-preview-section .priority-card .priority-section h3{display:none!important}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1657,7 +1663,16 @@ function previewSearchResult(item){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${moleculeParent?`<div class="search-preview-parent-return"><button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(moleculeParent)}" data-group-open="${esc(moleculeParent.id)}" title="Revenir à la fiche molécule">↖ ${esc(displayMedName(moleculeParent))}</button></div>`:""}</div></div>`;
  const sections=sec?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&String(x.content||'').trim()).slice(0,7);
- const safeSection=section=>{try{return renderSection(section).replace(/\sid="section-[^"]*"/g,'')}catch(e){return `<h3>${esc(section.title||'Rubrique')}</h3><p>${esc(String(section.content||'').slice(0,500))}</p>`}};
+ // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
+ const safeSection=section=>{
+  try{
+   if(section.id==='alerte-delivrance'||section.id==='conseils-comptoir'){
+    const tone=section.id==='alerte-delivrance'?'priority-alert':'priority-advice';
+    return `<div class="priority-card ${tone}">${renderPrioritySection(section).replace(/\sid="section-[^"]*"/g,'')}</div>`;
+   }
+   return renderSection(section).replace(/\sid="section-[^"]*"/g,'');
+  }catch(e){return `<p>${esc(String(section.content||'').slice(0,500))}</p>`}
+ };
  const childMeds=isMolecule(m)?moleculeChildren(m):[];
  const directGroupChildren=isGroup(m)?visible.filter(x=>String(parentGroupId(x))===String(m.id)&&(isGroup(x)||isMolecule(x)||(!moleculeParentId(x))))
   .sort((a,b)=>{const rank=x=>isGroup(x)?0:isMolecule(x)?1:2;return rank(a)-rank(b)||displayMedName(a).localeCompare(displayMedName(b),'fr',{numeric:true,sensitivity:'base'});}):[];
