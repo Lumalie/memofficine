@@ -2343,7 +2343,30 @@ const toggleType = () => {
   editorOriginalSnapshot=null;
   clearLocalDraft();detailLocation(id);renderDetail();
  };
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
+ // Délégation : fonctionne dès l'ouverture de l'éditeur et après son actualisation.
+ $("presentationEditors").addEventListener("click",event=>{
+  const add=event.target.closest("[data-add-cip-pack]");
+  if(add){
+   const rows=add.closest(".cip-pack-rows");
+   const original=rows?.querySelector("[data-cip-pack-row]");
+   if(!original)return;
+   const row=original.cloneNode(true);
+   row.querySelectorAll("input").forEach(input=>input.value="");
+   rows.insertBefore(row,add);
+   row.querySelector("[data-cip-value]")?.focus();
+   saveLocalDraft();
+   return;
+  }
+  const remove=event.target.closest("[data-remove-cip-pack]");
+  if(!remove)return;
+  const rows=remove.closest(".cip-pack-rows");
+  const all=rows?.querySelectorAll("[data-cip-pack-row]");
+  if(!all?.length)return;
+  if(all.length===1)all[0].querySelectorAll("input").forEach(input=>input.value="");
+  else remove.closest("[data-cip-pack-row]").remove();
+  saveLocalDraft();
+ });
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
