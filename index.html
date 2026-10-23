@@ -1468,11 +1468,28 @@ function renderExplorer(){
  const treeParent=m=>moleculeParentId(m)&&visibleById.has(String(moleculeParentId(m)))?String(moleculeParentId(m)):parentGroupId(m);
  const childrenOf=id=>visible.filter(m=>String(treeParent(m))===String(id)).sort(sortExplorer);
  const rootEntries=visible.filter(m=>!visibleById.has(String(treeParent(m)))||String(treeParent(m))===String(m.id)).sort(sortExplorer);
- const renderNode=(m,depth=0,ancestors=new Set())=>{
+ const renderNode=(m,depth=0,ancestors=new Set(),inheritedBadges=new Set())=>{
   if(ancestors.has(m.id))return "";
   const next=new Set(ancestors);next.add(m.id);
   const kids=isGroup(m)||isMolecule(m)?childrenOf(m.id):[];
   const forms=medicationForms(m);
+  // Les badges déjà affichés dans un parent ne sont pas répétés dans ses descendants.
+  // La déduplication est visuelle et limitée à l’arborescence Explorer : les données
+  // des fiches, les filtres et les badges de la fiche complète restent inchangés.
+  const badgeKey=(type,value)=>type+":"+norm(String(value||"").trim());
+  const classesShown=explorerClasses(m).filter(t=>explorerClassVisible(m,t));
+  const indicationsShown=indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t));
+  const formsShown=(m.entry_type==="dci"&&!explorerBadgeVisible(m,"forms"))?[]:forms;
+  const novel=(type,items)=>items.filter(t=>!inheritedBadges.has(badgeKey(type,t)));
+  const newClasses=novel("class",classesShown);
+  const newIndications=novel("indication",indicationsShown);
+  const newForms=novel("form",formsShown);
+  const childInherited=new Set(inheritedBadges);
+  if(filtered.some(x=>x.id===m.id)){
+   classesShown.forEach(t=>childInherited.add(badgeKey("class",t)));
+   indicationsShown.forEach(t=>childInherited.add(badgeKey("indication",t)));
+   formsShown.forEach(t=>childInherited.add(badgeKey("form",t)));
+  }
   const isMatch=filtered.some(x=>x.id===m.id);
   const specialtyPresentations=m.entry_type==="specialite"?specialtyItems(m):[];
   const presentationTitle=p=>{
@@ -1490,8 +1507,8 @@ function renderExplorer(){
     
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
-   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${((m.entry_type==="dci"?explorerBadgeVisible(m,"forms"):true)?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
-   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
+   ${isMatch&&(newClasses.length||newIndications.length||newForms.length)?`<div class="explore-tree-tags">${newClasses.map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${newIndications.map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${newForms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next,childInherited)).join("")}</div>`:""}
   </div>`;
  };
  $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche trouvée. Essaie un autre terme ou modifie les filtres.</div>';
