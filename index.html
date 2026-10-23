@@ -977,8 +977,8 @@ function groupLevelStyle(depth){
  const c=GROUP_LEVEL_COLORS[Math.max(0,depth)%GROUP_LEVEL_COLORS.length];
  return `--group-bg:${c.bg};--group-fg:${c.fg};--group-border:${c.border};`;
 }
-// Identité visuelle unique : profondeur pour les groupes, lavande pour les molécules.
-const MOLECULE_COLOR={bg:"#edf0fc",fg:"#585e9d",border:"#bdc4ed"};
+// Identité visuelle unique : profondeur pour les groupes, mauve pour les molécules.
+const MOLECULE_COLOR={bg:"#f2e5f7",fg:"#793f8f",border:"#d2addf"};
 function entityTreeStyle(item){
  if(isMolecule(item)){
   const c=MOLECULE_COLOR;
