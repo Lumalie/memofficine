@@ -782,6 +782,11 @@ button.tag.tag-extra-class{cursor:pointer}button.tag.tag-extra-class:hover{backg
 .memo-tag-picker-item input{width:auto!important;margin:0;accent-color:#59896b}
 .memo-tag-picker-empty{padding:9px 10px;font-size:.84rem;color:#667570}
 .memo-tag-picker-hint{margin:6px 0 0;font-size:.78rem;color:#667570}
+
+/* V6.32 — CIP 13 cliquables dans les contenus des rubriques et tableaux */
+.inline-cip-copy{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;border:1px solid #b9d8d2;background:#e9f5f1;color:#245d4b;border-radius:7px;padding:2px 7px;font:inherit;font-size:.91em;font-weight:600;cursor:pointer;white-space:nowrap}
+.inline-cip-copy:hover,.inline-cip-copy:focus-visible{background:#d5ece5;border-color:#7ab5a6;outline-offset:2px}
+.inline-cip-label{font-size:.79em;letter-spacing:.03em;opacity:.78}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -841,7 +846,23 @@ button.tag.tag-extra-class{cursor:pointer}button.tag.tag-extra-class:hover{backg
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 </main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// V6.32 — Copie déléguée : fonctionne dans les tableaux, textes et aperçus recréés.
+document.addEventListener('click',async event=>{
+ const button=event.target.closest?.('[data-inline-copy-cip]');
+ if(!button)return;
+ event.preventDefault();event.stopPropagation();
+ const code=button.dataset.inlineCopyCip;
+ try{
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(code)}
+  else{
+   const field=document.createElement('textarea');field.value=code;field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();
+   const ok=document.execCommand('copy');field.remove();if(!ok)throw new Error('Copie refusée');
+  }
+  toast('CIP copié : '+code);
+ }catch(_error){toast('Copie impossible : sélectionne le CIP manuellement.');}
+});
+</script>
 <script>
 const SUPABASE_URL = "https://xbhqogndzbrjhrigtncy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4cQdbKxcRjO8JH48uA8bZA_taBLuHdE";
@@ -2115,7 +2136,15 @@ async function uploadPresentationPhotos(m){
 // Format léger et sécurisé : seules les marques créées par la barre d'outils sont interprétées.
 const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#87949c',pink:'#a34e7e'};
 function richInline(raw){
- let html=esc(raw);
+ // Repérage des CIP 13 dans les textes et cellules de tableau.
+ // Les marqueurs sont remplacés après la mise en forme pour éviter de modifier le HTML.
+ const cipTokens=[];
+ const marked=String(raw??"").replace(/(^|[^\d])([0-9]{13})(?!\d)/g,(_all,before,code)=>{
+  const token=`MEMOPHARMCIPTOKEN${cipTokens.length}END`;
+  cipTokens.push({token,code});
+  return before+token;
+ });
+ let html=esc(marked);
  html=html.replace(/\[\[(default|green|red|orange|blue|gray|pink)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
  // Liens Markdown : seules les adresses HTTP(S) sont autorisées.
  html=html.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>\)]+)\)/gi,(_match,label,url)=>{
@@ -2127,6 +2156,9 @@ function richInline(raw){
  html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
  html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
  html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+ for(const {token,code} of cipTokens){
+  html=html.replace(token,`<button type="button" class="inline-cip-copy" data-inline-copy-cip="${code}" title="Copier le CIP ${code}" aria-label="Copier le CIP ${code}"><span class="inline-cip-label">CIP</span> ${code} <span aria-hidden="true">⧉</span></button>`);
+ }
  return html;
 }
 function richText(raw){
