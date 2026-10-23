@@ -749,6 +749,25 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .cip-pack-label{font-size:.79rem;color:#526a60;background:#f1f5f2;border:1px solid #dbe7df;border-radius:7px;padding:3px 7px}
 .cip-pack-editor{align-items:flex-start!important}.cip-pack-rows{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px}
 .cip-pack-edit-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.cip-pack-edit-row input:first-child{flex:1 1 150px;min-width:135px}.cip-pack-edit-row input:nth-child(2){flex:1 1 160px;min-width:135px}.cip-pack-edit-row button{border:1px solid #e3c7c7;background:#fff7f7;color:#9d5151;border-radius:8px;padding:6px 11px;cursor:pointer}.cip-pack-add{align-self:flex-start;border:1px solid #bfd9ca;background:#edf5ef;color:#28654e;border-radius:8px;padding:7px 10px;cursor:pointer}.presentation-cip-list{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0}
+
+/* V6.27 — boutons de navigation homogènes et emplacement stable du fil d’Ariane */
+#searchWorkspace .search-preview-parent-return{margin:12px 0 16px}
+#searchWorkspace .search-preview-parent-return .molecule-parent-title-link{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 10px;margin:0;border-radius:9px;
+  font:inherit;font-size:inherit;font-weight:400;line-height:normal;
+  min-height:0;white-space:normal;
+}
+#searchWorkspace .search-preview-breadcrumb-slot{
+  min-height:45px;display:flex;align-items:flex-start;
+  margin:0 0 16px;padding:2px 0 7px;
+  border-bottom:1px solid #cad6d5;
+}
+#searchWorkspace .search-preview-breadcrumb-slot .fiche-breadcrumb{
+  margin:0!important;padding:0!important;border:0!important;
+  min-height:0;align-self:center;
+}
+@media(max-width:600px){#searchWorkspace .search-preview-breadcrumb-slot{min-height:45px;margin-bottom:12px}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -1679,7 +1698,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${moleculeParent?`<div class="search-preview-parent-return"><button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(moleculeParent)}" data-group-open="${esc(moleculeParent.id)}" title="Revenir à la fiche molécule">↖ ${esc(displayMedName(moleculeParent))}</button></div>`:""}</div></div>`;
+ const headerHtml=`<div class="search-preview-breadcrumb-slot">${ficheBreadcrumb(m)}</div><div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${moleculeParent?`<div class="search-preview-parent-return"><button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(moleculeParent)}" data-group-open="${esc(moleculeParent.id)}" title="Revenir à la fiche molécule">↖ ${esc(displayMedName(moleculeParent))}</button></div>`:""}</div></div>`;
  const sections=sec?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
