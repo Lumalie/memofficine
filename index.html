@@ -637,6 +637,17 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .group-associations .associated-molecule-children .molecule-dose-grid{margin:0;padding:0;border:0;background:transparent}
 @media(max-width:600px){.group-associations .associated-molecules{display:grid;grid-template-columns:1fr}.group-associations .associated-molecule{min-width:0;width:100%}}
 
+/* V6.17 : aperçu plus large, entête identique à la fiche complète */
+@media(min-width:1050px){
+ #homeView.search-work-active #searchWorkspace{width:min(calc(100vw - 48px),1450px);max-width:none;margin-left:50%;transform:translateX(-50%);grid-template-columns:340px minmax(0,1fr)}
+}
+#homeView.search-work-active .home-hero{display:none}
+#searchWorkspace .search-work-preview .fiche-breadcrumb{margin-bottom:16px}
+#searchWorkspace .search-work-preview .detailtop{margin-bottom:14px}
+#searchWorkspace .search-work-preview .detailtop h2{font-size:1.65rem;line-height:1.2;margin:0 0 5px;font-variant:normal;text-transform:uppercase;letter-spacing:.035em}
+#searchWorkspace .search-work-preview .detailtop .tags{margin-top:8px}
+#searchWorkspace .search-work-preview .detailtop .tag{font-size:.78rem}
+#searchWorkspace .search-work-preview .group-kicker{margin-bottom:4px}
 /* V6.16 : recherche en deux volets, indépendante de l'Explorateur */
 #searchWorkspace{display:grid;grid-template-columns:minmax(270px,.88fr) minmax(0,1.5fr);gap:16px;margin:18px 0 22px;align-items:start}
 #searchWorkspace.hidden{display:none!important}
@@ -1548,14 +1559,21 @@ function previewSearchResult(item){
  previewSearchKey=searchPreviewKey(item);
  const m=item.med,sec=item.section,pres=item.presentation;
  const visible=publicMeds();
- const ancestors=[];const byId=new Map(visible.map(x=>[String(x.id),x]));
- let parent=moleculeParentId(m)||parentGroupId(m),guard=new Set([String(m.id)]);
- while(parent&&!guard.has(String(parent))){guard.add(String(parent));const node=byId.get(String(parent));if(!node)break;ancestors.unshift(node.name);parent=parentGroupId(node)}
+ const moleculeParent=visible.find(x=>String(x.id)===String(moleculeParentId(m))&&isMolecule(x));
+ const presentationForms=medicationForms(m);
+ const formBadge=!isGroup(m)&&presentationForms.length
+  ?presentationForms.length===1?`<span class="tag tag-form">${esc(presentationForms[0])}</span>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
+ const info=ingredientInfo(m);
+ const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
+ const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
+ const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2>${moleculeParent?`<button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(moleculeParent)}" data-group-open="${esc(moleculeParent.id)}" title="Revenir à la fiche molécule">↖ ${esc(displayMedName(moleculeParent))}</button>`:""}<div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div></div>`;
  const sections=sec?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&String(x.content||'').trim()).slice(0,7);
  const safeSection=section=>{try{return renderSection(section).replace(/\sid="section-[^"]*"/g,'')}catch(e){return `<h3>${esc(section.title||'Rubrique')}</h3><p>${esc(String(section.content||'').slice(0,500))}</p>`}};
  const childMeds=isMolecule(m)?visible.filter(x=>String(moleculeParentId(x))===String(m.id)):[];
  const presentations=(m.presentations||[]);
- $('searchPreview').innerHTML=`<div class="search-preview-path">${esc(ancestors.join(' › '))}</div><h2>${esc(displayMedName(m))}</h2><p class="muted">${isGroup(m)?'Fiche groupe':isMolecule(m)?'Fiche molécule':'Fiche dosage/forme'}${m.category?' · '+esc(m.category):''}</p><button type="button" class="search-preview-open" id="searchPreviewOpen">Ouvrir la fiche complète ↗</button>${sec?'<p class="muted" style="margin-top:12px">Rubrique trouvée dans cette fiche :</p>':''}${childMeds.length?`<div class="search-preview-related">${childMeds.map(x=>`<button type="button" data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} ↗</button>`).join('')}</div>`:''}${presentations.length?`<div class="search-preview-related">${presentations.map((p,i)=>`<button type="button" data-preview-presentation="${i}">${esc(presentationLabel(p,m,i))} ↗</button>`).join('')}</div>`:''}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}`;
+ $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div><button type="button" class="search-preview-open" id="searchPreviewOpen">Ouvrir la fiche complète ↗</button>${sec?'<p class="muted" style="margin-top:12px">Rubrique trouvée dans cette fiche :</p>':''}${childMeds.length?`<div class="search-preview-related">${childMeds.map(x=>`<button type="button" data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} ↗</button>`).join('')}</div>`:''}${presentations.length?`<div class="search-preview-related">${presentations.map((p,i)=>`<button type="button" data-preview-presentation="${i}">${esc(presentationLabel(p,m,i))} ↗</button>`).join('')}</div>`:''}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}`;
+ $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $('searchPreviewOpen').onclick=()=>openMedication(m.id,pres,sec?.id||null);
  $('searchPreview').querySelectorAll('[data-preview-section]').forEach(b=>b.onclick=()=>openMedication(m.id,pres,b.dataset.previewSection));
  $('searchPreview').querySelectorAll('[data-preview-child]').forEach(b=>b.onclick=()=>openMedication(b.dataset.previewChild));
