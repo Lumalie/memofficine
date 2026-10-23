@@ -744,12 +744,22 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .search-preview-section:has(.priority-card)>.search-preview-arrow{display:none!important}
 .search-preview-section .priority-card{width:100%;margin:0;box-sizing:border-box}
 .search-preview-section .priority-card .priority-section h3{display:none!important}
+
+.cip-pack-item{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;margin:3px 7px 3px 0;vertical-align:middle}
+.cip-pack-label{font-size:.79rem;color:#526a60;background:#f1f5f2;border:1px solid #dbe7df;border-radius:7px;padding:3px 7px}
+.cip-pack-editor{align-items:flex-start!important}.cip-pack-rows{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px}
+.cip-pack-edit-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.cip-pack-edit-row input:first-child{flex:1 1 150px;min-width:135px}.cip-pack-edit-row input:nth-child(2){flex:1 1 160px;min-width:135px}.cip-pack-edit-row button{border:1px solid #e3c7c7;background:#fff7f7;color:#9d5151;border-radius:8px;padding:6px 11px;cursor:pointer}.cip-pack-add{align-self:flex-start;border:1px solid #bfd9ca;background:#edf5ef;color:#28654e;border-radius:8px;padding:7px 10px;cursor:pointer}.presentation-cip-list{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
 .group-glance h3{color:#245d4b;margin-top:0;font-size:1.25rem}
 .group-glance .section{margin:0;border:0;background:transparent;padding:0;box-shadow:none}
 .group-glance .section h3{display:block}
+
+.cip-pack-item{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;margin:3px 7px 3px 0;vertical-align:middle}
+.cip-pack-label{font-size:.79rem;color:#526a60;background:#f1f5f2;border:1px solid #dbe7df;border-radius:7px;padding:3px 7px}
+.cip-pack-editor{align-items:flex-start!important}.cip-pack-rows{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px}
+.cip-pack-edit-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.cip-pack-edit-row input:first-child{flex:1 1 150px;min-width:135px}.cip-pack-edit-row input:nth-child(2){flex:1 1 160px;min-width:135px}.cip-pack-edit-row button{border:1px solid #e3c7c7;background:#fff7f7;color:#9d5151;border-radius:8px;padding:6px 11px;cursor:pointer}.cip-pack-add{align-self:flex-start;border:1px solid #bfd9ca;background:#edf5ef;color:#28654e;border-radius:8px;padding:7px 10px;cursor:pointer}.presentation-cip-list{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0}
 </style>
 </head>
 <body>
@@ -1173,6 +1183,14 @@ function explorerClassVisible(m,name){
  const hidden=(m.sections||[])[0]?.explorerHiddenClasses;
  return !(Array.isArray(hidden)&&hidden.includes(name));
 }
+// Plusieurs conditionnements pour une seule spécialité, compatibles avec les anciens CIP.
+function cipConditionnements(p){
+ const items=Array.isArray(p?.cipBoxes)?p.cipBoxes:[];
+ const cleaned=items.map(x=>({cip:String(x?.cip||"").trim(),pack:String(x?.pack||"").trim()})).filter(x=>x.cip||x.pack);
+ if(cleaned.length)return cleaned;
+ return p?.cip?[{cip:String(p.cip).trim(),pack:String(p.pack||"").trim()}]:[];
+}
+function cipBadges(p){return cipConditionnements(p).filter(x=>x.cip).map(x=>`<span class="cip-pack-item"><button type="button" class="explore-cip-copy" data-copy-cip="${esc(x.cip)}" title="Copier le CIP ${esc(x.cip)}" aria-label="Copier le CIP ${esc(x.cip)}"><span>CIP</span> ${esc(x.cip)} <span aria-hidden="true">⧉</span></button>${x.pack?`<span class="cip-pack-label">${esc(x.pack)}</span>`:""}</span>`).join("")}
 // Presentation et badges communs aux résultats et aux enfants d'arborescence.
 function searchPresentationLine(m,p,i,child=false){
  const name=String(p.name||m.name||'').trim();
@@ -1181,7 +1199,7 @@ function searchPresentationLine(m,p,i,child=false){
  const full=name+lab;
  const title=[full,...(dose&&!norm(full).includes(norm(dose))?[dose]:[]),...(form&&!norm(full).includes(norm(form))?[form]:[])].filter(Boolean).join(' · ');
  const princeps=p.presentationKind==='princeps'?'<span class="explore-pres-princeps">Princeps</span>':'';
- const cip=p.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:'';
+ const cip=cipBadges(p);
  const badges=explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join('')+indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join('');
  return `<div class="search-pres-direct ${child?'search-pres-child':''}"><button type="button" class="search-pres-title" data-open-med="${esc(m.id)}" data-hit-pres="${i}" aria-label="Ouvrir ${esc(title)}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="search-pres-details">${princeps}${cip}${badges?`<div class="search-pres-badges">${badges}</div>`:''}</div></div>`;
 }
@@ -1310,7 +1328,7 @@ function renderExplorer(){
    const presTitle=[presNameWithLab,...(presDose&&!norm(presName).includes(norm(presDose))?[presDose]:[]),...(presForm&&!norm(presName).includes(norm(presForm))?[presForm]:[])].filter(Boolean).join(" · ");
    const presLab=""; // Le laboratoire du générique est intégré au titre.
    const presBadge=princeps?'<span class="explore-pres-princeps">Princeps</span>':"";
-   const cipButton=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
+   const cipButton=cipBadges(p);
    const showSectionContent=!!sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!group;
    const preview=showSectionContent?`<div class="explore-preview-direct explore-preview-link" role="link" tabindex="0" data-open-med="${esc(m.id)}" data-hit-section="${esc(sec.id)}" aria-label="Ouvrir ${esc(sec.title)} dans la fiche ${esc(m.name)}"><span class="explore-preview-title">${esc(sec.title)} <span aria-hidden="true">↗</span></span>${searchSectionPreview(sec)}</div>`:"";
    if(group){
@@ -1339,7 +1357,7 @@ function renderExplorer(){
     const form=String(presentation.form||m.form||"").trim();
     const title=[name+lab,...(dose&&!norm(name).includes(norm(dose))?[dose]:[]),...(form&&!norm(name).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
     const princeps=presentation.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
-    const cip=presentation.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(presentation.cip)}" title="Copier le CIP"><span>CIP</span> ${esc(presentation.cip)} <span aria-hidden="true">⧉</span></button>`:"";
+    const cip=cipBadges(presentation);
     return `<div class="explore-grouped-presentation"><button type="button" class="explore-grouped-presentation-link" data-open-med="${esc(m.id)}" data-hit-pres="${pHit.presentation}" data-hit-section="${esc(pHit.section?.id||"")}"><span aria-hidden="true">●</span> ${esc(title)} <span aria-hidden="true">↗</span></button><div class="explore-pres-info">${princeps}${cip}</div></div>`;
    }).join("");
    if(m.entry_type==="specialite"&&specialtyItems(m).length){
@@ -1544,7 +1562,7 @@ function getSearchMatches(queryOverride=null){
  publicMeds().forEach(m=>{
   const base=norm([m.name,m.dosage,m.dci,m.parent_dci,m.category,m.aliases,...indicationTags(m),...explorerClasses(m),...medicationForms(m),...(isGroup(m)?["fiche groupe","groupe therapeutique","famille de medicaments"]:[])].join(" "));
   const presentations=specialtyItems(m);
-  const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,x.p.cip?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
+  const presText=x=>norm([x.name,x.p.dosage,x.p.lab,x.p.lab?"laboratoire":"",x.p.form,x.p.cip,...cipConditionnements(x.p).flatMap(c=>[c.cip,c.pack]),cipConditionnements(x.p).length?"cip":"",x.p.cis,x.p.cis?"cis":"",x.p.description,x.p.marking].join(" "));
   const sections=(m.sections||[]).filter(x=>x.enabled!==false);
   const secText=norm(sections.map(x=>x.id+" "+x.title+" "+x.content).join(" "));
   const combined=norm([base,...presentations.map(presText),secText].join(" "));
@@ -1561,7 +1579,7 @@ function getSearchMatches(queryOverride=null){
    sections.some(sec=>fieldMatch(t,sec))
   )&&tokens.every(t=>
    t!=="cip"&&t!=="cis"||
-   (t==="cip"&&!!x.p.cip)||(t==="cis"&&!!x.p.cis)
+   (t==="cip"&&cipConditionnements(x.p).some(c=>c.cip))||(t==="cis"&&!!x.p.cis)
   );
   const matchingPresentations=presentations.filter(presentationMatches);
   const specificPres=tokens.some(t=>t==="cip"||t==="cis"||t==="laboratoire"||t==="labo"||
@@ -1735,7 +1753,7 @@ function renderResults(){
   const form=String(p?.form||m.form||"").trim();
   const presentationTitle=[presWithLab,...(dose&&!norm(presWithLab).includes(norm(dose))?[dose]:[]),...(form&&!norm(presWithLab).includes(norm(form))?[form]:[])].filter(Boolean).join(" · ");
   const badge=p?.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
-  const cip=p?.cip?`<button type="button" class="explore-cip-copy" data-copy-cip="${esc(p.cip)}" title="Copier le CIP" aria-label="Copier le CIP ${esc(p.cip)}"><span>CIP</span> ${esc(p.cip)} <span aria-hidden="true">⧉</span></button>`:"";
+  const cip=cipBadges(p);
   const dciBadges=m.entry_type==="dci"&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
   const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">${esc(sec.title)} <span aria-hidden="true">↗</span></span>${searchSectionPreview(sec)}</div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
@@ -1930,7 +1948,7 @@ function presentationInfo(p){
  const line=(key,label,value)=>p[key]===true?`<p><strong>${label} :</strong> ${esc(value)}</p>`:"";
  const rows=[
   line("showName","Nom",p.name||"Non renseigné"),
-  line("showCip","CIP",p.cip||"Non renseigné"),
+  p.showCip===true?`<div class="presentation-cip-list"><strong>CIP / conditionnements :</strong> ${cipBadges(p)||"Non renseigné"}</div>`:"",
   line("showLab","Laboratoire",p.lab||"À renseigner"),
   line("showAspect","Aspect",p.description||"Non documenté"),
   line("showMarking","Marquage / sécabilité",p.marking||"Non documenté"),
@@ -1981,7 +1999,7 @@ function presentationEditor(p,i){
  <p class="hint">Coche les critères à afficher sur la fiche. Aucun n'est visible par défaut ; les informations masquées restent enregistrées.</p>
  <div class="presentation-fields">
  ${field("name","Nom","showName")}
- ${field("cip","CIP","showCip")}
+ <div class="full presentation-edit-row cip-pack-editor">${check("showCip","CIP / conditionnements")}<div class="cip-pack-rows">${cipConditionnements(p).concat(cipConditionnements(p).length?[]:[{cip:"",pack:""}]).map((item,j)=>`<div class="cip-pack-edit-row" data-cip-pack-row><input type="text" inputmode="numeric" data-cip-value value="${esc(item.cip)}" placeholder="Code CIP (13 chiffres)"><input type="text" data-pack-value value="${esc(item.pack)}" placeholder="Boîte de 30, boîte de 90…"><button type="button" data-remove-cip-pack title="Supprimer ce conditionnement" aria-label="Supprimer ce conditionnement">×</button></div>`).join("")}<button type="button" class="cip-pack-add" data-add-cip-pack>+ Ajouter un conditionnement</button></div></div>
  ${field("lab","Laboratoire","showLab")}
  ${field("description","Aspect","showAspect")}
  ${field("marking","Marquage / sécabilité","showMarking")}
@@ -2325,7 +2343,7 @@ const toggleType = () => {
   editorOriginalSnapshot=null;
   clearLocalDraft();detailLocation(id);renderDetail();
  };
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
@@ -2338,7 +2356,7 @@ const toggleType = () => {
  $("editor").onchange=saveLocalDraft;
  $("saveMed").onclick=()=>saveEditor(m.id);$("duplicateMed").onclick=()=>duplicateMed(m.id);$("deleteMed").onclick=()=>deleteMed(m.id);
 }
-function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());return p})}
+function readPresentationEditors(m){const cards=[...$("presentationEditors").querySelectorAll("[data-presentation]")];m.presentations=cards.map((card,i)=>{const p={imageUrl:m.presentations?.[i]?.imageUrl||"",presentationKind:card.querySelector("[data-pkind]:checked")?.dataset.pkind||"",canSplit:card.querySelector("[data-can-split]")?.checked===true,canCrush:card.querySelector("[data-can-crush]")?.checked===true,canOpen:card.querySelector("[data-can-open]")?.checked===true,cannotSplit:card.querySelector("[data-cannot-split]")?.checked===true,cannotCrush:card.querySelector("[data-cannot-crush]")?.checked===true,cannotOpen:card.querySelector("[data-cannot-open]")?.checked===true};card.querySelectorAll("[data-show-field]").forEach(input=>p[input.dataset.showField]=input.checked);card.querySelectorAll("[data-pfield]").forEach(input=>p[input.dataset.pfield]=input.value.trim());p.cipBoxes=[...card.querySelectorAll("[data-cip-pack-row]")].map(row=>({cip:row.querySelector("[data-cip-value]").value.trim(),pack:row.querySelector("[data-pack-value]").value.trim()})).filter(x=>x.cip||x.pack);p.cip=p.cipBoxes[0]?.cip||"";return p})}
 function tableRows(content){
  const rows=String(content||"").split("\n").filter(line=>line.trim()).map(line=>line.split(/\s+\|\s+/).map(cell=>cell.trim()));
  if(!rows.length)return [["",""],["",""]];
