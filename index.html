@@ -827,6 +827,20 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .explore-tree-node{position:relative}
 .explore-tree-node .explore-tree-node{margin-left:0}
 
+
+/* V6.31 — Espacement des rubriques selon les badges et cartouche documentaire. */
+.search-suggestions .result .result-dci-badges + .result-section-direct,
+.search-suggestions .result .result-presentation-info + .result-section-direct,
+.search-suggestions .result .sub + .result-section-direct{margin-top:9px}
+.search-suggestions .result .result-section-direct{margin-bottom:2px}
+.fiche-documentation{margin:26px 0 5px;padding:15px 18px;background:#fff;border:1px solid #e1e7e2;border-radius:12px;box-shadow:0 2px 9px #193f3408;color:#6c7772;font-size:.82rem;font-style:italic;line-height:1.55}
+.fiche-documentation .documentation-source{overflow-wrap:anywhere;white-space:pre-wrap}
+.fiche-documentation .documentation-source p{margin:4px 0}
+.fiche-documentation .documentation-source a{color:#5c7770}
+.fiche-documentation .documentation-date{margin-top:8px;color:#738078}
+.fiche-documentation .documentation-source + .documentation-date{padding-top:9px;border-top:1px solid #edf0ed}
+.search-preview .fiche-documentation{margin:15px 12px 8px}
+
 /* V6.30 — Rapprocher le nom de la fiche et la rubrique trouvée dans la recherche. */
 .search-suggestions .result .result-section-direct{
   margin:2px 0 0 21px;
@@ -836,6 +850,41 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .search-suggestions .result .result-section-title{
   margin:0;
   line-height:1.3;
+}
+
+/* V6.32 — Recherche minimisée : mêmes cartes et code couleur que les résultats de l'accueil. */
+.header-search-active #headerSearchSlot .search-suggestions .result{
+  --hit-ink:var(--memo-dose-ink);--hit-line:var(--memo-dose-border);--hit-rgb:250,238,231;
+  position:relative;box-sizing:border-box;margin:5px 8px;padding:11px 12px 11px 14px;
+  border:0;border-left:3px solid var(--hit-line);border-radius:0 7px 7px 0;
+  background:linear-gradient(90deg,rgba(var(--hit-rgb),.72),rgba(var(--hit-rgb),.22) 58%,transparent 100%);
+  color:var(--hit-ink);transition:background .15s ease;cursor:pointer;
+}
+.header-search-active #headerSearchSlot .search-suggestions .result-group{
+  --hit-ink:var(--memo-group-ink);--hit-line:var(--memo-group-border);--hit-rgb:234,243,237;
+}
+.header-search-active #headerSearchSlot .search-suggestions .result-molecule{
+  --hit-ink:var(--memo-molecule-ink);--hit-line:var(--memo-molecule-border);--hit-rgb:242,229,247;
+}
+.header-search-active #headerSearchSlot .search-suggestions .result-fiche{
+  --hit-ink:var(--memo-dose-ink);--hit-line:var(--memo-dose-border);--hit-rgb:250,238,231;
+}
+.header-search-active #headerSearchSlot .search-suggestions .result-presentation{
+  --hit-ink:var(--memo-presentation-ink);--hit-line:var(--memo-presentation-border);--hit-rgb:230,240,251;
+}
+.header-search-active #headerSearchSlot .search-suggestions .result strong,
+.header-search-active #headerSearchSlot .search-suggestions .result .result-dot,
+.header-search-active #headerSearchSlot .search-suggestions .result .result-kind-label{
+  color:var(--hit-ink);
+}
+.header-search-active #headerSearchSlot .search-suggestions .result:hover,
+.header-search-active #headerSearchSlot .search-suggestions .result[aria-selected="true"]{
+  border-left-color:var(--hit-ink);
+  background:linear-gradient(90deg,rgba(var(--hit-rgb),.98),rgba(var(--hit-rgb),.36) 70%,transparent 100%);
+  outline:none;
+}
+.header-search-active #headerSearchSlot .search-suggestions .result .result-section-direct{
+  border-left-color:var(--hit-line);
 }
 </style>
 <style>
@@ -1790,7 +1839,7 @@ function previewSearchResult(item){
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div></div>`;
- const sections=sec?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&String(x.content||'').trim()).slice(0,7);
+ const sections=sec&&!isDocumentationSection(sec)?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&!isDocumentationSection(x)&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
   try{
@@ -1808,7 +1857,7 @@ function previewSearchResult(item){
  const previewChildrenHtml=previewChildren.length?`<div class="search-preview-related search-preview-children">${previewChildren.map(x=>`<button type="button" class="search-preview-child ${isGroup(x)?'search-preview-child-group':isMolecule(x)?'search-preview-child-molecule':'search-preview-child-dose'}" ${isGroup(x)||isMolecule(x)?`style="${entityTreeStyle(x)}"`:''} data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} <span aria-hidden="true">↗</span></button>`).join('')}</div>`:'';
 
  const foundFooter=sec?`<div class="search-preview-found"><div class="search-preview-found-label">Rubrique trouvée dans cette fiche</div><button type="button" class="search-preview-found-link" data-preview-section="${esc(sec.id)}">↗ Afficher « ${esc(sec.title||'la rubrique')} » dans l’aperçu</button></div>`:'';
- $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}`;
+ $('searchPreview').innerHTML=`<div class="search-preview-header">${headerHtml}</div>${previewChildrenHtml}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}${foundFooter}${ficheDocumentation(m,(m.sections||[]).filter(x=>x.enabled!==false&&isDocumentationSection(x)))}`;
  // Les liens de fil d'Ariane et de retour à la molécule restent dans le volet d'aperçu.
  $('searchPreview').querySelectorAll('[data-group-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const target=visible.find(x=>String(x.id)===String(b.dataset.groupOpen));if(target)navigatePreview({med:target,section:null,presentation:null});});
  $('searchPreview').querySelector('[data-preview-open-title]')?.addEventListener('click',()=>openMedication(m.id,pres,sec?.id||null));
@@ -1928,6 +1977,22 @@ $('search').addEventListener('keydown',e=>{
  }
 });
 
+function isDocumentationSection(s){
+ return !!s&&(String(s.id||'').toLowerCase()==='sources'||/sources\s+et\s+mise\s+[àa]\s+jour/i.test(String(s.title||'')));
+}
+function ficheDocumentation(m,sections){
+ const sources=(sections||[]).filter(isDocumentationSection);
+ const sourceHtml=sources.map(s=>{
+   const raw=String(s.content||'').trim();
+   if(!raw)return '';
+   return `<div class="documentation-source">${richText(raw)}</div>`;
+ }).filter(Boolean).join('');
+ const mainSource=String(m.source||'').trim();
+ const extraSource=mainSource&&!sources.some(s=>String(s.content||'').includes(mainSource))
+   ?`<div class="documentation-source">Source principale : ${richInline(mainSource)}</div>`:'';
+ const date=String(m.updated||'').trim();
+ return `<aside class="fiche-documentation" aria-label="Sources et mise à jour">${sourceHtml}${extraSource}<div class="documentation-date">Dernière mise à jour : ${date?esc(formatDateFR(date)):'date non renseignée'}</div></aside>`;
+}
 function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  editorId=null;
  const m=meds.find(x=>x.id===selectedId);
@@ -1941,7 +2006,8 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const prioritySection=sections.find(s=>s.id==="coup-oeil");
  const adviceSection=sections.find(s=>s.id==="conseils-comptoir");
  const remainingSections=sections.filter(s=>s!==prioritySection&&s!==alertSection&&s!==adviceSection);
- const displaySections=remainingSections.map(s=>resolveSharedSection(m,s));
+ const displaySections=remainingSections.filter(s=>!isDocumentationSection(s)).map(s=>resolveSharedSection(m,s));
+ const documentationSections=remainingSections.filter(isDocumentationSection);
  const ficheParentNode=ficheParent(m);
  const moleculeDosages=isMolecule(m)?moleculeChildren(m):[];
  const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
@@ -1985,7 +2051,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
 
  ${isGroup(m)||isMolecule(m)?"":renderPresentations(m)}
  ${displaySections.map(s=>renderSection(s,targetSectionId)).join("")}
- ${m.updated?`<div class="detail-last-updated">Date de dernière mise à jour : ${esc(formatDateFR(m.updated))}</div>`:""}`;
+ ${ficheDocumentation(m,documentationSections)}`;
  $("detail").querySelectorAll("[data-group-open]").forEach(b=>b.onclick=()=>openMedication(b.dataset.groupOpen));
  $("detail").querySelectorAll(".associated-molecule-toggle").forEach(button=>button.onclick=()=>{
   const panel=button.closest(".associated-molecule")?.querySelector(".associated-molecule-children");
