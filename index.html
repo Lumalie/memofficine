@@ -71,8 +71,6 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 /* Confort de saisie et distinction visuelle des badges */
 .admin .section-editor textarea[data-field="content"]{min-height:118px;resize:vertical;line-height:1.55}
 .tag.tag-category{background:#e5f0e8;color:#245d4b}
-.tag.tag-extra-class{background:#e5f0e8;color:#245d4b;border:0;font-size:.78rem}
-button.tag.tag-extra-class{cursor:pointer}button.tag.tag-extra-class:hover{background:#cce4d2}
 .tag.tag-form{background:#e9e5f5;color:#62528c}
 .tag.tag-indication{background:#e5edf9;color:#365f8c;border:0;cursor:pointer}.tag.tag-indication:hover{background:#d5e4fa}
 .home-hero{text-align:center;padding:clamp(60px,12vh,130px) 15px 28px}.home-hero h2{font-size:clamp(1.8rem,4vw,2.8rem);margin:0}.home-hero p,.explore-heading p{color:var(--muted)}#homeView .searchcard{max-width:790px;margin:auto;padding:23px}#homeView #search{font-size:1.13rem;padding:15px 17px}#homeView .filters{display:none}#searchLayout{margin-top:24px}.explore-heading{text-align:center;padding:32px 0 14px}.explore-heading h2{font-size:1.9rem;margin:0}.explore-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:18px 0}.explore-controls label{flex:1;min-width:200px;font-weight:700}.explore-controls select{display:block;margin-top:6px}.explore-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:15px}.explore-card{background:white;border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 4px 14px #193f3408}.explore-card h3{margin:0 0 5px}.explore-card p{margin:6px 0;color:var(--muted);font-size:.87rem}.badge-button{border:0;border-radius:7px;padding:5px 9px;font-size:.79rem}.badge-class{background:#e5f0e8;color:#245d4b}.badge-indication{background:#e5edf9;color:#365f8c}.badge-form{background:#e9e5f5;color:#62528c}.explore-specialties{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.explore-specialties button{margin:3px 4px 3px 0;padding:5px 8px;font-size:.82rem}.presentation-target{outline:2px solid #8eb99a;scroll-margin-top:20px}#homeNav,#exploreNav{font-weight:700}.detail-summary{background:#f7faf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:16px}.detail-summary a{display:inline-block;margin:5px 12px 5px 0;color:var(--green);font-size:.87rem;text-decoration:none}.detail-summary a:hover{text-decoration:underline}
@@ -752,41 +750,15 @@ button.tag.tag-extra-class{cursor:pointer}button.tag.tag-extra-class:hover{backg
 .cip-pack-editor{align-items:flex-start!important}.cip-pack-rows{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px}
 .cip-pack-edit-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.cip-pack-edit-row input:first-child{flex:1 1 150px;min-width:135px}.cip-pack-edit-row input:nth-child(2){flex:1 1 160px;min-width:135px}.cip-pack-edit-row button{border:1px solid #e3c7c7;background:#fff7f7;color:#9d5151;border-radius:8px;padding:6px 11px;cursor:pointer}.cip-pack-add{align-self:flex-start;border:1px solid #bfd9ca;background:#edf5ef;color:#28654e;border-radius:8px;padding:7px 10px;cursor:pointer}.presentation-cip-list{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0}
 
-/* V6.27 — boutons de navigation homogènes et emplacement stable du fil d’Ariane */
-#searchWorkspace .search-preview-parent-return{margin:12px 0 16px}
-#searchWorkspace .search-preview-parent-return .molecule-parent-title-link{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:7px 10px;margin:0;border-radius:9px;
-  font:inherit;font-size:inherit;font-weight:400;line-height:normal;
-  min-height:0;white-space:normal;
-}
-#searchWorkspace .search-preview-breadcrumb-slot{
-  min-height:45px;display:flex;align-items:flex-start;
-  margin:0 0 16px;padding:2px 0 7px;
-  border-bottom:1px solid #cad6d5;
-}
-#searchWorkspace .search-preview-breadcrumb-slot .fiche-breadcrumb{
-  margin:0!important;padding:0!important;border:0!important;
-  min-height:0;align-self:center;
-}
-@media(max-width:600px){#searchWorkspace .search-preview-breadcrumb-slot{min-height:45px;margin-bottom:12px}}
-
-/* V6.31 — bibliothèques de classes et indications */
-.memo-tag-picker{position:relative;margin-top:8px}
-.memo-tag-picker-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;background:#f7faf8;border:1px solid #dce8df;border-radius:9px;padding:9px 12px;font-size:.88rem;color:#315a4b;cursor:pointer}
-.memo-tag-picker-toggle:hover{background:#edf5ef}
-.memo-tag-picker-menu{margin-top:5px;border:1px solid #dce8df;border-radius:10px;background:white;box-shadow:0 8px 22px #203d2d12;padding:7px;max-height:230px;overflow:auto}
-.memo-tag-picker-menu[hidden]{display:none!important}
-.memo-tag-picker-item{display:flex!important;align-items:center;gap:9px;padding:7px 9px;margin:0!important;border-radius:7px;font-weight:500!important;cursor:pointer}
-.memo-tag-picker-item:hover{background:#edf5ef}
-.memo-tag-picker-item input{width:auto!important;margin:0;accent-color:#59896b}
-.memo-tag-picker-empty{padding:9px 10px;font-size:.84rem;color:#667570}
-.memo-tag-picker-hint{margin:6px 0 0;font-size:.78rem;color:#667570}
-
-/* V6.32 — CIP 13 cliquables dans les contenus des rubriques et tableaux */
-.inline-cip-copy{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;border:1px solid #b9d8d2;background:#e9f5f1;color:#245d4b;border-radius:7px;padding:2px 7px;font:inherit;font-size:.91em;font-weight:600;cursor:pointer;white-space:nowrap}
-.inline-cip-copy:hover,.inline-cip-copy:focus-visible{background:#d5ece5;border-color:#7ab5a6;outline-offset:2px}
-.inline-cip-label{font-size:.79em;letter-spacing:.03em;opacity:.78}
+/* V6.25 — navigation cohérente sur tous les types de fiches */
+.fiche-parent-navigation{display:flex;align-items:center;flex-wrap:wrap;margin:12px 0 8px}
+.fiche-parent-navigation .molecule-parent-title-link{margin:0;padding:9px 13px;font-size:.94rem;font-weight:600;line-height:1.4;border-radius:10px}
+#searchWorkspace .fiche-parent-navigation{margin:12px 0 8px}
+.group-associations .associated-item,.group-associations .associated-molecule-open{padding:9px 13px;min-height:41px;font-size:.94rem;line-height:1.4;border-radius:10px}
+.group-associations .associated-molecule{border-radius:10px}
+.group-associations .associated-molecule-head .associated-molecule-open{border-radius:0}
+.group-associations .associated-molecule-toggle{min-height:41px}
+.group-associations .molecule-dose-link{min-height:41px}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -846,23 +818,7 @@ button.tag.tag-extra-class{cursor:pointer}button.tag.tag-extra-class:hover{backg
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 </main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-// V6.32 — Copie déléguée : fonctionne dans les tableaux, textes et aperçus recréés.
-document.addEventListener('click',async event=>{
- const button=event.target.closest?.('[data-inline-copy-cip]');
- if(!button)return;
- event.preventDefault();event.stopPropagation();
- const code=button.dataset.inlineCopyCip;
- try{
-  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(code)}
-  else{
-   const field=document.createElement('textarea');field.value=code;field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();
-   const ok=document.execCommand('copy');field.remove();if(!ok)throw new Error('Copie refusée');
-  }
-  toast('CIP copié : '+code);
- }catch(_error){toast('Copie impossible : sélectionne le CIP manuellement.');}
-});
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://xbhqogndzbrjhrigtncy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4cQdbKxcRjO8JH48uA8bZA_taBLuHdE";
@@ -1162,6 +1118,18 @@ function entityTreeStyle(item){
  }
  return groupLevelStyle(groupDepth(item));
 }
+// V6.25 : un seul emplacement et une seule présentation pour les retours vers les fiches parentes.
+function ficheParent(m,visible=publicMeds()){
+ const byId=new Map(visible.map(x=>[String(x.id),x]));
+ const molecule=byId.get(String(moleculeParentId(m)||""));
+ if(molecule&&isMolecule(molecule)&&String(molecule.id)!==String(m.id))return molecule;
+ const group=byId.get(String(parentGroupId(m)||""));
+ return group&&isGroup(group)&&String(group.id)!==String(m.id)?group:null;
+}
+function ficheParentButton(parent,preview=false){
+ if(!parent)return "";
+ return `<div class="fiche-parent-navigation${preview?' search-preview-parent-return':''}"><button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(parent)}" data-group-open="${esc(parent.id)}" title="Revenir à ${esc(displayMedName(parent))}">↖ ${esc(displayMedName(parent))}</button></div>`;
+}
 function ficheBreadcrumb(m){
  const visible=publicMeds(),byId=new Map(visible.map(x=>[String(x.id),x]));
  const chain=[],seen=new Set([String(m.id)]);
@@ -1232,12 +1200,6 @@ function explorerBadgeVisible(m,kind){
 function explorerClasses(m){
  const extras=(m.sections||[])[0]?.explorerExtraClasses;
  return [...new Set([m.category,...(Array.isArray(extras)?extras:[])].map(x=>String(x||"").trim()).filter(Boolean))];
-}
-function ficheClassBadges(m,interactive=false){
- const primary=String(m.category||"").trim().toLocaleLowerCase("fr");
- return explorerClasses(m).filter(t=>t.toLocaleLowerCase("fr")!==primary).map(t=>interactive
-  ?`<button type="button" class="tag tag-extra-class" data-fiche-category="${esc(t)}" title="Explorer cette classe thérapeutique">${esc(t)}</button>`
-  :`<span class="tag tag-extra-class">${esc(t)}</span>`).join("");
 }
 function explorerClassVisible(m,name){
  const hidden=(m.sections||[])[0]?.explorerHiddenClasses;
@@ -1501,28 +1463,11 @@ function renderExplorer(){
  const treeParent=m=>moleculeParentId(m)&&visibleById.has(String(moleculeParentId(m)))?String(moleculeParentId(m)):parentGroupId(m);
  const childrenOf=id=>visible.filter(m=>String(treeParent(m))===String(id)).sort(sortExplorer);
  const rootEntries=visible.filter(m=>!visibleById.has(String(treeParent(m)))||String(treeParent(m))===String(m.id)).sort(sortExplorer);
- const renderNode=(m,depth=0,ancestors=new Set(),inheritedBadges=new Set())=>{
+ const renderNode=(m,depth=0,ancestors=new Set())=>{
   if(ancestors.has(m.id))return "";
   const next=new Set(ancestors);next.add(m.id);
   const kids=isGroup(m)||isMolecule(m)?childrenOf(m.id):[];
   const forms=medicationForms(m);
-  // Les badges déjà affichés dans un parent ne sont pas répétés dans ses descendants.
-  // La déduplication est visuelle et limitée à l’arborescence Explorer : les données
-  // des fiches, les filtres et les badges de la fiche complète restent inchangés.
-  const badgeKey=(type,value)=>type+":"+norm(String(value||"").trim());
-  const classesShown=explorerClasses(m).filter(t=>explorerClassVisible(m,t));
-  const indicationsShown=indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t));
-  const formsShown=(m.entry_type==="dci"&&!explorerBadgeVisible(m,"forms"))?[]:forms;
-  const novel=(type,items)=>items.filter(t=>!inheritedBadges.has(badgeKey(type,t)));
-  const newClasses=novel("class",classesShown);
-  const newIndications=novel("indication",indicationsShown);
-  const newForms=novel("form",formsShown);
-  const childInherited=new Set(inheritedBadges);
-  if(filtered.some(x=>x.id===m.id)){
-   classesShown.forEach(t=>childInherited.add(badgeKey("class",t)));
-   indicationsShown.forEach(t=>childInherited.add(badgeKey("indication",t)));
-   formsShown.forEach(t=>childInherited.add(badgeKey("form",t)));
-  }
   const isMatch=filtered.some(x=>x.id===m.id);
   const specialtyPresentations=m.entry_type==="specialite"?specialtyItems(m):[];
   const presentationTitle=p=>{
@@ -1540,8 +1485,8 @@ function renderExplorer(){
     
    </div>
    ${specialtyPresentations.length>1?`<div class="explore-tree-presentations">${specialtyPresentations.map(({p,i})=>`<button type="button" class="explore-tree-presentation" data-open-med="${esc(m.id)}" data-open-pres="${i}"><span aria-hidden="true">↳</span> ${esc(presentationTitle(p))}${p.presentationKind==="princeps"?'<span class="explore-pres-princeps-inline">Princeps</span>':""}</button>`).join("")}</div>`:""}
-   ${isMatch&&(newClasses.length||newIndications.length||newForms.length)?`<div class="explore-tree-tags">${newClasses.map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${newIndications.map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${newForms.map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
-   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next,childInherited)).join("")}</div>`:""}
+   ${isMatch?`<div class="explore-tree-tags">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<button type="button" class="badge-button badge-class" data-filter-class="${esc(t)}">${esc(t)}</button>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<button type="button" class="badge-button badge-indication" data-filter-ind="${esc(t)}">${esc(t)}</button>`).join("")}${((m.entry_type==="dci"?explorerBadgeVisible(m,"forms"):true)?forms:[]).map(t=>`<button type="button" class="badge-button badge-form" data-filter-form="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+   ${kids.length?`<div class="explore-tree-children" id="tree-children-${esc(m.id)}" ${exploreExpandedGroups.has(m.id)||!!(query||classSel.value||indSel.value||formSel.value)?"":"hidden"}>${kids.map(child=>renderNode(child,depth+1,next)).join("")}</div>`:""}
   </div>`;
  };
  $("exploreCards").innerHTML=filtered.length?`<div class="explore-tree">${rootEntries.map(m=>renderNode(m)).join("")}</div>`:'<div class="empty">Aucune fiche trouvée. Essaie un autre terme ou modifie les filtres.</div>';
@@ -1748,7 +1693,7 @@ function previewSearchResult(item){
  previewSearchKey=searchPreviewKey(item);
  const m=item.med,sec=item.section,pres=item.presentation;
  const visible=publicMeds();
- const moleculeParent=visible.find(x=>String(x.id)===String(moleculeParentId(m))&&isMolecule(x));
+ const ficheParentNode=ficheParent(m,visible);
  const presentationForms=medicationForms(m);
  const formBadge=!isGroup(m)&&presentationForms.length
   ?presentationForms.length===1?`<span class="tag tag-form">${esc(presentationForms[0])}</span>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
@@ -1756,7 +1701,7 @@ function previewSearchResult(item){
  const activeIngredients=!isGroup(m)&&m.entry_type!=="dci"?splitDci(m.dci||m.parent_dci):[];
  const ingredientEntries=info?.entries?.length?info.entries:activeIngredients.map(name=>({name,dose:"",salt:"",saltDose:""}));
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
- const headerHtml=`<div class="search-preview-breadcrumb-slot">${ficheBreadcrumb(m)}</div><div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${ficheClassBadges(m)}${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}${moleculeParent?`<div class="search-preview-parent-return"><button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(moleculeParent)}" data-group-open="${esc(moleculeParent.id)}" title="Revenir à la fiche molécule">↖ ${esc(displayMedName(moleculeParent))}</button></div>`:""}</div></div>`;
+ const headerHtml=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2><button type="button" class="search-preview-title-link" data-preview-open-title title="Ouvrir la fiche complète">${esc(displayMedName(m))}</button></h2><div class="tags"><span class="tag tag-category">${esc(m.category||"Famille à définir")}</span>${formBadge}${indicationTags(m).map(t=>`<span class="tag tag-indication">${esc(t)}</span>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${ficheParentButton(ficheParentNode,true)}${activeIngredientsHtml}</div></div>`;
  const sections=sec?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&String(x.content||'').trim()).slice(0,7);
  // Les encarts prioritaires de l'aperçu utilisent exactement le rendu de la fiche complète.
  const safeSection=section=>{
@@ -1832,7 +1777,7 @@ function renderResults(){
   const badge=p?.presentationKind==="princeps"?'<span class="explore-pres-princeps">Princeps</span>':"";
   const cip=cipBadges(p);
   const dciBadges=m.entry_type==="dci"&&!isPresentation?`<div class="result-dci-badges">${explorerClasses(m).filter(t=>explorerClassVisible(m,t)).map(t=>`<span class="badge-button badge-class">${esc(t)}</span>`).join("")}${indicationTags(m).filter(t=>!((m.sections||[])[0]?.explorerHiddenIndications||[]).includes(t)).map(t=>`<span class="badge-button badge-indication">${esc(t)}</span>`).join("")}</div>`:"";
-  const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">↳ ${esc(sec.title)}</span></div>`:"";
+  const sectionDetail=sec&&(m.entry_type==="dci"||m.entry_type==="specialite")&&!isPresentation?`<div class="result-section-direct"><span class="result-section-title">${esc(sec.title)} <span aria-hidden="true">↗</span></span>${searchSectionPreview(sec)}</div>`:"";
   return `<div class="result result-${kind}" role="option" aria-selected="false" tabindex="-1" data-id="${esc(m.id)}" data-section="${esc(sec?.id||'')}" data-presentation="${item.presentation===null?'':item.presentation}">
    <strong><span class="result-dot" aria-hidden="true">●</span>${esc(isPresentation?presentationTitle:name)}<span class="result-arrow" aria-hidden="true">↗</span></strong>
    ${isPresentation?`<div class="result-presentation-info">${badge}${cip}</div>`:m.entry_type==="dci"?dciBadges:group?"":`<div class="sub">${esc(m.category||"Sans famille")}</div>`}
@@ -1849,18 +1794,9 @@ function renderResults(){
      if(pres!==null)url.searchParams.set("presentation",String(pres));else url.searchParams.delete("presentation");
      window.open(url.toString(),"_blank","noopener");return;
     }
-    // Le clic ouvre toujours la fiche complète ; le survol suffit pour l’aperçu.
+    if(currentView==="home"&&!openedSearchFiche&&!editorId&&$("search").value.trim()){const item=found.find(x=>String(x.med.id)===String(id)&&(x.section?.id||"")===(section||"")&&x.presentation===pres);if(item){navigatePreview(item);return;}}
     openMedication(id,pres,section);
    };
-   // Survol : aperçu uniquement, sans ajout à l’historique du navigateur.
-   // Les boutons CIP conservent leur action indépendante de copie.
-   el.addEventListener('mouseenter',()=>{
-    if(currentView!=="home"||openedSearchFiche||editorId||!$('search').value.trim())return;
-    const item=found.find(x=>String(x.med.id)===String(el.dataset.id)
-      &&(x.section?.id||'')===(el.dataset.section||'')
-      &&(x.presentation??null)===(el.dataset.presentation===''?null:Number(el.dataset.presentation)));
-    if(item&&searchPreviewKey(item)!==previewSearchKey)previewSearchResult(item);
-   });
    el.onclick=choose;
    el.ondblclick=()=>openMedication(el.dataset.id,el.dataset.presentation===""?null:Number(el.dataset.presentation),el.dataset.section||null);
    el.onauxclick=e=>{if(e.button===1){e.preventDefault();choose(e)}};
@@ -1890,13 +1826,6 @@ $('search').addEventListener('keydown',e=>{
   e.preventDefault();
   highlightedSearchIndex=e.key==='ArrowDown'?(highlightedSearchIndex+1)%results.length:(highlightedSearchIndex<0?results.length-1:(highlightedSearchIndex-1+results.length)%results.length);
   updateSearchHighlight();
-  const el=results[highlightedSearchIndex];
-  if(el&&currentView==='home'&&!openedSearchFiche&&!editorId){
-   const item=getSearchMatches().find(x=>String(x.med.id)===String(el.dataset.id)
-    &&(x.section?.id||'')===(el.dataset.section||'')
-    &&(x.presentation??null)===(el.dataset.presentation===''?null:Number(el.dataset.presentation)));
-   if(item)previewSearchResult(item);
-  }
  }else if(e.key==='Enter'){
   e.preventDefault();
   results[highlightedSearchIndex>=0?highlightedSearchIndex:0].click();
@@ -1919,7 +1848,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const adviceSection=sections.find(s=>s.id==="conseils-comptoir");
  const remainingSections=sections.filter(s=>s!==prioritySection&&s!==alertSection&&s!==adviceSection);
  const displaySections=remainingSections.map(s=>resolveSharedSection(m,s));
- const moleculeParent=publicMeds().find(x=>String(x.id)===String(moleculeParentId(m))&&isMolecule(x));
+ const ficheParentNode=ficheParent(m);
  const moleculeDosages=isMolecule(m)?moleculeChildren(m):[];
  const parent=meds.find(g=>g.id===parentGroupId(m)&&isGroup(g)&&(admin||g.published));
  const relatedVisible=publicMeds();
@@ -1943,7 +1872,7 @@ function renderDetail(targetSectionId=null,targetPresentationIndex=null){
  const activeIngredientsHtml=ingredientEntries.length?`<div class="detail-dci"><span class="detail-dci-label">DCI / substances actives :</span> ${ingredientEntries.map(e=>`<span class="detail-dci-item">${esc(e.name||"")}${e.dose?` — <strong>${esc(e.dose)}</strong>`:""}</span>`).join(" · ")}${ingredientEntries.filter(e=>e.salt||e.saltDose).map(e=>`<div class="ingredient-salt">${esc(e.name||"Substance active")} : ${esc(e.salt||"Sel non précisé")}${e.saltDose?` — ${esc(e.saltDose)}`:""}</div>`).join("")}</div>`:"";
  const formBadge=!isGroup(m)&&presentationForms.length
    ? presentationForms.length===1?`<button type="button" class="tag tag-form" data-fiche-form="${esc(presentationForms[0])}" title="Explorer cette forme">${esc(presentationForms[0])}</button>`:`<span class="tag tag-form">Plusieurs formes</span>`:"";
- $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2>${moleculeParent?`<button type="button" class="molecule-parent-title-link" style="${entityTreeStyle(moleculeParent)}" data-group-open="${esc(moleculeParent.id)}" title="Revenir à la fiche molécule">↖ ${esc(displayMedName(moleculeParent))}</button>`:""}<div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${ficheClassBadges(m,true)}${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
+ $("detail").innerHTML=`${ficheBreadcrumb(m)}<div class="detailtop"><div><div class="group-kicker">${isGroup(m)?"Fiche groupe":isMolecule(m)?"Fiche molécule":m.entry_type==="dci"?"Fiche dosage/forme":"Fiche médicament"}</div><h2>${esc(displayMedName(m))}</h2><div class="tags"><button type="button" class="tag tag-category" data-fiche-category="${esc(m.category||"")}" title="Explorer cette classe thérapeutique">${esc(m.category||"Famille à définir")}</button>${formBadge}${indicationTags(m).map(t=>`<button type="button" class="tag tag-indication" data-fiche-indication="${esc(t)}" title="Explorer cette indication">${esc(t)}</button>`).join("")}${admin?`<span class="tag status">${esc(String(m.status||"à vérifier").toLocaleLowerCase("fr"))}</span>`:""}</div>${ficheParentButton(ficheParentNode)}${activeIngredientsHtml}</div><div class="header-actions" id="detailPublicActions" style="align-items:center"><button id="copyFicheLink" class="soft" type="button">🔗 Copier le lien</button><button class="primary" id="editBtn" type="button">Modifier la fiche</button></div></div>
  ${alertSection&&String(alertSection.content||"").trim()?`<div class="priority-card priority-alert">${renderPrioritySection(alertSection,targetSectionId)}</div>`:""}
  ${prioritySection&&String(prioritySection.content||"").trim()?`<div class="group-glance">${renderPrioritySection(prioritySection,targetSectionId)}</div>`:""}
  ${adviceSection&&String(adviceSection.content||"").trim()?`<div class="priority-card priority-advice">${renderPrioritySection(adviceSection,targetSectionId)}</div>`:""}
@@ -2136,15 +2065,7 @@ async function uploadPresentationPhotos(m){
 // Format léger et sécurisé : seules les marques créées par la barre d'outils sont interprétées.
 const TEXT_COLORS={default:"#23352e",green:'#245d4b',red:'#a44c43',orange:'#a76a20',blue:'#326a9b',gray:'#87949c',pink:'#a34e7e'};
 function richInline(raw){
- // Repérage des CIP 13 dans les textes et cellules de tableau.
- // Les marqueurs sont remplacés après la mise en forme pour éviter de modifier le HTML.
- const cipTokens=[];
- const marked=String(raw??"").replace(/(^|[^\d])([0-9]{13})(?!\d)/g,(_all,before,code)=>{
-  const token=`MEMOPHARMCIPTOKEN${cipTokens.length}END`;
-  cipTokens.push({token,code});
-  return before+token;
- });
- let html=esc(marked);
+ let html=esc(raw);
  html=html.replace(/\[\[(default|green|red|orange|blue|gray|pink)\|([^\]\n]+)\]\]/g,(_m,c,t)=>`<span style="color:${TEXT_COLORS[c]}">${t}</span>`);
  // Liens Markdown : seules les adresses HTTP(S) sont autorisées.
  html=html.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>\)]+)\)/gi,(_match,label,url)=>{
@@ -2156,9 +2077,6 @@ function richInline(raw){
  html=html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
  html=html.replace(/__([^_\n]+)__/g,'<u>$1</u>');
  html=html.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
- for(const {token,code} of cipTokens){
-  html=html.replace(token,`<button type="button" class="inline-cip-copy" data-inline-copy-cip="${code}" title="Copier le CIP ${code}" aria-label="Copier le CIP ${code}"><span class="inline-cip-label">CIP</span> ${code} <span aria-hidden="true">⧉</span></button>`);
- }
  return html;
 }
 function richText(raw){
@@ -2340,8 +2258,8 @@ function renderEditor(id){
   <div class="full" id="parent-group-wrap"><label for="f-parent-group">Groupe parent (facultatif)</label><select id="f-parent-group"><option value="">Aucun groupe</option>${groupOptions(m).map(g=>`<option value="${esc(g.id)}" ${parentGroupId(m)===g.id?"selected":""}>${esc(g.name)} — ${esc(g.category)}</option>`).join("")}</select><div class="muted" id="group-parent-help">Choisis librement un groupe parent, quelle que soit sa classe thérapeutique.</div></div>
   <div><label id="f-name-label" for="f-name">Nom de la spécialité</label><input id="f-name" value="${esc(m.name)}" placeholder="Ex. : Tardyferon"></div><div id="f-dci-form-wrap"><label class="field-label-inline" for="f-dci-form">Forme pharmaceutique <span class="field-inline-choice"><input type="checkbox" data-explorer-visibility="forms" ${explorerBadgeVisible(m,"forms")?"checked":""} aria-label="Afficher la forme pharmaceutique dans Explorer"> <span>Afficher dans Explorer</span></span></label><input id="f-dci-form" data-memo-kind="form" list="memo-forms" value="${esc(m.sections?.[0]?.dciForm||m.form||"")}" placeholder="Ex. : Comprimé, gélule, solution buvable"></div><div id="f-dose-title-wrap" class="full"></div><div id="f-dosage-wrap"><label class="field-label-inline" for="f-dosage">Dosage <span class="field-inline-choice"><input type="checkbox" id="f-dose-in-title"> <span>Afficher dans le titre</span></span></label><div class="dosage-fields"><input id="f-dosage" value="${esc(dosageParts(m.dosage).value)}" placeholder="Ex. : 80"><select id="f-dosage-unit" aria-label="Unité de dosage">${["mg","g","µg","mL","UI","mg/mL","µg/mL","g/L","%","autre"].map(u=>`<option value="${u}" ${dosageParts(m.dosage).unit===u?"selected":""}>${u}</option>`).join("")}</select></div></div><div id="f-dci-wrap" class="full"><label>DCI / substances actives et dosages</label><div id="dciEntries"></div><button type="button" id="addDciEntry" class="soft" style="margin-top:8px">+ Ajouter une DCI</button><p class="muted">Une ligne par substance active. Le sel et sa quantité sont facultatifs et apparaîtront en gris conseil. Ne pas confondre la quantité de sel et celle de substance active.</p></div>
  <div class="full explorer-class-custom" id="princeps-editor-wrap"><label for="f-princeps">Princeps</label><input id="f-princeps" list="princeps-suggestions" value="${esc((m.sections?.[0]?.princepsNames||[]).join(', '))}" placeholder="Ex. : Nom de spécialité 1, Nom de spécialité 2" autocomplete="off"><datalist id="princeps-suggestions">${[...new Set(meds.flatMap(x=>x.sections?.[0]?.princepsNames||[]))].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist><p class="muted">Sépare les noms de spécialités par des virgules. Plusieurs noms peuvent être renseignés pour une même DCI. Vérifier le statut de princeps de chaque spécialité.</p></div>
- <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div class="memo-tag-picker" data-tag-picker="classes"><button type="button" class="memo-tag-picker-toggle" aria-expanded="false">☷ Parcourir les classes thérapeutiques <span>▾</span></button><div class="memo-tag-picker-menu" hidden></div><p class="memo-tag-picker-hint">Les valeurs déjà utilisées sont proposées automatiquement. Coche pour ajouter, décoche pour retirer.</p></div><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
- <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-indications">Indication·s thérapeutique·s</label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div class="memo-tag-picker" data-tag-picker="indications"><button type="button" class="memo-tag-picker-toggle" aria-expanded="false">☷ Parcourir les indications thérapeutiques <span>▾</span></button><div class="memo-tag-picker-menu" hidden></div><p class="memo-tag-picker-hint">Les valeurs déjà utilisées sont proposées automatiquement. Coche pour ajouter, décoche pour retirer.</p></div><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
+ <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-extra-classes">Classe·s thérapeutique·s</label><input id="f-extra-classes" list="class-suggestions" value="${esc(explorerClasses(m).filter(t=>t!=="Autres"||explorerClasses(m).length===1).join(", "))}" placeholder="Ex. : Antibiotiques, Pénicillines" autocomplete="off"><datalist id="class-suggestions">${[...new Set(meds.flatMap(explorerClasses))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-class-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
+ <div class="full explorer-class-custom"><label class="explorer-section-heading" for="f-indications">Indication·s thérapeutique·s</label><input id="f-indications" list="indication-suggestions" value="${esc(indicationTags(m).join(", "))}" placeholder="Ex. : Infection bactérienne, Carence en fer" autocomplete="off"><datalist id="indication-suggestions">${[...new Set(meds.flatMap(indicationTags))].sort((a,b)=>a.localeCompare(b,"fr")).map(t=>`<option value="${esc(t)}"></option>`).join("")}</datalist><div id="explorer-indication-choices" class="explorer-class-choices"></div><p class="muted">Sépare les étiquettes par des virgules. Coche uniquement les badges à afficher dans Explorer. Les autres restent enregistrés et utilisables dans les filtres.</p></div>
  
  
 
@@ -2437,62 +2355,6 @@ const toggleType = () => {
  }
  wireIndividualBadges("f-extra-classes","explorer-class-choices","explorerHiddenClasses");
  wireIndividualBadges("f-indications","explorer-indication-choices","explorerHiddenIndications");
-
- // Bibliothèque vivante : les étiquettes proviennent des fiches chargées depuis Supabase.
- // Aucune nouvelle table n'est nécessaire : les nouvelles valeurs sont disponibles après enregistrement.
- function wireTagLibrary(inputId,kind){
-  const input=$(inputId),root=$('editor').querySelector(`[data-tag-picker="${kind}"]`);
-  if(!input||!root)return;
-  const toggle=root.querySelector('.memo-tag-picker-toggle'),menu=root.querySelector('.memo-tag-picker-menu');
-  const allTags=()=>{
-   const values=meds.flatMap(x=>kind==='classes'?explorerClasses(x):indicationTags(x));
-   return [...new Map([...values,...selected()].filter(Boolean).map(v=>[norm(v),v])).values()].sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
-  };
-  const selected=()=>[...new Map(input.value.split(',').map(x=>x.trim()).filter(Boolean).map(v=>[norm(v),v])).values()];
-  const updateSelected=(value,checked)=>{
-   const current=selected().filter(x=>norm(x)!==norm(value));
-   if(checked)current.push(value);
-   input.value=current.join(', ');
-   input.dispatchEvent(new Event('input',{bubbles:true}));
-   input.focus();
-  };
-  const render=(query='')=>{
-   const chosen=new Set(selected().map(norm));
-   const options=allTags().filter(v=>!query||norm(v).includes(norm(query)));
-   menu.innerHTML=options.map(v=>`<label class="memo-tag-picker-item"><input type="checkbox" value="${esc(v)}" ${chosen.has(norm(v))?'checked':''}><span>${esc(v)}</span></label>`).join('')||'<div class="memo-tag-picker-empty">Aucune étiquette existante. Saisis-en une nouvelle, puis enregistre la fiche.</div>';
-   menu.querySelectorAll('input[type="checkbox"]').forEach(box=>box.addEventListener('change',()=>updateSelected(box.value,box.checked)));
-  };
-  const setOpen=(open)=>{menu.hidden=!open;toggle.setAttribute('aria-expanded',String(open));if(open)render();};
-  toggle.addEventListener('click',()=>setOpen(menu.hidden));
-  // Les suggestions suivent le terme actuellement saisi après la dernière virgule.
-  let suggestionBox=document.createElement('div');
-  suggestionBox.className='memo-tag-picker-menu';suggestionBox.hidden=true;
-  input.insertAdjacentElement('afterend',suggestionBox);
-  const suggest=()=>{
-   const term=input.value.split(',').pop().trim();
-   if(!term){suggestionBox.hidden=true;return;}
-   const chosen=new Set(selected().slice(0,-1).map(norm));
-   const hits=allTags().filter(v=>norm(v).includes(norm(term))&&!chosen.has(norm(v))).slice(0,8);
-   suggestionBox.innerHTML=hits.map(v=>`<button type="button" class="memo-tag-picker-toggle" data-suggest="${esc(v)}">${esc(v)}</button>`).join('');
-   suggestionBox.hidden=!hits.length;
-   suggestionBox.querySelectorAll('[data-suggest]').forEach(b=>b.addEventListener('click',()=>{
-    const parts=input.value.split(',');parts.pop();
-    input.value=[...parts.map(x=>x.trim()).filter(Boolean),b.dataset.suggest].join(', ')+', ';
-    input.dispatchEvent(new Event('input',{bubbles:true}));suggestionBox.hidden=true;input.focus();
-   }));
-  };
-  input.addEventListener('input',()=>{render();suggest();});
-  input.addEventListener('focus',suggest);
-  input.addEventListener('blur',()=>setTimeout(()=>{suggestionBox.hidden=true;},180));
-  document.addEventListener('click',e=>{if(!root.contains(e.target))setOpen(false);},{signal:editorTagPickerController.signal});
-  render();
- }
- if(window.editorTagPickerController)window.editorTagPickerController.abort();
- const editorTagPickerController=new AbortController();
- window.editorTagPickerController=editorTagPickerController;
- wireTagLibrary('f-extra-classes','classes');
- wireTagLibrary('f-indications','indications');
-
  $("backBtn").onclick=()=>{
   // Annuler réellement les modifications locales, y compris la conversion
   // automatique des anciennes rubriques en modèle de groupe.
@@ -2503,30 +2365,7 @@ const toggleType = () => {
   editorOriginalSnapshot=null;
   clearLocalDraft();detailLocation(id);renderDetail();
  };
- const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
- // Délégation : fonctionne dès l'ouverture de l'éditeur et après son actualisation.
- $("presentationEditors").addEventListener("click",event=>{
-  const add=event.target.closest("[data-add-cip-pack]");
-  if(add){
-   const rows=add.closest(".cip-pack-rows");
-   const original=rows?.querySelector("[data-cip-pack-row]");
-   if(!original)return;
-   const row=original.cloneNode(true);
-   row.querySelectorAll("input").forEach(input=>input.value="");
-   rows.insertBefore(row,add);
-   row.querySelector("[data-cip-value]")?.focus();
-   saveLocalDraft();
-   return;
-  }
-  const remove=event.target.closest("[data-remove-cip-pack]");
-  if(!remove)return;
-  const rows=remove.closest(".cip-pack-rows");
-  const all=rows?.querySelectorAll("[data-cip-pack-row]");
-  if(!all?.length)return;
-  if(all.length===1)all[0].querySelectorAll("input").forEach(input=>input.value="");
-  else remove.closest("[data-cip-pack-row]").remove();
-  saveLocalDraft();
- });
+ const refreshPresentationEditors=()=>{const root=$("presentationEditors");root.innerHTML=(m.presentations||[]).map((p,i)=>presentationEditor(p,i)).join("");root.querySelectorAll("[data-remove-presentation]").forEach(b=>b.onclick=()=>{captureEditorFields(m);const removed=Number(b.dataset.removePresentation);m.presentations.splice(removed,1);const old=pendingPresentationPhotos.get(m.id);if(old){const shifted=new Map();for(const [i,file] of old)if(i!==removed)shifted.set(i>removed?i-1:i,file);pendingPresentationPhotos.set(m.id,shifted)}refreshPresentationEditors()});wirePhotoInputs();root.querySelectorAll("[data-add-cip-pack]").forEach(b=>b.onclick=()=>{const rows=b.closest(".cip-pack-rows");const row=rows.querySelector("[data-cip-pack-row]").cloneNode(true);row.querySelectorAll("input").forEach(input=>input.value="");rows.insertBefore(row,b);row.querySelector("[data-cip-value]").focus()});root.addEventListener("click",e=>{const b=e.target.closest("[data-remove-cip-pack]");if(!b)return;const rows=b.closest(".cip-pack-rows");const all=rows.querySelectorAll("[data-cip-pack-row]");if(all.length===1){all[0].querySelectorAll("input").forEach(input=>input.value="")}else b.closest("[data-cip-pack-row]").remove()});root.querySelectorAll("[data-pkind]").forEach(input=>input.addEventListener("change",()=>{if(!input.checked)return;input.closest("[data-presentation]").querySelectorAll("[data-pkind]").forEach(other=>{if(other!==input)other.checked=false})}));root.querySelectorAll("[data-cannot-split],[data-can-split],[data-cannot-crush],[data-can-crush],[data-cannot-open],[data-can-open]").forEach(input=>input.addEventListener("change",()=>{const card=input.closest("[data-presentation]");const kind=input.hasAttribute("data-cannot-split")||input.hasAttribute("data-can-split")?"split":input.hasAttribute("data-cannot-open")||input.hasAttribute("data-can-open")?"open":"crush";const yes=card.querySelector(`[data-can-${kind}]`),no=card.querySelector(`[data-cannot-${kind}]`),reason=card.querySelector(`[data-reason-for="${kind}"]`);if(input===yes&&yes.checked)no.checked=false;if(input===no&&no.checked)yes.checked=false;reason.hidden=false;}));};
  $("addPresentation").onclick=()=>{captureEditorFields(m);m.presentations.push({name:"",showLab:false,lab:"",dosage:"",form:"",cip:"",cis:"",description:"",marking:"",imageUrl:"",sourceUrl:""});refreshPresentationEditors()};
  wirePhotoInputs();
  $("sectionEditors").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>sectionAction(b.dataset.act,Number(b.dataset.index),m.id));
