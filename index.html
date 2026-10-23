@@ -1772,9 +1772,18 @@ function renderResults(){
      if(pres!==null)url.searchParams.set("presentation",String(pres));else url.searchParams.delete("presentation");
      window.open(url.toString(),"_blank","noopener");return;
     }
-    if(currentView==="home"&&!openedSearchFiche&&!editorId&&$("search").value.trim()){const item=found.find(x=>String(x.med.id)===String(id)&&(x.section?.id||"")===(section||"")&&x.presentation===pres);if(item){navigatePreview(item);return;}}
+    // Le clic ouvre toujours la fiche complète ; le survol suffit pour l’aperçu.
     openMedication(id,pres,section);
    };
+   // Survol : aperçu uniquement, sans ajout à l’historique du navigateur.
+   // Les boutons CIP conservent leur action indépendante de copie.
+   el.addEventListener('mouseenter',()=>{
+    if(currentView!=="home"||openedSearchFiche||editorId||!$('search').value.trim())return;
+    const item=found.find(x=>String(x.med.id)===String(el.dataset.id)
+      &&(x.section?.id||'')===(el.dataset.section||'')
+      &&(x.presentation??null)===(el.dataset.presentation===''?null:Number(el.dataset.presentation)));
+    if(item&&searchPreviewKey(item)!==previewSearchKey)previewSearchResult(item);
+   });
    el.onclick=choose;
    el.ondblclick=()=>openMedication(el.dataset.id,el.dataset.presentation===""?null:Number(el.dataset.presentation),el.dataset.section||null);
    el.onauxclick=e=>{if(e.button===1){e.preventDefault();choose(e)}};
@@ -1804,6 +1813,13 @@ $('search').addEventListener('keydown',e=>{
   e.preventDefault();
   highlightedSearchIndex=e.key==='ArrowDown'?(highlightedSearchIndex+1)%results.length:(highlightedSearchIndex<0?results.length-1:(highlightedSearchIndex-1+results.length)%results.length);
   updateSearchHighlight();
+  const el=results[highlightedSearchIndex];
+  if(el&&currentView==='home'&&!openedSearchFiche&&!editorId){
+   const item=getSearchMatches().find(x=>String(x.med.id)===String(el.dataset.id)
+    &&(x.section?.id||'')===(el.dataset.section||'')
+    &&(x.presentation??null)===(el.dataset.presentation===''?null:Number(el.dataset.presentation)));
+   if(item)previewSearchResult(item);
+  }
  }else if(e.key==='Enter'){
   e.preventDefault();
   results[highlightedSearchIndex>=0?highlightedSearchIndex:0].click();
