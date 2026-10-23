@@ -636,6 +636,39 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .group-associations .associated-molecule-children[hidden]{display:none!important}
 .group-associations .associated-molecule-children .molecule-dose-grid{margin:0;padding:0;border:0;background:transparent}
 @media(max-width:600px){.group-associations .associated-molecules{display:grid;grid-template-columns:1fr}.group-associations .associated-molecule{min-width:0;width:100%}}
+
+/* V6.16 : recherche en deux volets, indépendante de l'Explorateur */
+#searchWorkspace{display:grid;grid-template-columns:minmax(270px,.88fr) minmax(0,1.5fr);gap:16px;margin:18px 0 22px;align-items:start}
+#searchWorkspace.hidden{display:none!important}
+#searchWorkspace .search-work-panel{background:#fff;border:1px solid #dce5df;border-radius:17px;overflow:hidden;min-width:0;box-shadow:0 4px 16px #183d3210}
+#searchWorkspace .search-work-heading{padding:13px 16px;background:#f5f8f6;border-bottom:1px solid #dce5df;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:750}
+#searchWorkspace .search-work-heading small{color:#687a70;font-weight:500}
+#searchWorkspace #searchSuggestions{display:block!important;position:static!important;inset:auto!important;width:auto!important;max-height:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;background:white!important}
+#searchWorkspace #searchSuggestions .results{max-height:70vh;overflow-y:auto}
+#searchWorkspace #searchSuggestions .result{border-bottom:1px solid #e8eeea;padding:12px 14px;cursor:pointer}
+#searchWorkspace #searchSuggestions .result:hover,#searchWorkspace #searchSuggestions .result.preview-selected{background:#edf5f0}
+#searchWorkspace #searchSuggestions .result.preview-selected{border-left:3px solid #4c9371;padding-left:11px}
+#searchWorkspace .search-work-preview{padding:18px;max-height:74vh;overflow:auto}
+#searchWorkspace .search-work-preview .section{margin:10px 0}
+#searchWorkspace .search-work-preview h2{margin:0 0 8px;font-size:1.45rem}
+#searchWorkspace .search-work-preview .search-preview-path{font-size:.8rem;color:#718178;margin:0 0 12px}
+#searchWorkspace .search-preview-open{border:1px solid #a8ccb3;background:#eaf3ed;color:#28634a;border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer}
+#searchWorkspace .search-preview-section{display:block;width:100%;text-align:left;border:1px solid #e2eae5;border-radius:11px;background:#fff;padding:12px;margin:10px 0;cursor:pointer;color:inherit}
+#searchWorkspace .search-preview-section:hover{background:#f3f8f5;border-color:#b7d6c3}
+#searchWorkspace .search-preview-section .section{border:0;padding:0;pointer-events:none}
+#searchWorkspace .search-preview-section .section h3{margin:0 0 6px}
+#searchWorkspace .search-preview-section .search-preview-arrow{float:right;color:#428467}
+#searchWorkspace .search-preview-related{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+#searchWorkspace .search-preview-related button{border:1px solid #cbdcf0;background:#eaf1fb;color:#315b87;border-radius:9px;padding:7px 10px;cursor:pointer}
+#searchWorkspace .search-preview-related button:hover{background:#dce9fa}
+#searchWorkspace .search-work-result-tree{border-top:1px solid #e8eeea;padding:8px 10px;background:#f9fbfa}
+#searchWorkspace .search-work-tree-toggle{border:0;background:transparent;font-weight:650;cursor:pointer;color:#793f8f;padding:7px;text-align:left;width:100%}
+#searchWorkspace .search-work-tree-children{padding-left:16px;display:grid;gap:4px}
+#searchWorkspace .search-work-tree-children button{border:0;border-left:2px solid #cbdcf0;background:#f0f5fc;text-align:left;padding:7px 9px;color:#315b87;cursor:pointer;border-radius:5px}
+#searchWorkspace .search-work-tree-children[hidden]{display:none}
+#homeView.search-work-active #homeExtras{display:none}
+#homeView.search-work-active #mainSearchCard{margin-bottom:0}
+@media(max-width:760px){#searchWorkspace{grid-template-columns:1fr}#searchWorkspace #searchSuggestions .results{max-height:280px}#searchWorkspace .search-work-preview{max-height:none}}
 </style>
 <style>
 .group-glance{background:#e1eee5;border:2px solid #9cbfa9;border-radius:18px;padding:20px 22px;margin:20px 0;box-shadow:0 3px 12px rgba(31,83,58,.09)}
@@ -678,6 +711,10 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
       <button type="button" class="home-shortcut" id="homeExploreShortcut"><span class="home-shortcut-icon" aria-hidden="true">📖</span><span><strong>Explorer les fiches →</strong><small>Par classe thérapeutique et indication</small></span></button>
       <button type="button" class="home-shortcut" id="homeSourcesShortcut"><span class="home-shortcut-icon" aria-hidden="true">📚</span><span><strong>Consulter les sources →</strong><small>Retrouver les références documentaires</small></span></button>
     </div>
+  </div>
+  <div id="searchWorkspace" class="hidden" aria-label="Recherche avec aperçu">
+    <section class="search-work-panel"><div class="search-work-heading"><span>Résultats</span><small>Sélectionner pour prévisualiser</small></div><div id="searchResultsSlot"></div></section>
+    <section class="search-work-panel"><div class="search-work-heading"><span>Aperçu de la fiche</span><small>Cliquer pour ouvrir</small></div><div class="search-work-preview" id="searchPreview"><div class="empty">Sélectionne un résultat.</div></div></section>
   </div>
   <div id="searchLayout" class="layout hidden">
     <section class="panel" aria-live="polite"><div id="detail" class="detail"><div class="empty">Choisis une fiche dans la bibliothèque pour afficher son contenu.</div></div><div id="editor" class="detail admin hidden"></div></section>
@@ -1504,6 +1541,36 @@ function updateSearchPlacement(){
  const target=compactMode?$("headerSearchSlot"):$("homeSearchSlot");
  if(card.parentElement!==target)target.appendChild(card);
 }
+let previewSearchKey="";
+function searchPreviewKey(item){return String(item.med.id)+"|"+(item.section?.id||"")+"|"+(item.presentation??"")}
+function previewSearchResult(item){
+ if(!item)return;
+ previewSearchKey=searchPreviewKey(item);
+ const m=item.med,sec=item.section,pres=item.presentation;
+ const visible=publicMeds();
+ const ancestors=[];const byId=new Map(visible.map(x=>[String(x.id),x]));
+ let parent=moleculeParentId(m)||parentGroupId(m),guard=new Set([String(m.id)]);
+ while(parent&&!guard.has(String(parent))){guard.add(String(parent));const node=byId.get(String(parent));if(!node)break;ancestors.unshift(node.name);parent=parentGroupId(node)}
+ const sections=sec?[sec]:(m.sections||[]).filter(x=>x.enabled!==false&&String(x.content||'').trim()).slice(0,7);
+ const safeSection=section=>{try{return renderSection(section).replace(/\sid="section-[^"]*"/g,'')}catch(e){return `<h3>${esc(section.title||'Rubrique')}</h3><p>${esc(String(section.content||'').slice(0,500))}</p>`}};
+ const childMeds=isMolecule(m)?visible.filter(x=>String(moleculeParentId(x))===String(m.id)):[];
+ const presentations=(m.presentations||[]);
+ $('searchPreview').innerHTML=`<div class="search-preview-path">${esc(ancestors.join(' › '))}</div><h2>${esc(displayMedName(m))}</h2><p class="muted">${isGroup(m)?'Fiche groupe':isMolecule(m)?'Fiche molécule':'Fiche dosage/forme'}${m.category?' · '+esc(m.category):''}</p><button type="button" class="search-preview-open" id="searchPreviewOpen">Ouvrir la fiche complète ↗</button>${sec?'<p class="muted" style="margin-top:12px">Rubrique trouvée dans cette fiche :</p>':''}${childMeds.length?`<div class="search-preview-related">${childMeds.map(x=>`<button type="button" data-preview-child="${esc(x.id)}">${esc(displayMedName(x))} ↗</button>`).join('')}</div>`:''}${presentations.length?`<div class="search-preview-related">${presentations.map((p,i)=>`<button type="button" data-preview-presentation="${i}">${esc(presentationLabel(p,m,i))} ↗</button>`).join('')}</div>`:''}${sections.map(x=>`<button type="button" class="search-preview-section" data-preview-section="${esc(x.id)}" title="Ouvrir cette rubrique"><span class="search-preview-arrow">↗</span>${safeSection(x)}</button>`).join('')||'<p class="empty">Aucune rubrique renseignée pour cette fiche.</p>'}`;
+ $('searchPreviewOpen').onclick=()=>openMedication(m.id,pres,sec?.id||null);
+ $('searchPreview').querySelectorAll('[data-preview-section]').forEach(b=>b.onclick=()=>openMedication(m.id,pres,b.dataset.previewSection));
+ $('searchPreview').querySelectorAll('[data-preview-child]').forEach(b=>b.onclick=()=>openMedication(b.dataset.previewChild));
+ $('searchPreview').querySelectorAll('[data-preview-presentation]').forEach(b=>b.onclick=()=>openMedication(m.id,Number(b.dataset.previewPresentation)));
+ $('results').querySelectorAll('.result').forEach(el=>el.classList.toggle('preview-selected',el.dataset.id===String(m.id)&&el.dataset.section===(sec?.id||'')&&el.dataset.presentation===(pres===null?'':String(pres))));
+}
+function syncSearchWorkspace(query,found){
+ const active=currentView==='home'&&!openedSearchFiche&&!editorId&&!!query;
+ $('homeView').classList.toggle('search-work-active',active);
+ $('searchWorkspace').classList.toggle('hidden',!active);
+ const dropdown=$('searchSuggestions');const target=active?$('searchResultsSlot'):$('mainSearchCard');
+ if(dropdown.parentElement!==target){if(active)target.appendChild(dropdown);else $('mainSearchCard').insertBefore(dropdown,$('filters'))}
+ if(active){dropdown.classList.remove('hidden');const match=found.find(x=>searchPreviewKey(x)===previewSearchKey)||found[0];if(match)previewSearchResult(match);else $('searchPreview').innerHTML='<div class="empty">Aucun résultat pour cette recherche.</div>'}
+ else previewSearchKey='';
+}
 let highlightedSearchIndex=-1;
 function searchResultLabel(item){
  const m=item.med;
@@ -1560,9 +1627,11 @@ function renderResults(){
      if(pres!==null)url.searchParams.set("presentation",String(pres));else url.searchParams.delete("presentation");
      window.open(url.toString(),"_blank","noopener");return;
     }
+    if(currentView==="home"&&!openedSearchFiche&&!editorId&&$("search").value.trim()){const item=found.find(x=>String(x.med.id)===String(id)&&(x.section?.id||"")===(section||"")&&x.presentation===pres);if(item){previewSearchResult(item);return;}}
     openMedication(id,pres,section);
    };
    el.onclick=choose;
+   el.ondblclick=()=>openMedication(el.dataset.id,el.dataset.presentation===""?null:Number(el.dataset.presentation),el.dataset.section||null);
    el.onauxclick=e=>{if(e.button===1){e.preventDefault();choose(e)}};
    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(e)}};
  });
@@ -1581,6 +1650,7 @@ function renderResults(){
  });
  $('searchLayout').classList.toggle('hidden',!openedSearchFiche&&!editorId);
  updateSearchPlacement();
+ syncSearchWorkspace(query,found);
 }
 $('search').addEventListener('keydown',e=>{
  const results=[...$('results').querySelectorAll('.result')];
