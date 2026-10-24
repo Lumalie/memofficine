@@ -1077,6 +1077,19 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #dashboardListView #dashListPageItems li::marker{color:var(--dash-list-ink,#28533f);font-size:1.1em}
 #dashboardListView #dashListPageItems li button{color:var(--dash-list-ink,#28533f)}
 #dashboardListView #dashListPageItems li button:hover{filter:brightness(.75);color:var(--dash-list-ink,#28533f)}
+
+/* V6.49 — Listes pleine largeur, colonnes et pagination */
+#dashboardListView{width:100%;max-width:none;margin:0;padding:0 0 60px;box-sizing:border-box}
+#dashboardListView .dash-list-page{width:100%;box-sizing:border-box}
+#dashboardListView #dashListPageItems ul.dash-two-columns{columns:2;column-gap:48px}
+#dashboardListView #dashListPageItems ul.dash-two-columns li{break-inside:avoid;overflow-wrap:anywhere}
+#dashboardListView .dash-pagination{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin:27px 0 4px}
+#dashboardListView .dash-pagination button{min-width:35px;min-height:35px;padding:5px 10px;border:1px solid #d6e4da;border-radius:9px;background:#fff;color:var(--dash-list-ink,#28533f);font:inherit;cursor:pointer}
+#dashboardListView .dash-pagination button[aria-current="page"]{background:var(--dash-list-ink,#28533f);color:white;border-color:var(--dash-list-ink,#28533f);font-weight:700}
+#dashboardListView .dash-pagination button:hover:not(:disabled){border-color:var(--dash-list-ink,#28533f)}
+#dashboardListView .dash-pagination button:disabled{opacity:.4;cursor:default}
+#dashboardListView .dash-pagination span{color:#7a8b7d;padding:0 3px}
+@media(max-width:650px){#dashboardListView #dashListPageItems ul.dash-two-columns{columns:1}}
 </style>
 </head>
 <body>
@@ -3291,10 +3304,13 @@ function dashCategoryLists(){
   conseils:all.filter(m=>hierarchyMeta(m).memofficineKind==="conseil")
  };
 }
-function dashShowStatList(filter,scroll=true){
+let dashStatPage=1;
+function dashShowStatList(filter,scroll=true,page=null){
  if(!admin)return;
  const titles={all:"Toutes les fiches créées",published:"Fiches publiées",review:"Fiches à vérifier",groups:"Fiches groupes",molecules:"Fiches molécules",dosages:"Fiches dosage/forme",conseils:"Fiches conseil"};
  if(!Object.hasOwn(titles,filter))return;
+ if(dashActiveFilter!==filter)dashStatPage=1;
+ if(page!==null)dashStatPage=page;
  dashActiveFilter=filter;
  const themeColors={
   all:"#28533f",published:"#28533f",review:"#906b20",
@@ -3305,16 +3321,38 @@ function dashShowStatList(filter,scroll=true){
  const container=$("dashListPageItems");
  $("dashListPageTitle").textContent=titles[filter]+" ("+matches.length+")";
  container.replaceChildren();
+ const pageSize=100,totalPages=Math.max(1,Math.ceil(matches.length/pageSize));
+ dashStatPage=Math.max(1,Math.min(dashStatPage,totalPages));
  if(!matches.length){const p=document.createElement("p");p.className="dash-empty";p.textContent="Aucune fiche dans cette catégorie pour le moment.";container.append(p)}
  else{
+  const visible=matches.slice((dashStatPage-1)*pageSize,dashStatPage*pageSize);
   const ul=document.createElement("ul");
-  for(const m of matches){
+  if(visible.length>=50)ul.classList.add("dash-two-columns");
+  for(const m of visible){
    const li=document.createElement("li"),btn=document.createElement("button");
    btn.type="button";btn.textContent=displayMedName(m);
    btn.addEventListener("click",()=>{dashActiveFilter=null;openMedication(m.id)});
    li.append(btn);ul.append(li);
   }
   container.append(ul);
+  if(totalPages>1){
+   const nav=document.createElement("nav");nav.className="dash-pagination";nav.setAttribute("aria-label","Pages de la liste des fiches");
+   function pageButton(label,target,disabled=false,active=false){
+    const btn=document.createElement("button");btn.type="button";btn.textContent=label;btn.disabled=disabled;
+    if(active)btn.setAttribute("aria-current","page");
+    btn.setAttribute("aria-label",typeof target==="number"?"Page "+target:label);
+    btn.addEventListener("click",()=>{dashShowStatList(filter,true,target)});nav.append(btn);
+   }
+   pageButton("‹",dashStatPage-1,dashStatPage===1);
+   let previous=0;
+   for(let i=1;i<=totalPages;i++){
+    if(i!==1&&i!==totalPages&&Math.abs(i-dashStatPage)>2)continue;
+    if(previous&&i>previous+1){const dots=document.createElement("span");dots.textContent="…";dots.setAttribute("aria-hidden","true");nav.append(dots)}
+    pageButton(String(i),i,false,i===dashStatPage);previous=i;
+   }
+   pageButton("›",dashStatPage+1,dashStatPage===totalPages);
+   container.append(nav);
+  }
  }
  if(currentView!=="dashboard-list"){
   const url=new URL(location.href);url.hash="liste-"+filter;
