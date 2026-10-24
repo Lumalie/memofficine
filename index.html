@@ -1066,6 +1066,17 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #dashboardListView li button:hover{color:#173f63}
 #dashboardListView .dash-back{background:#eff6f0;border:1px solid #cddfd2;color:#2c6245;border-radius:10px;padding:10px 14px;cursor:pointer}
 @media(max-width:600px){#dashboardListView .dash-list-page{padding:18px}}
+
+/* V6.48 — Liste de statistiques : alignement et couleur contextuelle */
+#dashboardListView .dash-list-page-head{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:17px;margin-bottom:19px;text-align:left}
+#dashboardListView .dash-list-page-head .dash-back{align-self:flex-start}
+#dashboardListView #dashListPageTitle{display:block;width:100%;font-size:clamp(1.75rem,2.5vw,2.1rem);line-height:1.2;font-weight:750;color:var(--dash-list-ink,#28533f);text-align:left}
+#dashboardListView #dashListPageItems{text-align:left}
+#dashboardListView #dashListPageItems ul{margin:0;padding-left:29px;line-height:1.95}
+#dashboardListView #dashListPageItems li{padding-left:3px}
+#dashboardListView #dashListPageItems li::marker{color:var(--dash-list-ink,#28533f);font-size:1.1em}
+#dashboardListView #dashListPageItems li button{color:var(--dash-list-ink,#28533f)}
+#dashboardListView #dashListPageItems li button:hover{filter:brightness(.75);color:var(--dash-list-ink,#28533f)}
 </style>
 </head>
 <body>
@@ -3285,6 +3296,11 @@ function dashShowStatList(filter,scroll=true){
  const titles={all:"Toutes les fiches créées",published:"Fiches publiées",review:"Fiches à vérifier",groups:"Fiches groupes",molecules:"Fiches molécules",dosages:"Fiches dosage/forme",conseils:"Fiches conseil"};
  if(!Object.hasOwn(titles,filter))return;
  dashActiveFilter=filter;
+ const themeColors={
+  all:"#28533f",published:"#28533f",review:"#906b20",
+  groups:"#2f684b",molecules:"#793f8f",dosages:"#98553f",conseils:"#9c426c"
+ };
+ $("dashboardListView").style.setProperty("--dash-list-ink",themeColors[filter]||"#28533f");
  const matches=dashCategoryLists()[filter].slice().sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base",numeric:true}));
  const container=$("dashListPageItems");
  $("dashListPageTitle").textContent=titles[filter]+" ("+matches.length+")";
