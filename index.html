@@ -3198,6 +3198,7 @@ function dashRender(){
    cb.type="checkbox";cb.checked=!!state.done[n.key];cb.setAttribute("aria-label","Terminer : "+n.title);
    span.innerHTML=richInline(n.title);if(cb.checked)span.className="dash-done";
    cb.addEventListener("change",()=>{const latest=dashRead();if(cb.checked)latest.done[n.key]=true;else delete latest.done[n.key];dashWrite(latest);dashScheduleCloud();dashRender()});
+   label.append(cb,span);
    const row=document.createElement("div");row.className="dash-task-row";
    if(n.children.length){
     const toggle=document.createElement("button");toggle.type="button";toggle.className="dash-fold";
