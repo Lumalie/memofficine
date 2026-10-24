@@ -954,6 +954,34 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 .cip-pack-editor{align-items:flex-start!important}.cip-pack-rows{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px}
 .cip-pack-edit-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.cip-pack-edit-row input:first-child{flex:1 1 150px;min-width:135px}.cip-pack-edit-row input:nth-child(2){flex:1 1 160px;min-width:135px}.cip-pack-edit-row button{border:1px solid #e3c7c7;background:#fff7f7;color:#9d5151;border-radius:8px;padding:6px 11px;cursor:pointer}.cip-pack-add{align-self:flex-start;border:1px solid #bfd9ca;background:#edf5ef;color:#28654e;border-radius:8px;padding:7px 10px;cursor:pointer}.presentation-cip-list{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0}
 </style>
+
+<style>
+/* V6.34 — Espace personnel d'administration */
+#adminDashboard{margin:0 0 22px;background:#fff;border:1px solid #dce8df;border-radius:17px;padding:19px;box-shadow:0 5px 20px #193f3408}
+#adminDashboard .dash-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#adminDashboard h2{margin:0;font-size:1.35rem;color:#234c3b}
+#adminDashboard .dash-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:15px 0}
+#adminDashboard .dash-stat{padding:13px;border-radius:12px;background:#f1f6f1;border:1px solid #e0e9e1}
+#adminDashboard .dash-stat b{display:block;font-size:1.55rem;color:#285b44}
+#adminDashboard .dash-stat span{font-size:.8rem;color:#64796b}
+#adminDashboard .dash-progress{height:9px;border-radius:20px;background:#e9eee9;overflow:hidden;margin:10px 0}
+#adminDashboard .dash-progress>div{height:100%;background:#80b18d;transition:width .2s}
+#adminDashboard .dash-panels{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;margin-top:18px}
+#adminDashboard .dash-pane{border:1px solid #e1e9e3;border-radius:13px;padding:15px;min-width:0}
+#adminDashboard .dash-pane h3{margin:0 0 10px;font-size:1.05rem}
+#adminDashboard .dash-tree,#adminDashboard .dash-tree ul{list-style:none;margin:0;padding-left:0}
+#adminDashboard .dash-tree ul{padding-left:19px;border-left:1px solid #dce8df;margin-left:7px}
+#adminDashboard .dash-tree li{margin:6px 0}
+#adminDashboard .dash-tree label{display:flex;gap:9px;align-items:flex-start;cursor:pointer;line-height:1.45}
+#adminDashboard .dash-tree input{width:17px;height:17px;flex:0 0 17px;margin-top:2px;accent-color:#47865d}
+#adminDashboard .dash-done{text-decoration:line-through;color:#83928a}
+#adminDashboard textarea{min-height:215px;resize:vertical;font-family:inherit;line-height:1.6}
+#adminDashboard .dash-tools{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+#adminDashboard .dash-tools button{font-size:.84rem}
+#adminDashboard .dash-note{font-size:.8rem;color:#697b70;line-height:1.5}
+#adminDashboard .dash-empty{color:#697b70;font-size:.88rem;padding:8px 0}
+@media(max-width:760px){#adminDashboard .dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#adminDashboard .dash-panels{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header><div class="wrap">
@@ -972,7 +1000,12 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 </div></header>
 <main>
   <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
-  <section id="homeView"><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><div id="homeSearchSlot"></div><section class="searchcard" id="mainSearchCard">
+  <section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
+ <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste</button></div>
+ <div class="dash-stats"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashReview">0</b><span>À vérifier</span></div><div class="dash-stat"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div></div>
+ <div class="dash-panels"><div class="dash-pane"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div></div>
+ <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau.</label><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. La liste n'est pas synchronisée avec Supabase : pense à l'exporter pour la sauvegarder ou changer d'appareil.</p></div></div>
+ </section><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><div id="homeSearchSlot"></div><section class="searchcard" id="mainSearchCard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
     <div id="searchSuggestions" class="search-suggestions hidden" role="listbox" aria-label="Suggestions de recherche"><div class="results" id="results"></div><div class="suggestion-count" id="count"></div></div>
@@ -1001,7 +1034,8 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <div class="notice"><strong>Base documentaire en construction :</strong> seules les fiches publiées sont visibles publiquement. Les contenus doivent être vérifiés à partir des sources officielles et ne remplacent pas la vérification de la spécialité exacte ni le jugement professionnel.</div>
 </main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
 <script>
 const SUPABASE_URL = "https://xbhqogndzbrjhrigtncy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4cQdbKxcRjO8JH48uA8bZA_taBLuHdE";
@@ -1084,6 +1118,7 @@ async function loadCloudMeds(){
  // Sa première génération a lieu avant la réponse asynchrone de Supabase :
  // la reconstruire dès que les fiches sont chargées, sans intervention utilisateur.
  if(currentView==="explore")renderExplorer();
+ dashRender();
  const requestedId=new URLSearchParams(window.location.search).get("fiche");
  selectedId=meds.find(m=>m.id===requestedId&&!isSourcesRecord(m))?.id||meds.find(m=>!isSourcesRecord(m))?.id||null;
  if(requestedId)openedSearchFiche=true;
@@ -1108,8 +1143,8 @@ async function initCloud(){
  const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
  if(sessionError)console.error(sessionError);currentUser=session?.user||null;admin=!!currentUser;
  $("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);
- await loadCloudMeds();
- supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();},0);});
+ await loadCloudMeds();dashSetUser();
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{currentUser=session?.user||null;admin=!!currentUser;$("loginBtn").classList.toggle("hidden",admin);$("adminBanner").classList.toggle("hidden",!admin);await loadCloudMeds();dashSetUser();},0);});
 }
 let currentView="home";
 const viewScrollPositions={home:0,explore:0,sources:0};
@@ -1195,6 +1230,7 @@ function showView(view){
  if(view==="explore")renderExplorer();
  if(view==="sources")renderSources();
  updateSearchPlacement();
+ dashRender();
  if(changing)restoreViewScroll(view);
  if(view==="home"&&editorId)restoreEditorFocus();
 }
@@ -2379,7 +2415,7 @@ function renderSection(s,targetSectionId=null){
  const isConseil = (s.title || "").toLowerCase().includes("à dire au comptoir");  
  return `<section class="section ${isConseil ? 'conseil-comptoir' : ''} ${targetSectionId&&s.id===targetSectionId?'direct-target':''}" id="section-${esc(s.id)}"><h3>${esc(s.title)}</h3>${s.sharedSourceName?`<p class="shared-origin">🔗 Rubrique partagée depuis ${esc(s.sharedSourceName)}</p>`:""}${imageHtml}${content}</section>`;
 }
-function setAdmin(value){admin=value;$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
+function setAdmin(value){admin=value;dashSetUser();$("adminBanner").classList.toggle("hidden",!admin);$("loginBtn").classList.toggle("hidden",admin);renderResults();if(selectedId&&!editorId&&!$("detail").classList.contains("hidden"))renderDetail()}
 function showLogin(){
  $("modalRoot").innerHTML=`<div class="modalback"><div class="modal"><h2>Connexion administrateur</h2><p>Connecte-toi avec le compte créé dans Supabase Authentication. Les inscriptions publiques doivent rester désactivées.</p><label class="label" for="loginEmail">Adresse e-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Ton adresse e-mail"><label class="label" for="loginPassword" style="margin-top:10px">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Mot de passe"><div class="actions"><button id="cancelLogin">Annuler</button><button class="primary" id="confirmLogin">Se connecter</button></div></div></div>`;
  $("cancelLogin").onclick=()=>$("modalRoot").innerHTML="";
@@ -3067,6 +3103,101 @@ if(!location.search&&!location.hash){
 openedSearchFiche=!!new URLSearchParams(location.search).get("fiche");renderFilters();renderResults();if(location.hash==="#explorer")showView("explore");else if(location.hash==="#sources")showView("sources");
 if(currentView==="explore"&&!meds.length)$("exploreCards").innerHTML='<div class="empty">Chargement des fiches…</div>';
 initCloud();
+// V6.34 — Tableau de bord privé (données locales, séparées de Supabase).
+let dashboardOwner="";
+function dashKey(){return "memopharm-dashboard-v1-"+dashboardOwner}
+function dashDefault(){return {text:"",done:{}}}
+function dashRead(){try{const v=JSON.parse(localStorage.getItem(dashKey())||"null");return v&&typeof v.text==="string"&&v.done&&typeof v.done==="object"?v:dashDefault()}catch(e){return dashDefault()}}
+function dashWrite(v){try{localStorage.setItem(dashKey(),JSON.stringify(v));return true}catch(e){toast("Stockage local indisponible : exporte ta liste.");return false}}
+function dashNodes(text){
+ const root=[],stack=[{level:-1,children:root}];
+ String(text||"").split(/\r?\n/).forEach(line=>{
+  if(!line.trim())return;
+  const spaces=(line.match(/^\s*/)||[""])[0].replace(/\t/g,"  ").length;
+  const level=Math.floor(spaces/2);
+  const title=line.trim().replace(/^(?:[-*•]\s*|\[\s*[x ]\s*\]\s*)/i,"").trim();
+  if(!title)return;
+  while(stack.length>1&&stack[stack.length-1].level>=level)stack.pop();
+  const parent=stack[stack.length-1];
+  const node={title,children:[],level};
+  parent.children.push(node);stack.push({level,children:node.children});
+ });
+ const collator=new Intl.Collator("fr",{sensitivity:"base",numeric:true});
+ function sort(items,path=""){
+  items.sort((a,b)=>collator.compare(a.title,b.title));
+  const counts={};
+  items.forEach(n=>{
+   const normalized=n.title.normalize("NFC").toLocaleLowerCase("fr");
+   counts[normalized]=(counts[normalized]||0)+1;
+   n.key=path+"/"+normalized+"#"+counts[normalized];
+   sort(n.children,n.key);
+  });
+ }
+ sort(root);return root;
+}
+function dashFlatten(nodes){let out=[];nodes.forEach(n=>{out.push(n);out.push(...dashFlatten(n.children))});return out}
+function dashRender(){
+ const el=$("adminDashboard");
+ el.classList.toggle("hidden",!admin||currentView!=="home");
+ if(!admin)return;
+ const list=meds.filter(m=>!isSourcesRecord(m));
+ $("dashTotal").textContent=list.length;
+ $("dashReview").textContent=list.filter(m=>String(m.status||"").toLocaleLowerCase("fr")!=="vérifiée").length;
+ $("dashMolecules").textContent=list.filter(isMolecule).length;
+ $("dashPublished").textContent=list.filter(m=>m.published).length;
+ const state=dashRead(),nodes=dashNodes(state.text),all=dashFlatten(nodes),completed=all.filter(n=>state.done[n.key]).length;
+ $("dashTaskCount").textContent=`(${completed}/${all.length})`;
+ $("dashProgressText").textContent=all.length?`${completed} tâche${completed>1?"s":""} terminée${completed>1?"s":""} sur ${all.length}`:"Ajoute tes premières tâches dans l'éditeur.";
+ $("dashProgressBar").style.width=(all.length?100*completed/all.length:0)+"%";
+ const tree=$("dashTaskTree");tree.replaceChildren();
+ function append(nodes,where){
+  const ul=document.createElement("ul");
+  nodes.forEach(n=>{
+   const li=document.createElement("li"),label=document.createElement("label"),cb=document.createElement("input"),span=document.createElement("span");
+   cb.type="checkbox";cb.checked=!!state.done[n.key];cb.setAttribute("aria-label","Terminer : "+n.title);
+   span.textContent=n.title;if(cb.checked)span.className="dash-done";
+   cb.addEventListener("change",()=>{const latest=dashRead();if(cb.checked)latest.done[n.key]=true;else delete latest.done[n.key];dashWrite(latest);dashRender()});
+   label.append(cb,span);li.append(label);if(n.children.length)append(n.children,li);ul.append(li);
+  });
+  where.append(ul);
+ }
+ if(nodes.length)append(nodes,tree);else tree.innerHTML='<div class="dash-empty">Aucune tâche pour le moment.</div>';
+ if(document.activeElement!==$("dashTextarea"))$("dashTextarea").value=state.text;
+}
+function dashSetUser(){
+ const next=admin&&currentUser?.id?String(currentUser.id):"";
+ if(dashboardOwner!==next){dashboardOwner=next;$("dashEditorPane").classList.add("hidden");}
+ dashRender();
+}
+$("dashToggleEditor").onclick=()=>{
+ const pane=$("dashEditorPane");pane.classList.toggle("hidden");
+ $("dashToggleEditor").textContent=pane.classList.contains("hidden")?"✏️ Modifier ma liste":"Masquer l'éditeur";
+ if(!pane.classList.contains("hidden")){$("dashTextarea").value=dashRead().text;$("dashTextarea").focus()}
+};
+$("dashSave").onclick=()=>{
+ if(!admin)return;
+ const state=dashRead();state.text=$("dashTextarea").value;
+ if(dashWrite(state)){dashRender();toast("Liste enregistrée et triée par ordre alphabétique.")}
+};
+$("dashExport").onclick=()=>{
+ const payload={version:1,exportedAt:new Date().toISOString(),...dashRead()};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="memopharm-tableau-de-bord.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$("dashImport").onclick=()=>$("dashImportFile").click();
+$("dashImportFile").onchange=async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ try{
+  const data=JSON.parse(await file.text());
+  if(typeof data.text!=="string"||!data.done||typeof data.done!=="object"||Array.isArray(data.done))throw Error("format");
+  if(confirm("Remplacer la liste et les cases cochées de ce navigateur par ce fichier ?")){
+   dashWrite({text:data.text,done:data.done});dashRender();toast("Liste importée.");
+  }
+ }catch(err){toast("Fichier de tableau de bord non reconnu.")}
+ e.target.value="";
+};
+
+
 </script>
 </body></html>
 
