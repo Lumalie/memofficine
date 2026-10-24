@@ -1024,7 +1024,23 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #adminDashboard .dash-is-editing .dash-task-row div:has(> .dash-edit-text){cursor:text}
 #adminDashboard .dash-is-editing .dash-edit-text{display:block;flex:1;min-width:0;cursor:text;outline-offset:3px}
 </style>
-</head>
+<style>
+/* V6.45 — Statistiques du tableau de bord par catégorie */
+#adminDashboard .dash-stats-general{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:10px}
+#adminDashboard .dash-stats-types{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:0}
+#adminDashboard .dash-stat-review{background:#fff5d9;border-color:#f1d99b}
+#adminDashboard .dash-stat-review b,#adminDashboard .dash-stat-review span{color:#906b20}
+#adminDashboard .dash-stat-group{background:#eaf3ed;border-color:#a8ccb3}
+#adminDashboard .dash-stat-group b,#adminDashboard .dash-stat-group span{color:#2f684b}
+#adminDashboard .dash-stat-molecule{background:#f2e5f7;border-color:#d2addf}
+#adminDashboard .dash-stat-molecule b,#adminDashboard .dash-stat-molecule span{color:#793f8f}
+#adminDashboard .dash-stat-dosage{background:#faeee7;border-color:#dfb5a4}
+#adminDashboard .dash-stat-dosage b,#adminDashboard .dash-stat-dosage span{color:#98553f}
+#adminDashboard .dash-stat-conseil{background:#fce8f0;border-color:#eeb6d0}
+#adminDashboard .dash-stat-conseil b,#adminDashboard .dash-stat-conseil span{color:#9c426c}
+@media(max-width:650px){#adminDashboard .dash-stats-general{grid-template-columns:repeat(3,minmax(0,1fr))}#adminDashboard .dash-stats-types{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){#adminDashboard .dash-stats-general{grid-template-columns:1fr}}
+</style></head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -1044,7 +1060,8 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   <section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div></div>
- <div class="dash-stats"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashReview">0</b><span>À vérifier</span></div><div class="dash-stat"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div></div>
+ <div class="dash-stats dash-stats-general"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div><div class="dash-stat dash-stat-review"><b id="dashReview">0</b><span>À vérifier</span></div></div>
+ <div class="dash-stats dash-stats-types" aria-label="Répartition des fiches par catégorie"><div class="dash-stat dash-stat-group"><b id="dashGroups">0</b><span>Fiches groupes</span></div><div class="dash-stat dash-stat-molecule"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat dash-stat-dosage"><b id="dashDosages">0</b><span>Fiches dosage/forme</span></div><div class="dash-stat dash-stat-conseil"><b id="dashConseils">0</b><span>Fiches conseil</span></div></div>
  <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
  <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
  <div class="dash-suggestions">
@@ -3228,7 +3245,11 @@ function dashRender(){
  const list=meds.filter(m=>!isSourcesRecord(m));
  $("dashTotal").textContent=list.length;
  $("dashReview").textContent=list.filter(m=>String(m.status||"").toLocaleLowerCase("fr")!=="vérifiée").length;
+ $("dashGroups").textContent=list.filter(isGroup).length;
  $("dashMolecules").textContent=list.filter(isMolecule).length;
+ $("dashDosages").textContent=list.filter(m=>!isGroup(m)&&!isMolecule(m)&&!!moleculeParentId(m)).length;
+ // Catégorie réservée aux futures fiches conseil : aucune fiche n'est présumée conseil sur la seule présence d'une rubrique.
+ $("dashConseils").textContent=list.filter(m=>hierarchyMeta(m).memofficineKind==="conseil").length;
  $("dashPublished").textContent=list.filter(m=>m.published).length;
  const state=dashRead(),nodes=dashNodes(state.text),all=dashFlatten(nodes),completed=all.filter(n=>state.done[n.key]).length;
  $("dashTaskCount").textContent=`(${completed}/${all.length})`;
