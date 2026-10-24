@@ -998,7 +998,11 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #homeView.admin-dashboard-only > #mainSearchCard,
 #homeView.admin-dashboard-only > #homeExtras,
 #homeView.admin-dashboard-only > #searchWorkspace,
-#homeView.admin-dashboard-only > #searchLayout{display:none!important}
+/* Le formulaire de création/modification vit dans #searchLayout : ne jamais le masquer. */
+#homeView.admin-dashboard-only > #searchLayout:not(:has(#editor:not(.hidden))):not(:has(#detail:not(.hidden))){display:none!important}
+/* Quand une fiche est ouverte, le tableau de bord ne doit pas prendre sa place. */
+#homeView.admin-dashboard-only:has(#editor:not(.hidden)) > #adminDashboard,
+#homeView.admin-dashboard-only:has(#detail:not(.hidden)):has(#searchLayout:not(.hidden)) > #adminDashboard{display:none!important}
 #adminDashboard .dash-suggestions{margin-top:17px;border:1px solid #e1e9e3;border-radius:13px;padding:16px;background:#fff}
 #adminDashboard .dash-suggestions textarea{display:block;box-sizing:border-box;width:100%;min-height:120px;padding:12px;border:1px solid #d6e3d9;border-radius:10px;background:#fcfefc;line-height:1.55}
 #adminDashboard .dash-suggestions p{font-size:.82rem;color:#687a6e;margin:6px 0 10px}
