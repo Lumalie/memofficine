@@ -1040,7 +1040,34 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #adminDashboard .dash-stat-conseil b,#adminDashboard .dash-stat-conseil span{color:#9c426c}
 @media(max-width:650px){#adminDashboard .dash-stats-general{grid-template-columns:repeat(3,minmax(0,1fr))}#adminDashboard .dash-stats-types{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){#adminDashboard .dash-stats-general{grid-template-columns:1fr}}
-</style></head>
+</style>
+<style>
+/* V6.46 — Statistiques interactives et listes de fiches */
+#adminDashboard .dash-stat[data-dash-filter]{cursor:pointer;text-align:left;font:inherit;transition:transform .15s,box-shadow .15s}
+#adminDashboard .dash-stat[data-dash-filter]:hover{transform:translateY(-2px);box-shadow:0 4px 12px #244b3820}
+#adminDashboard .dash-stat[data-dash-filter]:focus-visible{outline:3px solid #528f70;outline-offset:3px}
+#dashStatList{margin:12px 0 16px;border:1px solid #e0e9e3;border-radius:13px;background:#fff;padding:16px}
+#dashStatList[hidden]{display:none!important}
+#dashStatList .dash-list-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#dashStatList h3{margin:0;font-size:1.04rem;color:#254f3d}
+#dashStatList ul{margin:12px 0 0;padding-left:24px;line-height:1.65}
+#dashStatList li{padding:2px 0}
+#dashStatList li button{border:0;background:transparent;padding:3px 0;text-align:left;color:#2d5b77;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit}
+#dashStatList li button:hover{color:#164568}
+#dashStatList .dash-list-close{border:1px solid #dce5df;background:#f7faf8;border-radius:8px;padding:5px 10px;cursor:pointer}
+
+/* V6.47 : page dédiée aux listes des statistiques */
+#dashboardListView{max-width:1100px;margin:0 auto;padding:22px 0 60px}
+#dashboardListView .dash-list-page{background:white;border:1px solid #dfe9e2;border-radius:18px;padding:25px 30px;min-height:300px}
+#dashboardListView .dash-list-page-head{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+#dashboardListView h2{margin:0;color:#28533f;font-size:1.5rem}
+#dashboardListView ul{padding-left:26px;line-height:1.9}
+#dashboardListView li button{border:0;background:transparent;padding:3px 2px;color:#315b87;text-decoration:underline;text-underline-offset:3px;font:inherit;cursor:pointer;text-align:left}
+#dashboardListView li button:hover{color:#173f63}
+#dashboardListView .dash-back{background:#eff6f0;border:1px solid #cddfd2;color:#2c6245;border-radius:10px;padding:10px 14px;cursor:pointer}
+@media(max-width:600px){#dashboardListView .dash-list-page{padding:18px}}
+</style>
+</head>
 <body>
 <header><div class="wrap">
   <div class="topline">
@@ -1058,11 +1085,12 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 </div></header>
 <main>
   <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
-  <section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
+  <section id="dashboardListView" class="hidden" aria-label="Liste des fiches du tableau de bord"><div class="dash-list-page"><div class="dash-list-page-head"><button type="button" id="dashListBack" class="dash-back">← Retour au tableau de bord</button><h2 id="dashListPageTitle">Liste des fiches</h2></div><div id="dashListPageItems"></div></div></section><section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div></div>
- <div class="dash-stats dash-stats-general"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div><div class="dash-stat dash-stat-review"><b id="dashReview">0</b><span>À vérifier</span></div></div>
- <div class="dash-stats dash-stats-types" aria-label="Répartition des fiches par catégorie"><div class="dash-stat dash-stat-group"><b id="dashGroups">0</b><span>Fiches groupes</span></div><div class="dash-stat dash-stat-molecule"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat dash-stat-dosage"><b id="dashDosages">0</b><span>Fiches dosage/forme</span></div><div class="dash-stat dash-stat-conseil"><b id="dashConseils">0</b><span>Fiches conseil</span></div></div>
- <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
+ <div class="dash-stats dash-stats-general"><button type="button" class="dash-stat" data-dash-filter="all" aria-label="Afficher la liste : Fiches créées"><b id="dashTotal">0</b><span>Fiches créées</span></button><button type="button" class="dash-stat" data-dash-filter="published" aria-label="Afficher la liste : Fiches publiées"><b id="dashPublished">0</b><span>Fiches publiées</span></button><button type="button" class="dash-stat dash-stat-review" data-dash-filter="review" aria-label="Afficher la liste : À vérifier"><b id="dashReview">0</b><span>À vérifier</span></button></div>
+ <div class="dash-stats dash-stats-types" aria-label="Répartition des fiches par catégorie"><button type="button" class="dash-stat dash-stat-group" data-dash-filter="groups" aria-label="Afficher la liste : Fiches groupes"><b id="dashGroups">0</b><span>Fiches groupes</span></button><button type="button" class="dash-stat dash-stat-molecule" data-dash-filter="molecules" aria-label="Afficher la liste : Fiches molécules"><b id="dashMolecules">0</b><span>Fiches molécules</span></button><button type="button" class="dash-stat dash-stat-dosage" data-dash-filter="dosages" aria-label="Afficher la liste : Fiches dosage/forme"><b id="dashDosages">0</b><span>Fiches dosage/forme</span></button><button type="button" class="dash-stat dash-stat-conseil" data-dash-filter="conseils" aria-label="Afficher la liste : Fiches conseil"><b id="dashConseils">0</b><span>Fiches conseil</span></button></div>
+ <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><section id="dashStatList" hidden aria-live="polite"><div class="dash-list-head"><h3 id="dashStatListTitle">Liste des fiches</h3><button class="dash-list-close" id="dashStatListClose" type="button">✕ Fermer</button></div><div id="dashStatListItems"></div></section>
+ <div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
  <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
  <div class="dash-suggestions">
  <h3>💡 Suggestions de modifications</h3>
@@ -1287,6 +1315,7 @@ function showView(view){
  if(changing&&!restoringViewScroll)viewScrollPositions[currentView]=window.scrollY;
  currentView=view;
  $("homeView").classList.toggle("hidden",view!=="home");
+ $("dashboardListView").classList.toggle("hidden",view!=="dashboard-list");
  $("exploreView").classList.toggle("hidden",view!=="explore");
  $("sourcesView").classList.toggle("hidden",view!=="sources");
  
@@ -1832,6 +1861,7 @@ function navigateToView(view){
  window.scrollTo({top:0,behavior:"instant"});
 }
 function restoreHistoryPage(state=history.state){
+ if(state?.view==="dashboard-list"&&state.dashFilter&&admin){dashShowStatList(state.dashFilter,false);return;}
  const searchContext=state?.memopharmSearch;
  if(searchContext&&!new URLSearchParams(location.search).has('fiche')){
   editorId=null;openedSearchFiche=false;selectedId=null;
@@ -3236,6 +3266,50 @@ function dashNodes(text){
  sort(root);return root;
 }
 function dashFlatten(nodes){let out=[];nodes.forEach(n=>{out.push(n);out.push(...dashFlatten(n.children))});return out}
+// V6.46 — Chaque statistique affiche une liste de fiches cliquables.
+let dashActiveFilter=null;
+function dashCategoryLists(){
+ const all=meds.filter(m=>!isSourcesRecord(m));
+ return {
+  all,
+  published:all.filter(m=>m.published),
+  review:all.filter(m=>String(m.status||"").toLocaleLowerCase("fr")!=="vérifiée"),
+  groups:all.filter(isGroup),
+  molecules:all.filter(isMolecule),
+  dosages:all.filter(m=>!isGroup(m)&&!isMolecule(m)&&!!moleculeParentId(m)),
+  conseils:all.filter(m=>hierarchyMeta(m).memofficineKind==="conseil")
+ };
+}
+function dashShowStatList(filter,scroll=true){
+ if(!admin)return;
+ const titles={all:"Toutes les fiches créées",published:"Fiches publiées",review:"Fiches à vérifier",groups:"Fiches groupes",molecules:"Fiches molécules",dosages:"Fiches dosage/forme",conseils:"Fiches conseil"};
+ if(!Object.hasOwn(titles,filter))return;
+ dashActiveFilter=filter;
+ const matches=dashCategoryLists()[filter].slice().sort((a,b)=>displayMedName(a).localeCompare(displayMedName(b),"fr",{sensitivity:"base",numeric:true}));
+ const container=$("dashListPageItems");
+ $("dashListPageTitle").textContent=titles[filter]+" ("+matches.length+")";
+ container.replaceChildren();
+ if(!matches.length){const p=document.createElement("p");p.className="dash-empty";p.textContent="Aucune fiche dans cette catégorie pour le moment.";container.append(p)}
+ else{
+  const ul=document.createElement("ul");
+  for(const m of matches){
+   const li=document.createElement("li"),btn=document.createElement("button");
+   btn.type="button";btn.textContent=displayMedName(m);
+   btn.addEventListener("click",()=>{dashActiveFilter=null;openMedication(m.id)});
+   li.append(btn);ul.append(li);
+  }
+  container.append(ul);
+ }
+ if(currentView!=="dashboard-list"){
+  const url=new URL(location.href);url.hash="liste-"+filter;
+  url.searchParams.delete("fiche");url.searchParams.delete("edition");url.searchParams.delete("rubrique");url.searchParams.delete("presentation");
+  history.pushState({view:"dashboard-list",dashFilter:filter},"",url);
+ }
+ showView("dashboard-list");
+ if(scroll)window.scrollTo({top:0,behavior:"instant"});
+}
+document.querySelectorAll("#adminDashboard [data-dash-filter]").forEach(btn=>btn.addEventListener("click",()=>dashShowStatList(btn.dataset.dashFilter)));
+$("dashListBack").addEventListener("click",()=>navigateToView("home"));
 function dashRender(){
  const el=$("adminDashboard");
  $("homeView").classList.toggle("admin-dashboard-only",!!admin);
@@ -3251,6 +3325,7 @@ function dashRender(){
  // Catégorie réservée aux futures fiches conseil : aucune fiche n'est présumée conseil sur la seule présence d'une rubrique.
  $("dashConseils").textContent=list.filter(m=>hierarchyMeta(m).memofficineKind==="conseil").length;
  $("dashPublished").textContent=list.filter(m=>m.published).length;
+ if(dashActiveFilter&&currentView==="dashboard-list")dashShowStatList(dashActiveFilter,false);
  const state=dashRead(),nodes=dashNodes(state.text),all=dashFlatten(nodes),completed=all.filter(n=>state.done[n.key]).length;
  $("dashTaskCount").textContent=`(${completed}/${all.length})`;
  $("dashProgressText").textContent=all.length?`${completed} tâche${completed>1?"s":""} terminée${completed>1?"s":""} sur ${all.length}`:"Ajoute tes premières tâches dans l'éditeur.";
