@@ -956,6 +956,12 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 </style>
 
 <style>
+/* V6.40 — Édition de la liste sur place */
+#adminDashboard .dash-edit-text{display:inline-block;min-width:95px;min-height:22px;padding:2px 5px;border-radius:5px;white-space:pre-wrap;outline:1px dashed #bdd3c3;cursor:text;overflow-wrap:anywhere}
+#adminDashboard .dash-edit-text:focus{outline:2px solid #6ba684;background:#f5faf6}
+#adminDashboard .dash-is-editing .dash-task-row label{flex:1;min-width:0}
+#adminDashboard .dash-is-editing .dash-task-row .dash-edit-text{flex:1}
+#adminDashboard .dash-is-editing .dash-fold{opacity:.45}
 /* V6.34 — Espace personnel d'administration */
 #adminDashboard{margin:0 0 22px;background:#fff;border:1px solid #dce8df;border-radius:17px;padding:19px;box-shadow:0 5px 20px #193f3408}
 #adminDashboard .dash-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -987,6 +993,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #adminDashboard .dash-format-toolbar{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 7px;align-items:center}#adminDashboard .dash-format-toolbar button{padding:6px 9px}#adminDashboard .dash-format-toolbar select{width:auto;max-width:130px;padding:6px}#adminDashboard .dash-sync-status{font-size:.82rem;color:#627b6a;margin-top:9px}#adminDashboard .dash-tree label span p{margin:0}#adminDashboard .dash-note{font-size:.8rem;color:#697b70;line-height:1.5}
 #adminDashboard .dash-empty{color:#697b70;font-size:.88rem;padding:8px 0}
 @media(max-width:760px){#adminDashboard .dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#adminDashboard .dash-panels{grid-template-columns:1fr}}
+#homeView.admin-dashboard-only > .home-hero,
+#homeView.admin-dashboard-only > #homeSearchSlot,
+#homeView.admin-dashboard-only > #mainSearchCard,
+#homeView.admin-dashboard-only > #homeExtras,
+#homeView.admin-dashboard-only > #searchWorkspace,
+#homeView.admin-dashboard-only > #searchLayout{display:none!important}
+#adminDashboard .dash-suggestions{margin-top:17px;border:1px solid #e1e9e3;border-radius:13px;padding:16px;background:#fff}
+#adminDashboard .dash-suggestions textarea{display:block;box-sizing:border-box;width:100%;min-height:120px;padding:12px;border:1px solid #d6e3d9;border-radius:10px;background:#fcfefc;line-height:1.55}
+#adminDashboard .dash-suggestions p{font-size:.82rem;color:#687a6e;margin:6px 0 10px}
+#adminDashboard .dash-suggestions .dash-tools{justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -1007,10 +1023,16 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 <main>
   <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   <section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
- <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste</button></div>
+ <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div>
  <div class="dash-stats"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashReview">0</b><span>À vérifier</span></div><div class="dash-stat"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div></div>
- <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><div class="dash-panels"><div class="dash-pane"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div></div>
+ <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><div class="dash-panels"><div class="dash-pane"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
  <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
+ <div class="dash-suggestions">
+ <h3>💡 Suggestions de modifications</h3>
+ <p>Note ici tes idées d'amélioration, les corrections à prévoir ou les fonctionnalités à développer. Ces notes sont sauvegardées avec ton tableau de bord.</p>
+ <textarea id="dashSuggestions" aria-label="Suggestions de modifications" placeholder="Ex. : Ajouter une recherche par interactions, améliorer la fiche…"></textarea>
+ <div class="dash-tools"><button id="dashSuggestionsSave" class="primary" type="button">Enregistrer les suggestions (Ctrl+S)</button></div>
+ </div>
  </section><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><div id="homeSearchSlot"></div><section class="searchcard" id="mainSearchCard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
@@ -3113,7 +3135,7 @@ initCloud();
 // V6.34 — Tableau de bord privé (données locales, séparées de Supabase).
 let dashboardOwner="";
 function dashKey(){return "memopharm-dashboard-v1-"+dashboardOwner}
-function dashDefault(){return {text:"",done:{},collapsed:{}}}
+function dashDefault(){return {text:"",done:{},collapsed:{},suggestions:""}}
 let dashCloudReady=false,dashCloudTimer=null,dashCloudGeneration=0;
 function dashStatus(message){const el=$("dashSyncStatus");if(el)el.textContent=message}
 async function dashCloudLoad(){
@@ -3128,13 +3150,13 @@ async function dashCloudLoad(){
   if(data&&data.content&&typeof data.content.text==="string"){
    const remote=data.content;
    // Ne jamais écraser silencieusement une liste locale non vide lors de la première connexion.
-   if(local.text&&JSON.stringify(local)!==JSON.stringify({text:remote.text,done:remote.done||{},collapsed:remote.collapsed||{}})){
+   if(local.text&&JSON.stringify(local)!==JSON.stringify({text:remote.text,done:remote.done||{},collapsed:remote.collapsed||{},suggestions:remote.suggestions||""})){
     if(confirm("Une liste synchronisée existe déjà. OK : utiliser la liste Supabase sur cet appareil. Annuler : conserver ta liste locale (tu pourras la synchroniser en enregistrant).")){
-     dashWrite({text:remote.text,done:remote.done||{},collapsed:remote.collapsed||{}});
+     dashWrite({text:remote.text,done:remote.done||{},collapsed:remote.collapsed||{},suggestions:remote.suggestions||""});
     }
-   }else dashWrite({text:remote.text,done:remote.done||{},collapsed:remote.collapsed||{}});
+   }else dashWrite({text:remote.text,done:remote.done||{},collapsed:remote.collapsed||{},suggestions:remote.suggestions||""});
   }else if(local.text||Object.keys(local.done).length){await dashCloudSave(true);}
-  dashCloudReady=true;dashStatus("☁️ Synchronisation Supabase active · Sauvegarde locale de secours");dashRender();
+  dashCloudReady=true;dashStatus("☁️ Synchronisation Supabase active · Sauvegarde locale de secours");if(!dashInlineEditing){dashRender();dashRenderSuggestions();}
  }catch(error){console.warn("Synchronisation tableau de bord indisponible",error);dashStatus("💻 Sauvegarde locale uniquement · Installer la table SQL admin_dashboard pour activer la synchronisation");}
 }
 async function dashCloudSave(silent=false){
@@ -3148,7 +3170,7 @@ async function dashCloudSave(silent=false){
  }catch(error){console.warn("Sauvegarde distante indisponible",error);if(!silent)dashStatus("⚠️ Sauvegarde locale réussie, mais synchronisation Supabase impossible");return false;}
 }
 function dashScheduleCloud(){if(dashCloudTimer)clearTimeout(dashCloudTimer);dashCloudTimer=setTimeout(()=>{dashCloudSave()},500)}
-function dashRead(){try{const v=JSON.parse(localStorage.getItem(dashKey())||"null");return v&&typeof v.text==="string"&&v.done&&typeof v.done==="object"?{...v,collapsed:v.collapsed&&typeof v.collapsed==="object"?v.collapsed:{}}:dashDefault()}catch(e){return dashDefault()}}
+function dashRead(){try{const v=JSON.parse(localStorage.getItem(dashKey())||"null");return v&&typeof v.text==="string"&&v.done&&typeof v.done==="object"?{...v,collapsed:v.collapsed&&typeof v.collapsed==="object"?v.collapsed:{},suggestions:typeof v.suggestions==="string"?v.suggestions:""}:dashDefault()}catch(e){return dashDefault()}}
 function dashWrite(v){try{localStorage.setItem(dashKey(),JSON.stringify(v));return true}catch(e){toast("Stockage local indisponible : exporte ta liste.");return false}}
 function dashNodes(text){
  const root=[],stack=[{level:-1,children:root}];
@@ -3179,8 +3201,10 @@ function dashNodes(text){
 function dashFlatten(nodes){let out=[];nodes.forEach(n=>{out.push(n);out.push(...dashFlatten(n.children))});return out}
 function dashRender(){
  const el=$("adminDashboard");
+ $("homeView").classList.toggle("admin-dashboard-only",!!admin);
  el.classList.toggle("hidden",!admin||currentView!=="home");
  if(!admin)return;
+ $("dashToggleEditor").textContent=dashInlineEditing?"✕ Quitter la modification (Ctrl+M)":"✏️ Modifier ma liste (Ctrl+M)";
  const list=meds.filter(m=>!isSourcesRecord(m));
  $("dashTotal").textContent=list.length;
  $("dashReview").textContent=list.filter(m=>String(m.status||"").toLocaleLowerCase("fr")!=="vérifiée").length;
@@ -3196,10 +3220,10 @@ function dashRender(){
   nodes.forEach(n=>{
    const li=document.createElement("li"),label=document.createElement("label"),cb=document.createElement("input"),span=document.createElement("span");
    cb.type="checkbox";cb.checked=!!state.done[n.key];cb.setAttribute("aria-label","Terminer : "+n.title);
-   span.innerHTML=richInline(n.title);if(cb.checked)span.className="dash-done";
+   span.innerHTML=dashInlineEditing?"":richInline(n.title);if(dashInlineEditing){span.textContent=n.title;span.contentEditable="true";span.className="dash-edit-text";span.spellcheck=true;span.dataset.raw=n.title;}else if(cb.checked)span.className="dash-done";
    cb.addEventListener("change",()=>{const latest=dashRead();if(cb.checked)latest.done[n.key]=true;else delete latest.done[n.key];dashWrite(latest);dashScheduleCloud();dashRender()});
    label.append(cb,span);
-   const row=document.createElement("div");row.className="dash-task-row";
+   const row=document.createElement("div");row.className="dash-task-row";li.dataset.taskKey=n.key;li.className="dash-task-li";
    if(n.children.length){
     const toggle=document.createElement("button");toggle.type="button";toggle.className="dash-fold";
     const folded=!!state.collapsed?.[n.key];
@@ -3224,31 +3248,118 @@ function dashRender(){
   where.append(ul);
  }
  if(nodes.length)append(nodes,tree);else tree.innerHTML='<div class="dash-empty">Aucune tâche pour le moment.</div>';
+ tree.classList.toggle("dash-is-editing",dashInlineEditing);
+ $("dashInlineActions").classList.toggle("hidden",!dashInlineEditing);
+ if(dashInlineEditing){tree.querySelectorAll(".dash-task-children[hidden]").forEach(x=>x.hidden=false);tree.querySelectorAll(".dash-fold").forEach(x=>x.disabled=true);}
+
  if(document.activeElement!==$("dashTextarea"))$("dashTextarea").value=state.text;
 }
 function dashSetUser(){
  const next=admin&&currentUser?.id?String(currentUser.id):"";
  if(dashboardOwner!==next){dashboardOwner=next;dashCloudGeneration++;if(dashCloudTimer)clearTimeout(dashCloudTimer);$("dashEditorPane").classList.add("hidden");if(next)dashCloudLoad();}
- dashRender();
+ dashRender();dashRenderSuggestions();
 }
-$("dashToggleEditor").onclick=()=>{
- const pane=$("dashEditorPane");pane.classList.toggle("hidden");
- $("dashToggleEditor").textContent=pane.classList.contains("hidden")?"✏️ Modifier ma liste":"Masquer l'éditeur";
- if(!pane.classList.contains("hidden")){$("dashTextarea").value=dashRead().text;$("dashTextarea").focus()}
-};
-$("dashSave").onclick=()=>{
+// V6.40 — Édition directement dans la liste, sans second champ de saisie.
+let dashInlineEditing=false;
+function dashEditToggle(){
  if(!admin)return;
- const state=dashRead();state.text=$("dashTextarea").value;
- if(dashWrite(state)){dashRender();dashStatus("⏳ Enregistrement sur Supabase…");dashCloudSave().then(ok=>toast(ok?"Liste enregistrée et synchronisée.":"Liste enregistrée localement ; synchronisation indisponible."))}
-};
-// Ctrl+S (Windows/Linux) ou Cmd+S (Mac) en cours d'édition : sauvegarde la liste sans ouvrir « Enregistrer la page ».
-$("dashTextarea").addEventListener("keydown",event=>{
- if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"){
-  event.preventDefault();
-  event.stopPropagation();
-  $("dashSave").click();
+ if(dashInlineEditing){dashInlineEditing=false;dashRender();return;}
+ dashInlineEditing=true;$("dashEditorPane").classList.add("hidden");dashRender();
+ const first=$("dashTaskTree").querySelector(".dash-edit-text");if(first)first.focus();
+}
+$("dashToggleEditor").onclick=dashEditToggle;
+function dashEditItem(text="",after=null){
+ const tree=$("dashTaskTree");let ul=after?.parentElement;
+ if(!ul||ul.tagName!=="UL"){ul=tree.querySelector(":scope > ul");if(!ul){ul=document.createElement("ul");tree.replaceChildren(ul)}}
+ const li=document.createElement("li");li.className="dash-task-li";
+ const row=document.createElement("div");row.className="dash-task-row";
+ const spacer=document.createElement("span");spacer.className="dash-fold-spacer";
+ const label=document.createElement("label");const cb=document.createElement("input");cb.type="checkbox";
+ const span=document.createElement("span");span.className="dash-edit-text";span.contentEditable="true";span.spellcheck=true;span.textContent=text;
+ label.append(cb,span);row.append(spacer,label);li.append(row);
+ if(after)after.after(li);else ul.append(li);
+ span.focus();const range=document.createRange();range.selectNodeContents(span);range.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+ return li;
+}
+function dashCurrentLi(target){return target.closest("li.dash-task-li")}
+function dashChangeIndent(li,delta){
+ if(!li)return;
+ if(delta>0){
+  const previous=li.previousElementSibling;if(!previous)return;
+  let holder=previous.querySelector(":scope > .dash-task-children");
+  if(!holder){holder=document.createElement("div");holder.className="dash-task-children";previous.append(holder)}
+  let ul=holder.querySelector(":scope > ul");if(!ul){ul=document.createElement("ul");holder.append(ul)}
+  ul.append(li);
+ }else{
+  const ul=li.parentElement,holder=ul?.parentElement,parent=holder?.parentElement;
+  if(!parent?.matches("li.dash-task-li"))return;
+  parent.after(li);
+  if(!ul.children.length)holder.remove();
  }
+}
+function dashSerialize(){
+ const tree=$("dashTaskTree");let lines=[],done={},collapsed={};
+ const old=dashRead();
+ function walk(ul,level,path){
+  if(!ul)return;
+  const siblings=[...ul.children].filter(li=>li.matches("li.dash-task-li"));
+  const counts={};
+  siblings.forEach(li=>{
+   const text=li.querySelector(":scope > .dash-task-row .dash-edit-text")?.textContent.trim()||"";
+   if(!text)return;
+   const normalized=text.replace(/\[\[.*?\|/g,"").replace(/\]\]/g,"").replace(/[*_]/g,"").normalize("NFC").toLocaleLowerCase("fr");
+   counts[normalized]=(counts[normalized]||0)+1;
+   const key=path+"/"+normalized+"#"+counts[normalized];
+   lines.push("  ".repeat(level)+text);
+   if(li.querySelector(":scope > .dash-task-row input[type=checkbox]")?.checked)done[key]=true;
+   if(old.collapsed?.[li.dataset.taskKey])collapsed[key]=true;
+   walk(li.querySelector(":scope > .dash-task-children > ul"),level+1,key);
+  });
+ }
+ walk(tree.querySelector(":scope > ul"),0,"");
+ return {...old,text:lines.join("\n"),done,collapsed};
+}
+async function dashSaveInline(){
+ if(!dashInlineEditing)return;
+ const state=dashSerialize();
+ if(!dashWrite(state))return;
+ dashInlineEditing=false;dashRender();dashStatus("⏳ Enregistrement sur Supabase…");
+ const ok=await dashCloudSave();toast(ok?"Liste enregistrée, triée et synchronisée.":"Liste enregistrée localement ; synchronisation indisponible.");
+}
+$("dashInlineSave").onclick=dashSaveInline;
+$("dashInlineCancel").onclick=()=>{dashInlineEditing=false;dashRender()};
+$("dashInlineAdd").onclick=()=>dashEditItem();
+$("dashInlineExport").onclick=()=>$("dashExport").click();
+$("dashTaskTree").addEventListener("keydown",e=>{
+ if(!dashInlineEditing||!e.target.matches(".dash-edit-text"))return;
+ const li=dashCurrentLi(e.target);
+ if(e.key==="Tab"){e.preventDefault();dashChangeIndent(li,e.shiftKey?-1:1);e.target.focus();return}
+ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();dashEditItem("",li);return}
 });
+function dashRenderSuggestions(){
+ const el=$("dashSuggestions");if(!el)return;
+ if(document.activeElement!==el)el.value=dashRead().suggestions||"";
+}
+async function dashSaveSuggestions(){
+ if(!admin)return;
+ const state=dashRead();state.suggestions=$("dashSuggestions").value;
+ if(!dashWrite(state))return;
+ dashStatus("⏳ Sauvegarde des suggestions…");
+ const ok=await dashCloudSave();
+ toast(ok?"Suggestions synchronisées avec Supabase.":"Suggestions enregistrées localement ; synchronisation indisponible.");
+}
+$("dashSuggestionsSave").onclick=dashSaveSuggestions;
+document.addEventListener("keydown",e=>{
+ if(!admin||currentView!=="home"||!(e.ctrlKey||e.metaKey))return;
+ if(e.key.toLowerCase()==="m"){
+  e.preventDefault();e.stopPropagation();dashEditToggle();
+ }else if(e.key.toLowerCase()==="s"&&document.activeElement===$("dashSuggestions")){
+  e.preventDefault();e.stopPropagation();dashSaveSuggestions();
+ }else if(e.key.toLowerCase()==="s"&&dashInlineEditing){
+  e.preventDefault();e.stopPropagation();dashSaveInline();
+ }
+},true);
+$("dashSave").onclick=()=>{if(dashInlineEditing){dashSaveInline();return}const state=dashRead();state.text=$("dashTextarea").value;if(dashWrite(state)){dashRender();dashCloudSave()}};
 $("dashExport").onclick=()=>{
  const payload={version:1,exportedAt:new Date().toISOString(),...dashRead()};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -3261,7 +3372,7 @@ $("dashImportFile").onchange=async e=>{
   const data=JSON.parse(await file.text());
   if(typeof data.text!=="string"||!data.done||typeof data.done!=="object"||Array.isArray(data.done))throw Error("format");
   if(confirm("Remplacer la liste et les cases cochées de ce navigateur par ce fichier ?")){
-   dashWrite({text:data.text,done:data.done,collapsed:data.collapsed||{}});dashRender();dashScheduleCloud();toast("Liste importée.");
+   dashWrite({text:data.text,done:data.done,collapsed:data.collapsed||{},suggestions:data.suggestions||""});dashRenderSuggestions();dashRender();dashScheduleCloud();toast("Liste importée.");
   }
  }catch(err){toast("Fichier de tableau de bord non reconnu.")}
  e.target.value="";
