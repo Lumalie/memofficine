@@ -978,7 +978,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #adminDashboard textarea{min-height:215px;resize:vertical;font-family:inherit;line-height:1.6}
 #adminDashboard .dash-tools{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
 #adminDashboard .dash-tools button{font-size:.84rem}
-#adminDashboard .dash-note{font-size:.8rem;color:#697b70;line-height:1.5}
+#adminDashboard .dash-format-toolbar{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 7px;align-items:center}#adminDashboard .dash-format-toolbar button{padding:6px 9px}#adminDashboard .dash-format-toolbar select{width:auto;max-width:130px;padding:6px}#adminDashboard .dash-sync-status{font-size:.82rem;color:#627b6a;margin-top:9px}#adminDashboard .dash-tree label span p{margin:0}#adminDashboard .dash-note{font-size:.8rem;color:#697b70;line-height:1.5}
 #adminDashboard .dash-empty{color:#697b70;font-size:.88rem;padding:8px 0}
 @media(max-width:760px){#adminDashboard .dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#adminDashboard .dash-panels{grid-template-columns:1fr}}
 </style>
@@ -1003,8 +1003,8 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
   <section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste</button></div>
  <div class="dash-stats"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashReview">0</b><span>À vérifier</span></div><div class="dash-stat"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div></div>
- <div class="dash-panels"><div class="dash-pane"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div></div>
- <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. La liste n'est pas synchronisée avec Supabase : pense à l'exporter pour la sauvegarder ou changer d'appareil.</p></div></div>
+ <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><div class="dash-panels"><div class="dash-pane"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div></div>
+ <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
  </section><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><div id="homeSearchSlot"></div><section class="searchcard" id="mainSearchCard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
@@ -3107,6 +3107,40 @@ initCloud();
 let dashboardOwner="";
 function dashKey(){return "memopharm-dashboard-v1-"+dashboardOwner}
 function dashDefault(){return {text:"",done:{}}}
+let dashCloudReady=false,dashCloudTimer=null,dashCloudGeneration=0;
+function dashStatus(message){const el=$("dashSyncStatus");if(el)el.textContent=message}
+async function dashCloudLoad(){
+ const uid=dashboardOwner,gen=++dashCloudGeneration;dashCloudReady=false;
+ if(!uid)return;
+ dashStatus("☁️ Recherche de ta liste synchronisée…");
+ try{
+  const {data,error}=await supabaseClient.from("admin_dashboard").select("content,updated_at").eq("user_id",uid).maybeSingle();
+  if(gen!==dashCloudGeneration||uid!==dashboardOwner)return;
+  if(error)throw error;
+  const local=dashRead();
+  if(data&&data.content&&typeof data.content.text==="string"){
+   const remote=data.content;
+   // Ne jamais écraser silencieusement une liste locale non vide lors de la première connexion.
+   if(local.text&&JSON.stringify(local)!==JSON.stringify({text:remote.text,done:remote.done||{}})){
+    if(confirm("Une liste synchronisée existe déjà. OK : utiliser la liste Supabase sur cet appareil. Annuler : conserver ta liste locale (tu pourras la synchroniser en enregistrant).")){
+     dashWrite({text:remote.text,done:remote.done||{}});
+    }
+   }else dashWrite({text:remote.text,done:remote.done||{}});
+  }else if(local.text||Object.keys(local.done).length){await dashCloudSave(true);}
+  dashCloudReady=true;dashStatus("☁️ Synchronisation Supabase active · Sauvegarde locale de secours");dashRender();
+ }catch(error){console.warn("Synchronisation tableau de bord indisponible",error);dashStatus("💻 Sauvegarde locale uniquement · Installer la table SQL admin_dashboard pour activer la synchronisation");}
+}
+async function dashCloudSave(silent=false){
+ if(!dashboardOwner||!admin)return false;
+ const uid=dashboardOwner,content=dashRead();
+ try{
+  const {error}=await supabaseClient.from("admin_dashboard").upsert({user_id:uid,content,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+  if(error)throw error;
+  if(uid===dashboardOwner){dashCloudReady=true;dashStatus("☁️ Liste enregistrée sur Supabase et sur cet appareil");}
+  return true;
+ }catch(error){console.warn("Sauvegarde distante indisponible",error);if(!silent)dashStatus("⚠️ Sauvegarde locale réussie, mais synchronisation Supabase impossible");return false;}
+}
+function dashScheduleCloud(){if(dashCloudTimer)clearTimeout(dashCloudTimer);dashCloudTimer=setTimeout(()=>{dashCloudSave()},500)}
 function dashRead(){try{const v=JSON.parse(localStorage.getItem(dashKey())||"null");return v&&typeof v.text==="string"&&v.done&&typeof v.done==="object"?v:dashDefault()}catch(e){return dashDefault()}}
 function dashWrite(v){try{localStorage.setItem(dashKey(),JSON.stringify(v));return true}catch(e){toast("Stockage local indisponible : exporte ta liste.");return false}}
 function dashNodes(text){
@@ -3124,10 +3158,10 @@ function dashNodes(text){
  });
  const collator=new Intl.Collator("fr",{sensitivity:"base",numeric:true});
  function sort(items,path=""){
-  items.sort((a,b)=>collator.compare(a.title,b.title));
+  items.sort((a,b)=>collator.compare(a.title.replace(/\[\[[^|]+\|/g,"").replace(/\]\]/g,"").replace(/[*_]/g,""),b.title.replace(/\[\[[^|]+\|/g,"").replace(/\]\]/g,"").replace(/[*_]/g,"")));
   const counts={};
   items.forEach(n=>{
-   const normalized=n.title.normalize("NFC").toLocaleLowerCase("fr");
+   const normalized=n.title.replace(/\[\[.*?\|/g,"").replace(/\]\]/g,"").replace(/[*_]/g,"").normalize("NFC").toLocaleLowerCase("fr");
    counts[normalized]=(counts[normalized]||0)+1;
    n.key=path+"/"+normalized+"#"+counts[normalized];
    sort(n.children,n.key);
@@ -3155,8 +3189,8 @@ function dashRender(){
   nodes.forEach(n=>{
    const li=document.createElement("li"),label=document.createElement("label"),cb=document.createElement("input"),span=document.createElement("span");
    cb.type="checkbox";cb.checked=!!state.done[n.key];cb.setAttribute("aria-label","Terminer : "+n.title);
-   span.textContent=n.title;if(cb.checked)span.className="dash-done";
-   cb.addEventListener("change",()=>{const latest=dashRead();if(cb.checked)latest.done[n.key]=true;else delete latest.done[n.key];dashWrite(latest);dashRender()});
+   span.innerHTML=richInline(n.title);if(cb.checked)span.className="dash-done";
+   cb.addEventListener("change",()=>{const latest=dashRead();if(cb.checked)latest.done[n.key]=true;else delete latest.done[n.key];dashWrite(latest);dashScheduleCloud();dashRender()});
    label.append(cb,span);li.append(label);if(n.children.length)append(n.children,li);ul.append(li);
   });
   where.append(ul);
@@ -3166,7 +3200,7 @@ function dashRender(){
 }
 function dashSetUser(){
  const next=admin&&currentUser?.id?String(currentUser.id):"";
- if(dashboardOwner!==next){dashboardOwner=next;$("dashEditorPane").classList.add("hidden");}
+ if(dashboardOwner!==next){dashboardOwner=next;dashCloudGeneration++;if(dashCloudTimer)clearTimeout(dashCloudTimer);$("dashEditorPane").classList.add("hidden");if(next)dashCloudLoad();}
  dashRender();
 }
 $("dashToggleEditor").onclick=()=>{
@@ -3177,7 +3211,7 @@ $("dashToggleEditor").onclick=()=>{
 $("dashSave").onclick=()=>{
  if(!admin)return;
  const state=dashRead();state.text=$("dashTextarea").value;
- if(dashWrite(state)){dashRender();toast("Liste enregistrée et triée par ordre alphabétique.")}
+ if(dashWrite(state)){dashRender();dashStatus("⏳ Enregistrement sur Supabase…");dashCloudSave().then(ok=>toast(ok?"Liste enregistrée et synchronisée.":"Liste enregistrée localement ; synchronisation indisponible."))}
 };
 // Ctrl+S (Windows/Linux) ou Cmd+S (Mac) en cours d'édition : sauvegarde la liste sans ouvrir « Enregistrer la page ».
 $("dashTextarea").addEventListener("keydown",event=>{
@@ -3199,12 +3233,38 @@ $("dashImportFile").onchange=async e=>{
   const data=JSON.parse(await file.text());
   if(typeof data.text!=="string"||!data.done||typeof data.done!=="object"||Array.isArray(data.done))throw Error("format");
   if(confirm("Remplacer la liste et les cases cochées de ce navigateur par ce fichier ?")){
-   dashWrite({text:data.text,done:data.done});dashRender();toast("Liste importée.");
+   dashWrite({text:data.text,done:data.done});dashRender();dashScheduleCloud();toast("Liste importée.");
   }
  }catch(err){toast("Fichier de tableau de bord non reconnu.")}
  e.target.value="";
 };
 
+
+// Mise en forme identique à l'éditeur des fiches : même syntaxe et même moteur d'affichage.
+const dashArea=$("dashTextarea");let dashSelection=[0,0];
+dashArea.addEventListener("select",()=>{dashSelection=[dashArea.selectionStart,dashArea.selectionEnd]});
+dashArea.addEventListener("keyup",()=>{dashSelection=[dashArea.selectionStart,dashArea.selectionEnd]});
+dashArea.addEventListener("mouseup",()=>{dashSelection=[dashArea.selectionStart,dashArea.selectionEnd]});
+$("dashFormatToolbar").addEventListener("mousedown",e=>{if(e.target.closest("button"))e.preventDefault()});
+function dashApplyFormat(mode){
+ const area=dashArea;area.focus({preventScroll:true});
+ const [start,end]=dashSelection;area.setSelectionRange(start,end);
+ const selected=area.value.slice(start,end);
+ if(["bold","italic","underline"].includes(mode)){if(!selected)return;toggleInlineMarks(area,mode,start,end);return}
+ if(mode==="link"){applyEditorKeyboardFormat(area,"link");return}
+ let replacement=selected;
+ if(mode==="bullets"||mode==="numbers"){
+  replacement=selected.split("\n").map((line,i)=>{const m=line.match(/^(\s*)(.*)$/);return m[1]+(mode==="bullets"?"- ":(i+1)+". ")+m[2].replace(/^(?:[-•]|\d+\.)\s+/,"")}).join("\n");
+ }else if(mode.startsWith("color:"))replacement=`[[${mode.slice(6)}|${selected}]]`;
+ else if(mode.startsWith("align:")||mode.startsWith("size:"))replacement=`[[${mode}|${selected}]]`;
+ if(!selected)return;
+ area.setRangeText(replacement,start,end,"select");dashSelection=[start,start+replacement.length];area.dispatchEvent(new Event("input",{bubbles:true}));
+}
+$("dashFormatToolbar").querySelectorAll("[data-dash-format]").forEach(b=>b.addEventListener("click",()=>dashApplyFormat(b.dataset.dashFormat)));
+$("dashFormatToolbar").querySelectorAll("[data-dash-style]").forEach(sel=>sel.addEventListener("change",()=>{if(sel.value)dashApplyFormat(sel.dataset.dashStyle+":"+sel.value);sel.value=""}));
+dashArea.addEventListener("keydown",e=>{
+ if((e.ctrlKey||e.metaKey)&&["b","i","u","k"].includes(e.key.toLowerCase())){e.preventDefault();e.stopPropagation();dashSelection=[dashArea.selectionStart,dashArea.selectionEnd];dashApplyFormat(({b:"bold",i:"italic",u:"underline",k:"link"})[e.key.toLowerCase()]);}
+});
 
 </script>
 </body></html>
