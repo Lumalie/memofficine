@@ -1004,7 +1004,7 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
  <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste</button></div>
  <div class="dash-stats"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashReview">0</b><span>À vérifier</span></div><div class="dash-stat"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div></div>
  <div class="dash-panels"><div class="dash-pane"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div></div>
- <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau.</label><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. La liste n'est pas synchronisée avec Supabase : pense à l'exporter pour la sauvegarder ou changer d'appareil.</p></div></div>
+ <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. La liste n'est pas synchronisée avec Supabase : pense à l'exporter pour la sauvegarder ou changer d'appareil.</p></div></div>
  </section><div class="home-hero"><h2>Que recherchez-vous ?</h2><p>Un médicament, une DCI, une rubrique ou un conseil…</p></div><div id="homeSearchSlot"></div><section class="searchcard" id="mainSearchCard">
     <label class="label" for="search">Rechercher un médicament, une DCI, une spécialité, un laboratoire, un dosage, un CIP ou une rubrique</label>
     <div class="searchrow"><input id="search" type="search" placeholder="Ex. : amoxicilline modalités de prise, oubli, conservation…" autocomplete="off"><button id="clearSearch">Effacer</button></div>
@@ -3179,6 +3179,14 @@ $("dashSave").onclick=()=>{
  const state=dashRead();state.text=$("dashTextarea").value;
  if(dashWrite(state)){dashRender();toast("Liste enregistrée et triée par ordre alphabétique.")}
 };
+// Ctrl+S (Windows/Linux) ou Cmd+S (Mac) en cours d'édition : sauvegarde la liste sans ouvrir « Enregistrer la page ».
+$("dashTextarea").addEventListener("keydown",event=>{
+ if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"){
+  event.preventDefault();
+  event.stopPropagation();
+  $("dashSave").click();
+ }
+});
 $("dashExport").onclick=()=>{
  const payload={version:1,exportedAt:new Date().toISOString(),...dashRead()};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
