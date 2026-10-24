@@ -1003,6 +1003,17 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #adminDashboard .dash-suggestions textarea{display:block;box-sizing:border-box;width:100%;min-height:120px;padding:12px;border:1px solid #d6e3d9;border-radius:10px;background:#fcfefc;line-height:1.55}
 #adminDashboard .dash-suggestions p{font-size:.82rem;color:#687a6e;margin:6px 0 10px}
 #adminDashboard .dash-suggestions .dash-tools{justify-content:flex-end}
+
+/* V6.42 — Une seule colonne pour les encarts et commandes de liste regroupées. */
+#adminDashboard .dash-panels{display:flex;flex-direction:column;gap:16px;width:100%}
+#adminDashboard .dash-panels>.dash-pane{width:100%;box-sizing:border-box}
+#adminDashboard .dash-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+#adminDashboard .dash-list-heading h3{margin:0}
+#adminDashboard .dash-task-row{display:flex;align-items:center;gap:6px}
+#adminDashboard .dash-task-row>label{flex:1;min-width:0}
+#adminDashboard .dash-delete-entry{display:none;flex:none;border:1px solid #edcfcf;border-radius:8px;background:#fff5f5;color:#a44444;padding:5px 8px;cursor:pointer;font-size:.88rem}
+#adminDashboard .dash-is-editing .dash-delete-entry{display:inline-flex;align-items:center;justify-content:center}
+#adminDashboard .dash-delete-entry:hover{background:#ffe7e7}
 </style>
 </head>
 <body>
@@ -1023,9 +1034,9 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 <main>
   <div id="adminBanner" class="admin-banner hidden"><div><strong>Administration Mémopharm</strong><div class="muted">Les modifications sont synchronisées avec la base en ligne.</div></div><div class="mini-actions"><button id="addMedBtn" class="primary">+ Nouvelle fiche</button><button id="addGroupBtn" class="soft">+ Nouveau groupe</button><button id="exportBtn">Exporter JSON</button><button id="importBtn">Importer JSON</button><button id="logoutBtn">Déconnexion</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
   <section id="homeView"><section id="adminDashboard" class="hidden" aria-label="Tableau de bord personnel">
- <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div>
+ <div class="dash-heading"><div><h2>🌿 Mon espace Mémopharm</h2><div class="muted">Suivi de la bibliothèque et de mes projets</div></div></div>
  <div class="dash-stats"><div class="dash-stat"><b id="dashTotal">0</b><span>Fiches créées</span></div><div class="dash-stat"><b id="dashReview">0</b><span>À vérifier</span></div><div class="dash-stat"><b id="dashMolecules">0</b><span>Fiches molécules</span></div><div class="dash-stat"><b id="dashPublished">0</b><span>Fiches publiées</span></div></div>
- <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><div class="dash-panels"><div class="dash-pane"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
+ <div id="dashSyncStatus" class="dash-sync-status" role="status">Sauvegarde locale disponible · Synchronisation en attente</div><div class="dash-panels"><div class="dash-pane"><div class="dash-list-heading"><h3>📋 Ma liste de suivi <small id="dashTaskCount" class="muted"></small></h3><button id="dashToggleEditor" type="button" class="soft">✏️ Modifier ma liste (Ctrl+M)</button></div><div class="dash-progress"><div id="dashProgressBar" style="width:0%"></div></div><div id="dashProgressText" class="muted">Aucune tâche</div><div id="dashTaskTree" class="dash-tree" style="margin-top:12px"></div><div id="dashInlineActions" class="dash-tools hidden"><button type="button" id="dashInlineAdd">＋ Nouvelle entrée</button><button type="button" class="primary" id="dashInlineSave">Enregistrer et trier A → Z (Ctrl+S)</button><button type="button" id="dashInlineCancel">Annuler</button><button type="button" id="dashInlineExport">Exporter</button></div></div>
  <div class="dash-pane hidden" id="dashEditorPane"><h3>✏️ Éditer mes projets</h3><label for="dashTextarea" class="muted">Une ligne = une tâche. Deux espaces supplémentaires = un sous-niveau. Ctrl+S (ou ⌘S sur Mac) pour enregistrer.</label><div id="dashFormatToolbar" class="dash-format-toolbar" aria-label="Mise en forme de la liste"><button type="button" data-dash-format="bold" title="Gras (Ctrl+B)"><b>G</b></button><button type="button" data-dash-format="italic" title="Italique (Ctrl+I)"><i>I</i></button><button type="button" data-dash-format="underline" title="Souligné (Ctrl+U)"><u>S</u></button><button type="button" data-dash-format="link">🔗 Lien</button><button type="button" data-dash-format="bullets">• Liste</button><button type="button" data-dash-format="numbers">1. Liste</button><select data-dash-style="align" aria-label="Alignement"><option value="">Aligner…</option><option value="left">Gauche</option><option value="center">Centré</option><option value="right">Droite</option><option value="justify">Justifié</option></select><select data-dash-style="size" aria-label="Taille"><option value="">Taille…</option><option value="12">12 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option></select><select data-dash-style="color" aria-label="Couleur"><option value="">Couleur…</option><option value="default">Défaut</option><option value="green">Vert</option><option value="red">Rouge</option><option value="orange">Orange</option><option value="blue">Bleu</option><option value="gray">Gris</option><option value="pink">Rose</option></select></div><textarea id="dashTextarea" spellcheck="false" placeholder="Antibiotiques&#10;  Amoxicilline&#10;    Vérifier les sources&#10;    Compléter la posologie&#10;Antianémiques&#10;  Tardyferon"></textarea><div class="dash-tools"><button type="button" class="primary" id="dashSave">Enregistrer et trier A → Z</button><button type="button" id="dashExport">Exporter ma liste</button><button type="button" id="dashImport">Importer une liste</button><input id="dashImportFile" type="file" accept=".json,application/json" class="hidden"></div><p class="dash-note">Les éléments sont classés par ordre alphabétique à chaque niveau. Les cases cochées sont mémorisées sur ce navigateur. Synchronisation Supabase disponible après installation de la table SQL dédiée. Les données restent également conservées localement.</p></div></div>
  <div class="dash-suggestions">
  <h3>💡 Suggestions de modifications</h3>
@@ -3243,6 +3254,9 @@ function dashRender(){
     const spacer=document.createElement("span");spacer.className="dash-fold-spacer";spacer.setAttribute("aria-hidden","true");
     row.append(spacer,label);li.append(row);
    }
+   const del=document.createElement("button");del.type="button";del.className="dash-delete-entry";del.textContent="🗑";
+   del.setAttribute("aria-label","Supprimer : "+n.title);del.title="Supprimer cette entrée";
+   del.addEventListener("click",()=>dashDeleteEntry(li));row.append(del);
    ul.append(li);
   });
   where.append(ul);
@@ -3276,10 +3290,21 @@ function dashEditItem(text="",after=null){
  const spacer=document.createElement("span");spacer.className="dash-fold-spacer";
  const label=document.createElement("label");const cb=document.createElement("input");cb.type="checkbox";
  const span=document.createElement("span");span.className="dash-edit-text";span.contentEditable="true";span.spellcheck=true;span.textContent=text;
- label.append(cb,span);row.append(spacer,label);li.append(row);
+ label.append(cb,span);row.append(spacer,label);
+ const del=document.createElement("button");del.type="button";del.className="dash-delete-entry";del.textContent="🗑";del.title="Supprimer cette entrée";del.setAttribute("aria-label","Supprimer cette entrée");del.onclick=()=>dashDeleteEntry(li);row.append(del);li.append(row);
  if(after)after.after(li);else ul.append(li);
  span.focus();const range=document.createRange();range.selectNodeContents(span);range.collapse(false);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
  return li;
+}
+function dashDeleteEntry(li){
+ if(!dashInlineEditing||!li)return;
+ const title=li.querySelector(":scope > .dash-task-row .dash-edit-text")?.textContent?.trim()||"cette entrée";
+ const descendants=li.querySelectorAll(".dash-task-children li.dash-task-li").length;
+ const msg=descendants?`Supprimer « ${title} » et ses ${descendants} sous-entrée(s) ? Cette suppression sera définitive après enregistrement.`:`Supprimer « ${title} » ? La suppression sera définitive après enregistrement.`;
+ if(!confirm(msg))return;
+ const ul=li.parentElement,holder=ul?.parentElement;
+ li.remove();
+ if(ul&&!ul.children.length&&holder?.classList.contains("dash-task-children"))holder.remove();
 }
 function dashCurrentLi(target){return target.closest("li.dash-task-li")}
 function dashChangeIndent(li,delta){
