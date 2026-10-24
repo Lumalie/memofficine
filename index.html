@@ -1014,6 +1014,11 @@ main{max-width:1180px;margin:auto;padding:22px 18px 44px;min-height:calc(100vh -
 #adminDashboard .dash-delete-entry{display:none;flex:none;border:1px solid #edcfcf;border-radius:8px;background:#fff5f5;color:#a44444;padding:5px 8px;cursor:pointer;font-size:.88rem}
 #adminDashboard .dash-is-editing .dash-delete-entry{display:inline-flex;align-items:center;justify-content:center}
 #adminDashboard .dash-delete-entry:hover{background:#ffe7e7}
+/* V6.43 : en mode édition, la saisie a priorité sur les cases à cocher. */
+#adminDashboard .dash-is-editing .dash-task-row input[type="checkbox"]{display:none!important;pointer-events:none!important}
+#adminDashboard .dash-is-editing .dash-task-row label,
+#adminDashboard .dash-is-editing .dash-task-row div:has(> .dash-edit-text){cursor:text}
+#adminDashboard .dash-is-editing .dash-edit-text{display:block;flex:1;min-width:0;cursor:text;outline-offset:3px}
 </style>
 </head>
 <body>
@@ -3229,8 +3234,8 @@ function dashRender(){
  function append(nodes,where){
   const ul=document.createElement("ul");
   nodes.forEach(n=>{
-   const li=document.createElement("li"),label=document.createElement("label"),cb=document.createElement("input"),span=document.createElement("span");
-   cb.type="checkbox";cb.checked=!!state.done[n.key];cb.setAttribute("aria-label","Terminer : "+n.title);
+   const li=document.createElement("li"),label=document.createElement(dashInlineEditing?"div":"label"),cb=document.createElement("input"),span=document.createElement("span");
+   cb.type="checkbox";cb.checked=!!state.done[n.key];cb.disabled=dashInlineEditing;cb.setAttribute("aria-label","Terminer : "+n.title);
    span.innerHTML=dashInlineEditing?"":richInline(n.title);if(dashInlineEditing){span.textContent=n.title;span.contentEditable="true";span.className="dash-edit-text";span.spellcheck=true;span.dataset.raw=n.title;}else if(cb.checked)span.className="dash-done";
    cb.addEventListener("change",()=>{const latest=dashRead();if(cb.checked)latest.done[n.key]=true;else delete latest.done[n.key];dashWrite(latest);dashScheduleCloud();dashRender()});
    label.append(cb,span);
@@ -3288,7 +3293,7 @@ function dashEditItem(text="",after=null){
  const li=document.createElement("li");li.className="dash-task-li";
  const row=document.createElement("div");row.className="dash-task-row";
  const spacer=document.createElement("span");spacer.className="dash-fold-spacer";
- const label=document.createElement("label");const cb=document.createElement("input");cb.type="checkbox";
+ const label=document.createElement("div");const cb=document.createElement("input");cb.type="checkbox";cb.disabled=true;
  const span=document.createElement("span");span.className="dash-edit-text";span.contentEditable="true";span.spellcheck=true;span.textContent=text;
  label.append(cb,span);row.append(spacer,label);
  const del=document.createElement("button");del.type="button";del.className="dash-delete-entry";del.textContent="🗑";del.title="Supprimer cette entrée";del.setAttribute("aria-label","Supprimer cette entrée");del.onclick=()=>dashDeleteEntry(li);row.append(del);li.append(row);
